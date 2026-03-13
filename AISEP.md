@@ -7,7 +7,7 @@
 
 <!-- 由 /project switch 命令自动更新 -->
 ```yaml
-active_project: "proj-001"    # 制造业ERP
+active_project: "proj-002"    # 拍卖模块
 ```
 
 ## 上下文围栏（Context Fence）
@@ -15,9 +15,9 @@ active_project: "proj-001"    # 制造业ERP
 <!-- 由 /project switch 和 /project archive 命令自动更新 -->
 ```yaml
 context_fence:
-  active: "proj-001"
+  active: "proj-002"
   excluded_dirs:
-    # - "projects/proj-002/**"    # 暂停中（示例）
+    - "projects/proj-001/**"    # 已归档
   cross_project_allowed:
     - ".aisep/knowledge/**"       # 认知知识库始终可访问
     - ".aisep/evolution/**"       # 进化数据始终可访问

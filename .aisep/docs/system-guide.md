@@ -113,7 +113,8 @@ AISEP250311/
 | **加新方法论** | 在 `skills/methodologies/` 下建目录，写 `SKILL.md` |
 | **改制品格式** | 改 `templates/artifacts/s{n}-*.tmpl.yaml` |
 | **快速定位** | 说"状态" → 展示已建/待建/backlog 统计 |
-| **对话收尾** | `/tidy` → 自动同步所有变更到系统文件 |
+| **对话收尾** | `/tidy` → 同步变更 + Git checkpoint（AI 判断 + 人工审核） |
+| **版本管理** | `/tidy` 步骤 15 自动检测变更，人工确认后 commit + push |
 
 ### 完整命令速查
 
@@ -220,6 +221,7 @@ S7 部署配置                           ← deployment.yaml
 - Context Fence：`AISEP.md` 声明排除目录，多项目时硬排除非活跃项目的上下文
 - Project Map：`_map.yaml` Gate 通过时自动生成，低 token 项目全貌（< 500 tokens）
 - Registry 冷热分区：活跃项目留主注册表，归档项目迁移到 `registry-archive.yaml`
+- Git 版本同步：`/tidy` 收尾时 AI 判断是否需要 commit，人工确认后自动 commit + push（GitHub: [Albertsun6/AISEP](https://github.com/Albertsun6/AISEP)）
 
 ---
 

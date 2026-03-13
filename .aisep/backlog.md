@@ -35,7 +35,7 @@
 - [ ] **静态 HTML 报告生成** — Gate 通过时自动生成 project-dashboard.html（参考 allure-report）
 - [ ] **VS Code Extension** — 侧栏展示项目列表/Gate 时间线/一键 pipeline 按钮
 - [ ] **Continue Context Provider 融合** — 研究其声明式上下文注册架构，作为 AISEP VS Code Extension 技术底座
-- [ ] **GitHub 代码管理集成** — 项目代码的版本控制和 CI/CD 流程
+- [x] **GitHub 代码管理集成** — 项目代码的版本控制（已完成：Git 初始化 + GitHub private 仓库 + /tidy Git 同步步骤）
 
 ## Changelog
 
@@ -72,3 +72,4 @@
 | 2026-03-13 | 落地 2 个中优先级方案：Skills _summary.yaml(odoo17) + 知识库倒排索引(4维度) |
 | 2026-03-13 | 落地上下文归档机制（机制八）：阶段/Slice 过渡归档协议 + pipeline 5 步归档清单 |
 | 2026-03-13 | 🔴 高优先级 backlog 全部清零（8/8 完成） |
+| 2026-03-13 | Git 版本管理建立：.gitignore + Git 初始化 + GitHub 远程仓库(Albertsun6/AISEP) + /tidy Step 15 版本同步 |

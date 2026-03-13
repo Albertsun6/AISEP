@@ -9,3 +9,11 @@ ideas:
     tags: [erp, manufacturing, odoo]
     refined: null
     promoted_to: "proj-001"
+
+  - id: "idea-002"
+    description: "拍卖模块 — 基于 Odoo 17 的拍卖业务系统，管理拍品登记、竞价流程、成交结算等核心业务，后期引入独立前端框架面向客户"
+    status: "promoted"
+    created_at: "2026-03-13T09:40:00+08:00"
+    tags: [auction, odoo, business]
+    refined: null
+    promoted_to: "proj-002"
