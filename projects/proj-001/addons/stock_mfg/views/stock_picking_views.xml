@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ══════════════════════════════════════════════════════════════
+         stock_mfg: 出入库操作记录视图扩展
+         ══════════════════════════════════════════════════════════════ -->
+
+    <!-- Tree 视图继承 — 在 picking 列表中添加 origin 列便于追溯 -->
+    <record id="view_stock_picking_tree_inherit_mfg" model="ir.ui.view">
+        <field name="name">stock.picking.tree.inherit.mfg</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.vpicktree"/>
+        <field name="priority">20</field>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='state']" position="before">
+                <field name="origin" string="来源单据" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

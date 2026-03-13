@@ -1,0 +1,315 @@
+# S2 制品：Slice 规划
+# 项目：制造业ERP (proj-001)
+# 生成时间：2026-03-12T21:15:00+08:00
+# Slice 总数：7 | Story 总数：40
+
+slice_plan:
+  slices:
+    # ══════════════════════════════════════════════════════════════
+    # Slice 1: Walking Skeleton — 销售基础流程
+    # 目标：验证 Odoo 17 技术栈 + 端到端基础链路
+    # ══════════════════════════════════════════════════════════════
+    - id: "SLICE-01"
+      name: "销售基础流程"
+      description: "客户管理 + 报价单 → 销售订单全流程。验证技术栈可行性。"
+      demo_scenario: "创建客户 → 为客户创建报价单 → 确认为销售订单 → 查看订单详情"
+      models:
+        - "res.partner (customer)"
+        - "sale.order"
+        - "sale.order.line"
+      stories:
+        - "US-036"  # 创建客户
+        - "US-037"  # 查看客户列表
+        - "US-032"  # 创建报价单
+        - "US-033"  # 确认销售订单
+        - "US-034"  # 查看销售订单列表
+        - "US-035"  # 查看销售订单详情与发货状态
+      story_count: 6
+      estimated_lines: "300-500"
+      dependencies: []
+      priority_mix: { Must: 6, Should: 0, Could: 0 }
+      slice_1_justification:
+        - "零依赖 — 可独立运行"
+        - "验证 Odoo 17 模块创建、Model/View/Security/Menu 全链路"
+        - "销售是业务入口，端到端流程的起点"
+        - "通用域，复杂度最低，最快出成果"
+
+    # ══════════════════════════════════════════════════════════════
+    # Slice 2: 库存基础
+    # ══════════════════════════════════════════════════════════════
+    - id: "SLICE-02"
+      name: "库存基础 + 出入库"
+      description: "仓库/库位配置 + 出入库操作 + 库存查看。打通物流基础。"
+      demo_scenario: "配置仓库和库位 → 手动入库 → 查看库存 → 执行出库 → 查看出入库记录"
+      models:
+        - "stock.warehouse"
+        - "stock.location"
+        - "stock.picking"
+        - "stock.quant"
+      stories:
+        - "US-027"  # 配置仓库
+        - "US-028"  # 管理库位
+        - "US-023"  # 执行入库
+        - "US-024"  # 执行出库
+        - "US-026"  # 查看出入库记录
+        - "US-031"  # 查看实时库存量
+      story_count: 6
+      estimated_lines: "400-600"
+      dependencies: ["SLICE-01"]
+      dependency_reason: "销售确认后生成发货单（出库指令），需 Slice 1 的销售订单"
+      priority_mix: { Must: 5, Should: 1, Could: 0 }
+
+    # ══════════════════════════════════════════════════════════════
+    # Slice 3: 采购全流程
+    # ══════════════════════════════════════════════════════════════
+    - id: "SLICE-03"
+      name: "采购全流程"
+      description: "供应商管理 + 询价 → 采购订单 → 收货验收全流程。"
+      demo_scenario: "创建供应商 → 创建询价单 → 确认采购订单 → 收货验收 → 库存自动增加"
+      models:
+        - "res.partner (vendor)"
+        - "purchase.order"
+        - "purchase.order.line"
+      stories:
+        - "US-014"  # 创建供应商
+        - "US-015"  # 查看供应商列表
+        - "US-017"  # 创建询价单
+        - "US-018"  # 确认采购订单
+        - "US-019"  # 查看采购订单列表
+        - "US-021"  # 执行收货验收
+      story_count: 6
+      estimated_lines: "300-500"
+      dependencies: ["SLICE-02"]
+      dependency_reason: "收货验收需要库存模块（入库操作）"
+      priority_mix: { Must: 6, Should: 0, Could: 0 }
+
+    # ══════════════════════════════════════════════════════════════
+    # Slice 4: BOM + 生产计划
+    # ══════════════════════════════════════════════════════════════
+    - id: "SLICE-04"
+      name: "BOM + 生产计划"
+      description: "物料清单管理 + 创建和确认生产工单。制造核心基础。"
+      demo_scenario: "创建 BOM → 创建生产工单（自动算原料需求） → 确认工单 → 查看计划列表"
+      models:
+        - "mrp.bom"
+        - "mrp.bom.line"
+        - "mrp.production"
+      stories:
+        - "US-001"  # 创建 BOM
+        - "US-002"  # 查看 BOM 列表与详情
+        - "US-003"  # 编辑 BOM
+        - "US-005"  # 手动创建生产工单
+        - "US-006"  # 查看生产计划列表
+        - "US-008"  # 确认生产工单
+      story_count: 6
+      estimated_lines: "400-600"
+      dependencies: ["SLICE-02"]
+      dependency_reason: "生产工单确认后生成领料单，需库存模块支撑"
+      priority_mix: { Must: 6, Should: 0, Could: 0 }
+
+    # ══════════════════════════════════════════════════════════════
+    # Slice 5: 生产执行
+    # ══════════════════════════════════════════════════════════════
+    - id: "SLICE-05"
+      name: "生产执行与报工"
+      description: "生产领料 → 报工完成 → 成品入库。闭合生产核心循环。"
+      demo_scenario: "按工单领料（库存减少） → 报工完成（成品入库） → 查看执行详情和消耗差异"
+      models:
+        - "mrp.production (extend)"
+        - "stock.move (consume/produce)"
+      stories:
+        - "US-009"  # 生产领料
+        - "US-010"  # 报工完成生产
+        - "US-011"  # 查看工单执行详情
+        - "US-004"  # 归档 BOM
+      story_count: 4
+      estimated_lines: "300-500"
+      dependencies: ["SLICE-04", "SLICE-02"]
+      dependency_reason: "领料需要 BOM 工单（Slice 4）+ 库存扣减（Slice 2）"
+      priority_mix: { Must: 3, Should: 1, Could: 0 }
+
+    # ══════════════════════════════════════════════════════════════
+    # Slice 6: 工艺路线 + MRP 建议
+    # ══════════════════════════════════════════════════════════════
+    - id: "SLICE-06"
+      name: "工艺路线 + 生产建议"
+      description: "定义生产工序 + 基于销售需求自动建议生产计划。"
+      demo_scenario: "创建工艺路线 → 关联到 BOM → 运行 MRP 建议 → 一键生成工单"
+      models:
+        - "mrp.routing"
+        - "mrp.routing.workcenter"
+      stories:
+        - "US-012"  # 创建和编辑工艺路线
+        - "US-013"  # 查看工艺路线
+        - "US-007"  # 基于销售需求建议生产计划
+      story_count: 3
+      estimated_lines: "300-450"
+      dependencies: ["SLICE-04", "SLICE-01"]
+      dependency_reason: "MRP 建议需要 BOM（Slice 4）+ 销售订单需求（Slice 1）"
+      priority_mix: { Must: 0, Should: 3, Could: 0 }
+
+    # ══════════════════════════════════════════════════════════════
+    # Slice 7: 高级功能
+    # ══════════════════════════════════════════════════════════════
+    - id: "SLICE-07"
+      name: "高级功能（调拨/盘点/定价/维护）"
+      description: "库存调拨、盘点、价目表、供应商/客户信息编辑、采购高级操作。"
+      demo_scenario: "库存调拨 → 盘点差异确认 → 配置价目表 → 修改/取消采购订单"
+      models:
+        - "stock.quant (extend)"
+        - "product.pricelist"
+        - "product.pricelist.item"
+      stories:
+        - "US-025"  # 创建库存调拨
+        - "US-029"  # 发起盘点
+        - "US-030"  # 确认盘点差异
+        - "US-016"  # 编辑供应商信息
+        - "US-020"  # 修改或取消采购订单
+        - "US-022"  # 查看收货记录
+        - "US-038"  # 编辑客户信息
+        - "US-039"  # 创建价目表
+        - "US-040"  # 配置价格规则
+      story_count: 9
+      estimated_lines: "500-700"
+      dependencies: ["SLICE-02", "SLICE-03", "SLICE-01"]
+      dependency_reason: "调拨/盘点需库存基础，定价需销售，收货记录需采购"
+      priority_mix: { Must: 0, Should: 5, Could: 4 }
+
+  # ══════════════════════════════════════════════════════════════
+  # 依赖拓扑序（Topological Order）
+  # ══════════════════════════════════════════════════════════════
+  dependency_graph:
+    topological_order:
+      - phase: 1
+        slices: ["SLICE-01"]
+        rationale: "零依赖，技术栈验证"
+      - phase: 2
+        slices: ["SLICE-02"]
+        rationale: "库存是所有物流操作的基础"
+      - phase: 3
+        slices: ["SLICE-03", "SLICE-04"]
+        rationale: "采购和生产可并行（都仅依赖库存）"
+      - phase: 4
+        slices: ["SLICE-05"]
+        rationale: "生产执行依赖 BOM + 库存"
+      - phase: 5
+        slices: ["SLICE-06", "SLICE-07"]
+        rationale: "高级功能和工艺路线可并行"
+    circular_dependencies: false
+    critical_path: "SLICE-01 → SLICE-02 → SLICE-04 → SLICE-05"
+
+  # ══════════════════════════════════════════════════════════════
+  # 汇总统计
+  # ══════════════════════════════════════════════════════════════
+  summary:
+    total_slices: 7
+    total_stories: 40
+    total_estimated_lines: "2500-3800"
+    must_coverage: "24/24 Must stories covered in Slices 1-5"
+    mvp_scope: "Slices 1-5 = 完整 MVP（28 stories, 全部 Must）"
+    enhancement_scope: "Slices 6-7 = 增强功能（12 stories, Should + Could）"
+
+  # ══════════════════════════════════════════════════════════════
+  # CRUD 覆盖矩阵
+  # ══════════════════════════════════════════════════════════════
+  crud_matrix:
+    # Model | Create | Read | Update | Delete/Archive | Notes
+    - model: "mrp.bom"
+      create: "US-001"
+      read: "US-002"
+      update: "US-003"
+      delete: "US-004"  # Archive
+      coverage: "complete"
+
+    - model: "mrp.production"
+      create: "US-005"
+      read: "US-006, US-011"
+      update: "US-008, US-009, US-010"  # 确认/领料/报工 = 状态更新
+      delete: null
+      coverage: "complete"
+      notes: "Delete 不适用（工单通过状态流转管理生命周期）"
+
+    - model: "mrp.routing"
+      create: "US-012"
+      read: "US-013"
+      update: "US-012"  # 创建和编辑合并
+      delete: null
+      coverage: "acceptable"
+      notes: "Delete 非必需（可归档或不使用），标记为 Won't"
+
+    - model: "purchase.order"
+      create: "US-017"
+      read: "US-019"
+      update: "US-018, US-020"  # 确认 + 修改
+      delete: "US-020"  # 取消
+      coverage: "complete"
+
+    - model: "res.partner (vendor)"
+      create: "US-014"
+      read: "US-015"
+      update: "US-016"
+      delete: null
+      coverage: "acceptable"
+      notes: "Delete 不适用（供应商有历史采购记录，只可归档）— Won't"
+
+    - model: "stock.picking"
+      create: "US-023, US-024, US-025"  # 入库/出库/调拨
+      read: "US-026, US-022"
+      update: null  # 通过确认操作隐式更新
+      delete: null
+      coverage: "complete"
+      notes: "Update/Delete 不适用（picking 通过状态流转管理）"
+
+    - model: "stock.quant"
+      create: null  # 由 picking 自动创建
+      read: "US-031"
+      update: "US-029, US-030"  # 盘点调整
+      delete: null
+      coverage: "complete"
+      notes: "Create/Delete 由系统自动管理，非人工操作"
+
+    - model: "stock.warehouse"
+      create: "US-027"
+      read: "US-027"  # 配置页面含列表
+      update: "US-027"  # 配置包含修改
+      delete: null
+      coverage: "acceptable"
+      notes: "Delete 不适用（仓库是基础配置，不可删除）— Won't"
+
+    - model: "stock.location"
+      create: "US-028"
+      read: "US-028"
+      update: "US-028"
+      delete: null
+      coverage: "acceptable"
+      notes: "Delete 不适用（库位有历史移动记录）— Won't"
+
+    - model: "sale.order"
+      create: "US-032"
+      read: "US-034, US-035"
+      update: "US-033"  # 确认
+      delete: null
+      coverage: "acceptable"
+      notes: "Delete 不适用（订单通过状态管理）— Won't"
+
+    - model: "res.partner (customer)"
+      create: "US-036"
+      read: "US-037"
+      update: "US-038"
+      delete: null
+      coverage: "acceptable"
+      notes: "Delete 不适用（客户有历史订单）— Won't"
+
+    - model: "product.pricelist"
+      create: "US-039"
+      read: "US-039"  # 创建页面含列表
+      update: "US-040"
+      delete: null
+      coverage: "acceptable"
+      notes: "Delete 非核心需求 — Could/Won't"
+
+    crud_summary:
+      total_models: 12
+      complete: 4    # BOM, production, purchase.order, stock.picking
+      acceptable: 8  # Delete 标记为 Won't（业务合理）
+      missing: 0

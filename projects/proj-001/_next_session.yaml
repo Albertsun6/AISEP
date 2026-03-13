@@ -1,0 +1,72 @@
+# 会话交接清单
+# 由 /tidy 自动生成，供新对话开场时消费
+# 生成时间：2026-03-13T09:21
+
+next_session:
+  generated_at: "2026-03-13T09:21"
+  predicted_task: "启动新项目 proj-002 或继续 AISEP 系统演进"
+  predicted_stage: "S0-init / 系统设计"
+
+  recommended:
+    - path: ".aisep/docs/system-guide.md"
+      reason: "系统全局入口，始终需要"
+    - path: ".aisep/docs/architecture.md"
+      reason: "架构真相源，本轮有多处更新（archive/、registry 冷热分区）"
+    - path: ".aisep/backlog.md"
+      reason: "本轮清零高优先级，中优还剩 2 项可选"
+    - path: "AISEP.md"
+      reason: "新增 context_fence 区块，多项目场景必读"
+
+  optional:
+    - path: ".aisep/docs/self-evolution.md"
+      reason: "本轮新增 L2 知识沉淀协议，如果要测试知识晋升流程需要参考"
+    - path: ".aisep/docs/context-loading-protocol.md"
+      reason: "本轮新增机制七（围栏）+ 机制八（过渡归档），如需调整上下文策略可参考"
+    - path: "projects/proj-001/_map.yaml"
+      reason: "首个 Project Map 实例，可作为新项目的参考模板"
+    - path: ".agents/workflows/project-mgmt.md"
+      reason: "本轮增强了 archive 3 文件联动 + switch context_fence 联动"
+
+  excluded:
+    - pattern: "projects/proj-001/artifacts/slices/**"
+      reason: "proj-001 已完成，Slice 制品无需加载"
+    - pattern: "projects/proj-001/addons/**"
+      reason: "Odoo 模块代码，非当前关注"
+    - pattern: ".aisep/schemas/**"
+      reason: "Schema 验证定义，非当前关注"
+    - pattern: ".aisep/knowledge/entries/**"
+      reason: "知识条目详情按需读取，不预加载"
+
+  context_audit:
+    session_date: "2026-03-13"
+    topic: "AISEP Backlog 高优先级方案落地"
+    files_touched: 13
+    files:
+      - { path: ".aisep/backlog.md", times: 5, verdict: "essential" }
+      - { path: ".aisep/docs/architecture.md", times: 4, verdict: "essential" }
+      - { path: ".aisep/docs/context-loading-protocol.md", times: 4, verdict: "essential" }
+      - { path: "AISEP.md", times: 3, verdict: "essential" }
+      - { path: ".aisep/registry.yaml", times: 3, verdict: "essential" }
+      - { path: ".aisep/docs/system-guide.md", times: 3, verdict: "essential" }
+      - { path: ".aisep/docs/self-evolution.md", times: 2, verdict: "essential" }
+      - { path: ".agents/workflows/pipeline.md", times: 2, verdict: "essential" }
+      - { path: ".agents/workflows/project-mgmt.md", times: 2, verdict: "essential" }
+      - { path: ".aisep/knowledge/index.yaml", times: 2, verdict: "essential" }
+      - { path: ".aisep/docs/implementation_plan.md", times: 1, verdict: "referenced" }
+      - { path: "projects/proj-001/project.yaml", times: 1, verdict: "referenced" }
+      - { path: "projects/proj-001/history/gate-log.yaml", times: 1, verdict: "referenced" }
+    late_discoveries: []
+    topic_drift:
+      anchor: "Backlog 高优先级方案落地"
+      events:
+        - { at: "后段", topic: "中优先级 backlog 分析（3 项展开讨论）", severity: "minor" }
+        - { at: "后段", topic: "L2 知识沉淀协议（超出原定 3 项范围）", severity: "minor" }
+      recommendation: "两次 minor 偏移均是自然衍生，无需调整"
+
+  rationale: |
+    本轮完成了 7 个 backlog 方案落地（高优全清 + 中优 5/7），系统扩展能力显著增强。
+    下一步有三个自然方向：
+    1. 启动 proj-002 实测多项目机制（context_fence / 冷热分区 / _map.yaml）
+    2. 继续消化剩余 backlog（中优 2 项 + 低优 9 项）
+    3. 系统级演进（VS Code Extension / 静态 HTML 报告等远期项目）
+    推荐优先启动 proj-002，因为实战是验证架构设计最可靠的方式。

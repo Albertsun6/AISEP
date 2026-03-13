@@ -1,0 +1,87 @@
+# S2 制品 Schema: Slice 规划
+# 验证目标: artifacts/global/slice-plan.yaml
+
+_meta:
+  schema_id: s2-slice-plan
+  version: "1.0"
+  stage: s2
+  description: "Slice 规划 — 垂直切片划分、依赖拓扑和工作量估算。"
+
+schema:
+  root: slice_plan
+  fields:
+    strategy:
+      type: enum
+      required: true
+      enum_values: [vertical]
+
+    granularity:
+      type: enum
+      required: true
+      enum_values: [feature]
+      validation: "L2 功能级"
+
+    slices:
+      type: list
+      required: true
+      min_items: 1
+      items:
+        type: map
+        fields:
+          id:
+            type: string
+            required: true
+            pattern: "^slice-\\d+$"
+          name:
+            type: string
+            required: true
+          scope:
+            type: string
+            required: true
+            validation: "一句话描述该 Slice 的业务场景"
+          models:
+            type: list
+            required: true
+            min_items: 1
+            items:
+              type: string
+            validation: "1-3 个 Model（粒度标准）"
+          stories:
+            type: list
+            required: true
+            min_items: 1
+            items:
+              type: string
+            validation: "引用 functional.yaml 中的 Story ID"
+          estimated_lines:
+            type: integer
+            required: true
+            min: 100
+            max: 1500
+            validation: "建议 300-800 行，超范围须说明理由"
+          depends_on:
+            type: list
+            required: true
+            items:
+              type: string
+            validation: "引用其他 Slice ID，空列表表示无依赖"
+          acceptance:
+            type: string
+            required: true
+            validation: "一句话描述该 Slice 可演示的验收场景"
+
+gate_validations:
+  - rule: "至少有 1 个 Slice"
+    severity: error
+  - rule: "Slice 1（depends_on 为空的）至少有 1 个"
+    severity: error
+  - rule: "Slice 间依赖关系无环形依赖"
+    severity: error
+  - rule: "每个 Slice 的 models 数量 1-3 个"
+    severity: warning
+  - rule: "每个 Slice 的 estimated_lines 在 300-800 范围"
+    severity: warning
+  - rule: "所有 functional.yaml 中的 Must Story 须被至少一个 Slice 引用"
+    severity: warning
+  - rule: "Slice ID 全局唯一"
+    severity: error

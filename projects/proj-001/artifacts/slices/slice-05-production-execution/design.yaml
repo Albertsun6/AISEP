@@ -1,0 +1,322 @@
+# S4 制品：Slice 5 详细设计
+# 项目：制造业ERP (proj-001)
+# Slice：SLICE-05 — 生产执行与报工
+# 生成时间：2026-03-13T00:20:00+08:00
+
+slice_design:
+  slice_id: "SLICE-05"
+  slice_name: "生产执行与报工"
+  description: "生产领料 → 报工完成 → 成品入库。闭合生产核心循环。附带 BOM 归档功能。"
+  bounded_context: "生产管理"
+  module: "mrp_mfg"
+
+  stories:
+    - "US-004"  # 归档物料清单
+    - "US-009"  # 生产领料
+    - "US-010"  # 报工完成生产
+    - "US-011"  # 查看工单执行详情
+
+  # ══════════════════════════════════════════════════════════════
+  # Model 详细设计（扩展已有 Model，无新建）
+  # ══════════════════════════════════════════════════════════════
+  models:
+    # ── mrp.bom — 补充归档功能 (US-004) ──
+    - name: "mrp.bom"
+      class_name: "MrpBom"
+      inherit: "mrp.bom"
+      _inherit_type: "class"
+      related_stories: ["US-004"]
+      slice_scope_note: |
+        Slice 4 已预埋 action_archive_bom 方法和归档按钮。
+        Slice 5 无需修改 Model 代码，仅确认 View 中已有归档按钮即可。
+        归档 = state='archived' + active=False，Slice 4 已实现。
+
+      fields: []       # 无新字段
+      methods: []      # action_archive_bom 已在 Slice 4 实现
+      constraints: {}  # 无新约束
+
+    # ── mrp.production — 扩展生产执行流 (US-009, US-010, US-011) ──
+    - name: "mrp.production"
+      class_name: "MrpProduction"
+      inherit: "mrp.production"
+      _inherit_type: "class"
+      related_stories: ["US-009", "US-010", "US-011"]
+      slice_scope_note: |
+        扩展 Slice 4 的 mrp.production，增加领料和报工操作。
+        核心状态流：confirmed → progress（领料后）→ done（报工后）
+        
+        ⚠️ 关键设计决策（Odoo 17 标准 MRP 兼容性）：
+        Odoo 17 标准 mrp.production 已有完善的领料/报工/完工机制：
+        - 确认后 move_raw_ids 自动生成（Slice 4 已支持）
+        - move_raw_ids 的 quantity_done 字段用于记录实际领料
+        - button_mark_done() 是标准完工方法
+        - 标准流程已包含成品自动入库逻辑
+        
+        本 Slice 策略：**利用标准流程 + 轻量增强**
+        1. 领料(US-009)：添加 action_consume_materials 按钮方法，
+           批量设置 move_raw_ids 的 quantity_done = product_uom_qty，
+           并将工单状态推进到 progress
+        2. 报工(US-010)：添加 action_produce 按钮方法，
+           设置 qty_producing 后调用标准 button_mark_done()
+        3. 详情(US-011)：通过 View 增强展示领料/产出/差异信息
+
+      fields:
+        # === 已有标准字段（本 Slice 重点使用） ===
+        - name: "move_raw_ids"
+          type: "One2many"
+          comodel: "stock.move"
+          inverse_name: "raw_material_production_id"
+          string: "原料消耗"
+          source: inherited
+          note: "确认后自动生成，Slice 5 在领料时设置 quantity_done"
+
+        - name: "move_finished_ids"
+          type: "One2many"
+          comodel: "stock.move"
+          inverse_name: "production_id"
+          string: "成品产出"
+          source: inherited
+          note: "完工后系统自动生成成品入库记录"
+
+        - name: "qty_producing"
+          type: "Float"
+          string: "完成数量"
+          source: inherited
+          note: "报工时填写实际完成数量"
+
+        - name: "qty_variance"
+          type: "Float"
+          string: "数量差异"
+          compute: "_compute_qty_variance"
+          store: true
+          depends: ["product_qty", "qty_producing"]
+          source: custom
+          note: "已在 Slice 4 定义，本 Slice 完工后有实际意义"
+
+        # === 新增自定义字段 ===
+        - name: "is_material_consumed"
+          type: "Boolean"
+          string: "已领料"
+          compute: "_compute_is_material_consumed"
+          store: true
+          depends: ["move_raw_ids.quantity_done"]
+          source: custom
+          note: |
+            计算字段：当所有 move_raw_ids 的 quantity_done > 0 时为 True。
+            用于控制按钮可见性和状态指示。
+
+        - name: "consumption_note"
+          type: "Text"
+          string: "领料备注"
+          source: custom
+          note: "记录领料时的特殊情况（如部分领料原因等）"
+
+      methods:
+        - name: "action_consume_materials"
+          trigger: "button"
+          description: "一键领料：批量设置原料的实际领用量（US-009）"
+          business_rule: |
+            1. 前置检查：state 必须为 'confirmed'
+            2. 检查 move_raw_ids 是否存在
+            3. 对每个 move_raw_ids：
+               - 设置 quantity_done = product_uom_qty（全量领料）
+            4. 将工单 state 设置为 'progress'（通过标准方法或直接写入）
+            注意：简化版不做库存可用量检查（Odoo 标准在 _action_done 时才扣减库存）
+          related_story: "US-009"
+          override: false  # 新方法，非 override
+
+        - name: "action_produce"
+          trigger: "button"
+          description: "报工完成：记录完成数量并完工（US-010）"
+          business_rule: |
+            1. 前置检查：state 必须为 'progress'（已领料）
+            2. 设置 qty_producing = product_qty（默认全量完成，用户可在 View 中修改）
+            3. 调用 Odoo 标准 button_mark_done() 完工
+            4. 标准逻辑自动处理：
+               - 工单状态变为 'done'
+               - 成品自动入库（move_finished_ids 完成）
+               - 原料消耗记录锁定
+            5. qty_variance 自动重算（compute depends 触发）
+          related_story: "US-010"
+          override: false  # 新方法
+
+        - name: "_compute_is_material_consumed"
+          trigger: "compute"
+          description: "计算是否已完成领料"
+          business_rule: |
+            for production in self:
+                if production.move_raw_ids:
+                    production.is_material_consumed = all(
+                        m.quantity_done > 0 for m in production.move_raw_ids
+                    )
+                else:
+                    production.is_material_consumed = False
+          related_story: "US-009"
+          override: true
+
+      constraints:
+        sql_constraints: []    # 无新 SQL 约束
+        api_constrains: []     # 无新 API 约束
+
+  # ══════════════════════════════════════════════════════════════
+  # View 设计
+  # ══════════════════════════════════════════════════════════════
+  views:
+    # ── 生产工单 Form View 增强 ──
+    - id: "view_mrp_production_form_inherit_mfg"
+      type: "form"
+      model: "mrp.production"
+      inherit_id: "mrp.mrp_production_form_view"
+      description: |
+        在 Slice 4 的继承基础上进一步增强：
+        1. Header 添加「领料」和「报工」按钮  
+        2. 原料消耗 tab 中 quantity_done 可编辑
+        3. 成品产出 tab 增强展示
+        4. 新增「执行详情」tab（计划 vs 实际对比 + 差异展示）
+      layout:
+        header:
+          - button: "action_consume_materials (领料 → 仅 confirmed 状态可见)"
+          - button: "action_produce (报工完工 → 仅 progress 状态可见)"
+        sheet:
+          group_right:
+            - "is_material_consumed (已领料标志 — 自定义)"
+            - "qty_producing (完成数量 — progress/done 时可见)"
+            - "qty_variance (数量差异 — done 时可见)"
+          notebook:
+            - page: "原料消耗"
+              content: "move_raw_ids (tree)"
+              columns: ["product_id", "product_uom_qty", "quantity_done", "product_uom"]
+              note: |
+                confirmed/progress 状态下 quantity_done 可编辑（允许部分领料）
+                done 状态下全部只读
+            - page: "成品产出"
+              content: "move_finished_ids (tree readonly=1)"
+              columns: ["product_id", "product_uom_qty", "quantity_done"]
+            - page: "执行详情 (新增)"
+              content: |
+                分组展示：
+                - 左列：product_qty（计划）、qty_producing（实际）、qty_variance（差异）
+                - 右列：date_start、date_finished、consumption_note
+
+    # ── BOM Form View — 确认归档按钮已就绪 (US-004) ──
+    - id: "view_mrp_bom_form_inherit_mfg"
+      type: "form"
+      model: "mrp.bom"
+      inherit_id: "mrp.mrp_bom_form_view"
+      description: |
+        Slice 4 已添加归档按钮（action_archive_bom）。
+        Slice 5 无需修改 BOM View。
+      note: "US-004 归档功能已在 Slice 4 预埋完成，无需额外 View 修改"
+
+    # ── 生产工单 Tree View — 添加进度指示 ──
+    - id: "view_mrp_production_tree_inherit_mfg"
+      type: "tree"
+      model: "mrp.production"
+      inherit_id: "mrp.mrp_production_tree_view"
+      note: "Slice 4 已添加 qty_variance 列。Slice 5 添加 is_material_consumed 指示。"
+      key_elements:
+        - "is_material_consumed (已领料 — badge 指示)"
+
+  # ══════════════════════════════════════════════════════════════
+  # Menu 与 Action — 无变更
+  # ══════════════════════════════════════════════════════════════
+  menus: []
+  actions: []
+  # 说明：Slice 5 使用 Slice 4 已定义的菜单和 Action，无需新增。
+
+  # ══════════════════════════════════════════════════════════════
+  # Wizard — 无需求
+  # ══════════════════════════════════════════════════════════════
+  wizards: []
+
+  # ══════════════════════════════════════════════════════════════
+  # Security — 无新 Model，无变更
+  # ══════════════════════════════════════════════════════════════
+  security:
+    groups: []   # 使用 Slice 4 已有的 group_mfg_user / group_mfg_manager
+    acl: []      # 无新 Model → 无新 ACL
+    record_rules: []
+
+  # ══════════════════════════════════════════════════════════════
+  # Demo 数据增强
+  # ══════════════════════════════════════════════════════════════
+  data:
+    - file: "demo/mrp_mfg_demo.xml"
+      type: demo
+      action: update
+      description: |
+        更新演示数据，增加已确认工单（可演示领料和报工流程）：
+        - 更新工单 1：设为已确认状态（可直接领料）
+        - 保持工单 2 为草稿（展示完整流程）
+
+  # ══════════════════════════════════════════════════════════════
+  # 依赖关系
+  # ══════════════════════════════════════════════════════════════
+  dependencies:
+    upstream_slices: ["SLICE-04", "SLICE-02"]
+    upstream_reason: "领料需要 BOM 工单（Slice 4）+ 库存扣减（Slice 2）"
+    external_modules:
+      - "mrp"
+      - "stock"
+      - "product"
+    notes: |
+      Slice 5 是 mrp_mfg 模块的第二次扩展（追加到 Slice 4 的代码上）。
+      不新增 Model，仅扩展 mrp.production 的方法和 View。
+      闭合生产核心循环：BOM → 工单 → 领料 → 报工 → 成品入库。
+
+  # ══════════════════════════════════════════════════════════════
+  # 文件变更清单
+  # ══════════════════════════════════════════════════════════════
+  file_manifest:
+    module_root: "addons/mrp_mfg/"
+    files:
+      - path: "models/mrp_production.py"
+        action: modify
+        content_hint: |
+          追加方法：action_consume_materials, action_produce, _compute_is_material_consumed
+          追加字段：is_material_consumed (compute), consumption_note (Text)
+      - path: "views/mrp_production_views.xml"
+        action: modify
+        content_hint: |
+          修改继承 Form View：header 添加领料/报工按钮，notebook 切换为可编辑，
+          添加执行详情 page。
+          修改继承 Tree View：添加 is_material_consumed 列。
+      - path: "demo/mrp_mfg_demo.xml"
+        action: modify
+        content_hint: "更新演示工单状态"
+    total_files_modified: 3
+    total_files_new: 0
+    estimated_lines_changed: "150-250"
+
+  # ══════════════════════════════════════════════════════════════
+  # Story ↔ 设计追溯矩阵
+  # ══════════════════════════════════════════════════════════════
+  traceability:
+    - story: "US-004 归档物料清单"
+      model: "mrp.bom"
+      view: "form (Slice 4 已实现按钮)"
+      method: "action_archive_bom (Slice 4 已实现)"
+      ac_coverage: "点击归档 → 状态变为已归档 + 不出现在默认列表 → ✅ (Slice 4 预埋)"
+
+    - story: "US-009 生产领料"
+      model: "mrp.production"
+      view: "form header button (领料)"
+      method: "action_consume_materials"
+      ac_coverage: |
+        工单已确认 + 原料可用 → 领料按钮 → quantity_done 设置 + 状态变 progress → ✅
+        库存不足提示 → 简化版不检查（标准 Odoo 在完工时处理） → ⚠️ 简化实现
+
+    - story: "US-010 报工完成生产"
+      model: "mrp.production"
+      view: "form header button (报工)"
+      method: "action_produce → button_mark_done()"
+      ac_coverage: |
+        工单进行中 → 报工 → 状态变 done + 成品入库 → ✅
+        实际与计划不同 → 系统记录差异 (qty_variance) → ✅
+        已完工不可修改 → 标准 Odoo 行为 → ✅
+
+    - story: "US-011 查看工单执行详情"
+      model: "mrp.production"
+      view: "form 执行详情 page"
+      method: "无（视图展示）"
+      ac_coverage: "计划 vs 实际对比 + 产出数量 + 差异展示 → ✅"

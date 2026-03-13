@@ -1,0 +1,182 @@
+# S1 制品：能力图谱 + Gap 分析
+# 项目：制造业ERP (proj-001)
+# 生成时间：2026-03-12T19:35:00+08:00
+
+capability_map:
+  capabilities:
+    # ═══ L1 战略能力 ═══
+    - id: "CAP-001"
+      name: "制造运营管理"
+      level: L1
+      maturity: none
+      priority: Must
+      bounded_context: "生产管理"
+
+    - id: "CAP-002"
+      name: "供应链管理"
+      level: L1
+      maturity: none
+      priority: Must
+      bounded_context: "采购管理"
+
+    - id: "CAP-003"
+      name: "仓储物流管理"
+      level: L1
+      maturity: basic
+      priority: Must
+      bounded_context: "库存管理"
+
+    - id: "CAP-004"
+      name: "客户订单管理"
+      level: L1
+      maturity: basic
+      priority: Must
+      bounded_context: "销售管理"
+
+    # ═══ L2 业务能力（生产） ═══
+    - id: "CAP-011"
+      name: "BOM 管理"
+      level: L2
+      parent_id: "CAP-001"
+      maturity: none
+      priority: Must
+      related_processes: ["计划到生产"]
+
+    - id: "CAP-012"
+      name: "生产计划与排程"
+      level: L2
+      parent_id: "CAP-001"
+      maturity: none
+      priority: Must
+      related_processes: ["计划到生产"]
+
+    - id: "CAP-013"
+      name: "生产执行与报工"
+      level: L2
+      parent_id: "CAP-001"
+      maturity: none
+      priority: Must
+      related_processes: ["计划到生产"]
+
+    - id: "CAP-014"
+      name: "工艺路线管理"
+      level: L2
+      parent_id: "CAP-001"
+      maturity: none
+      priority: Should
+      related_processes: ["计划到生产"]
+
+    # ═══ L2 业务能力（采购） ═══
+    - id: "CAP-021"
+      name: "供应商管理"
+      level: L2
+      parent_id: "CAP-002"
+      maturity: none
+      priority: Must
+      related_processes: ["采购到入库"]
+
+    - id: "CAP-022"
+      name: "采购下单与跟踪"
+      level: L2
+      parent_id: "CAP-002"
+      maturity: none
+      priority: Must
+      related_processes: ["采购到入库", "需求到采购"]
+
+    - id: "CAP-023"
+      name: "收货验收"
+      level: L2
+      parent_id: "CAP-002"
+      maturity: none
+      priority: Must
+      related_processes: ["采购到入库"]
+
+    # ═══ L2 业务能力（库存） ═══
+    - id: "CAP-031"
+      name: "出入库管理"
+      level: L2
+      parent_id: "CAP-003"
+      maturity: basic
+      priority: Must
+      related_processes: ["采购到入库", "销售到交付", "计划到生产"]
+
+    - id: "CAP-032"
+      name: "库位与仓库管理"
+      level: L2
+      parent_id: "CAP-003"
+      maturity: none
+      priority: Should
+      related_processes: ["盘点与调整"]
+
+    - id: "CAP-033"
+      name: "盘点与库存调整"
+      level: L2
+      parent_id: "CAP-003"
+      maturity: basic
+      priority: Should
+      related_processes: ["盘点与调整"]
+
+    # ═══ L2 业务能力（销售） ═══
+    - id: "CAP-041"
+      name: "报价与订单管理"
+      level: L2
+      parent_id: "CAP-004"
+      maturity: basic
+      priority: Must
+      related_processes: ["销售到交付"]
+
+    - id: "CAP-042"
+      name: "客户管理"
+      level: L2
+      parent_id: "CAP-004"
+      maturity: basic
+      priority: Must
+      related_processes: ["销售到交付"]
+
+    - id: "CAP-043"
+      name: "定价策略"
+      level: L2
+      parent_id: "CAP-004"
+      maturity: none
+      priority: Could
+      related_processes: ["销售到交付"]
+
+  # ═══ Gap 分析（existing_system = Excel） ═══
+  gap_analysis:
+    baseline:
+      - capability_id: "CAP-001"
+        current_system: "无系统/手工管理"
+        coverage: none
+      - capability_id: "CAP-002"
+        current_system: "无系统/电话+微信"
+        coverage: none
+      - capability_id: "CAP-003"
+        current_system: "Excel 台账"
+        coverage: partial
+      - capability_id: "CAP-004"
+        current_system: "Excel 台账"
+        coverage: partial
+
+    target:
+      - capability_id: "CAP-001"
+        target_system: "Odoo 17 Manufacturing"
+      - capability_id: "CAP-002"
+        target_system: "Odoo 17 Purchase"
+      - capability_id: "CAP-003"
+        target_system: "Odoo 17 Inventory"
+      - capability_id: "CAP-004"
+        target_system: "Odoo 17 Sales"
+
+    gaps:
+      - capability_id: "CAP-001"
+        gap_type: new_build
+        description: "生产管理完全从零构建。BOM、工单、工艺路线均需新建。"
+      - capability_id: "CAP-002"
+        gap_type: new_build
+        description: "采购管理从零构建。供应商信息需从通讯录迁移。"
+      - capability_id: "CAP-003"
+        gap_type: migration
+        description: "库存数据从 Excel 迁移到 Odoo。需设计库位体系、导入现有库存。"
+      - capability_id: "CAP-004"
+        gap_type: migration
+        description: "销售数据从 Excel 迁移到 Odoo。客户信息和历史订单需导入。"

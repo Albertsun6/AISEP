@@ -1,0 +1,53 @@
+# projects/proj-001/_map.yaml
+# 项目地图 — Gate 通过时自动生成，低 token 全局概览
+# ⚠️ 自动生成文件，不可手工编辑
+_meta:
+  generated_at: "2026-03-13T09:00:00+08:00"
+  source_project: "proj-001"
+  version: 1
+
+map:
+  project: "制造业ERP"
+  tech_stack: "odoo17"
+  stage: "s8-completed"
+
+  modules:
+    - name: sale_mfg
+      models: [SaleOrder, SaleOrderLine]
+      key_features: [delivery_status, qty_positive_constraint]
+    - name: stock_mfg
+      models: []
+      key_features: [标准复用零自定义, ACL+RecordRules+菜单]
+    - name: purchase_mfg
+      models: [PurchaseOrder, PurchaseOrderLine]
+      key_features: [receipt_status, qty_price_constraint]
+    - name: mrp_mfg
+      models: [MrpBom, MrpBomLine, MrpProduction, MrpProductionDetail, MrpProductionSuggestion]
+      key_features: [bom_state_lifecycle, qty_variance, action_confirm, TransientModel向导]
+
+  slices:
+    total: 7
+    completed: 7
+    items:
+      - { id: SLICE-01, scope: 销售基础流程, module: sale_mfg }
+      - { id: SLICE-02, scope: 库存基础+出入库, module: stock_mfg }
+      - { id: SLICE-03, scope: 采购全流程, module: purchase_mfg }
+      - { id: SLICE-04, scope: BOM+生产计划, module: mrp_mfg }
+      - { id: SLICE-05, scope: 生产执行与报工, module: mrp_mfg }
+      - { id: SLICE-06, scope: MRP建议向导, module: mrp_mfg }
+      - { id: SLICE-07, scope: 快捷入口+高级功能, module: stock_mfg }
+
+  gates:
+    total: 12
+    passed: 12
+    revised: 0
+    failed: 0
+    key_decisions:
+      - "ADR-001: Odoo 17 + PostgreSQL 16 技术栈"
+      - "ADR-002: 全标准继承扩展策略（零原生修改）"
+      - "P1-05: stock.move.quantity_done → quantity (Odoo 17 兼容修复)"
+
+  knowledge:
+    cognitive_notes: 3
+    patterns_promoted_to_L1: 2
+    pitfalls_captured: 1

@@ -1,0 +1,36 @@
+id: "learn-004"
+title: "自进化的四层架构 — 从记忆到能力生成"
+date: "2026-03-12"
+source_conversation: "b266db96-1748-4bd2-a84d-9463c8d5b449"
+
+category: system_design
+tags: [自进化, 反馈循环, OpenClaw, AlphaEvolve, MiClaw, 闭环学习]
+
+one_liner: "系统越用越好的秘诀不是一个大循环，而是四个自动化程度递增的层次"
+
+analogy: |
+  类似人类记忆的层次：
+  L1 是工作记忆（今天犯的错） → L2 是长期记忆（反复犯的错变成经验）
+  → L3 是反思（定期审视自己的习惯） → L4 是学习新技能（遇到新领域主动学）。
+  关键是 L1-L2 自动发生，L3-L4 需要主动触发。
+
+key_insights:
+  - "L1（经验记忆）全自动记录每次 Gate 修正 — 零成本积累原始数据"
+  - "L2（知识沉淀）当同一类修正出现 ≥2 次时自动建议知识条目 — 模式识别"
+  - "L3（规则优化）人触发 /evolve，AI 用统计数据建议改进 — AlphaEvolve 模式"
+  - "L4（能力自生成）遇到未知框架时 AI 自研究生成 skill — MiClaw 模式"
+  - "OpenClaw 的'全自动自改代码'对编码场景可行，但管理工程流程必须人在回路"
+
+related_concepts:
+  - "learn-001: 递归问题与元层次思维"
+  - "learn-002: 摩擦即特性"
+  - "反馈循环（Feedback Loop）"
+  - "达尔文哥德尔机器（Darwin Gödel Machine）"
+
+references:
+  - "OpenClaw — 开源自进化 AI Agent"
+  - "小米 MiClaw — 能力自生成"
+  - "DeepMind AlphaEvolve — 代码进化优化"
+  - "Mem0 — 分层记忆框架"
+
+mastery: low

@@ -1,0 +1,81 @@
+# AISEP 制品 Schema 索引
+# 所有制品验证 Schema 的注册表
+
+schemas:
+  # === S0: 项目初始化 ===
+  - id: s0-project
+    file: s0-project.schema.yaml
+    stage: s0
+    artifact: artifacts/global/project.yaml
+    required: true
+    description: "项目定义 — 名称、范围、约束"
+
+  - id: s0-research
+    file: s0-research.schema.yaml
+    stage: s0
+    artifact: artifacts/global/research.yaml
+    required: false
+    description: "技术调研（可选）"
+
+  # === S1: 业务领域分析 ===
+  - id: s1-domain-model
+    file: s1-domain-model.schema.yaml
+    stage: s1
+    artifact: artifacts/global/domain-model.yaml
+    required: true
+    description: "领域模型 — 限界上下文、聚合、实体"
+
+  - id: s1-capability-map
+    file: s1-capability-map.schema.yaml
+    stage: s1
+    artifact: artifacts/global/capability-map.yaml
+    required: true
+    description: "业务能力图谱"
+
+  # === S2: 需求规格 ===
+  - id: s2-functional
+    file: s2-functional.schema.yaml
+    stage: s2
+    artifact: artifacts/global/functional.yaml
+    required: true
+    description: "功能需求规格 — User Stories + AC"
+
+  - id: s2-slice-plan
+    file: s2-slice-plan.schema.yaml
+    stage: s2
+    artifact: artifacts/global/slice-plan.yaml
+    required: true
+    description: "Slice 规划 — 划分、依赖、估算"
+
+  # === S3: 架构设计 ===
+  - id: s3-architecture
+    file: s3-architecture.schema.yaml
+    stage: s3
+    artifact: artifacts/global/architecture.yaml
+    required: true
+    description: "架构设计 — 技术栈、数据模型、安全模型"
+
+  # === S4: Slice 详细设计 ===
+  - id: s4-slice-design
+    file: s4-slice-design.schema.yaml
+    stage: s4
+    artifact: artifacts/slices/{slice-name}/design.yaml
+    required: true
+    description: "Slice 详细设计 — Model/View/Menu/Security"
+
+  # === S7: 部署配置 ===
+  - id: s7-deployment
+    file: s7-deployment.schema.yaml
+    stage: s7
+    artifact: artifacts/global/deployment.yaml
+    required: true
+    description: "部署配置 — 环境、脚本、监控"
+
+# Schema 格式说明:
+#   type: string | integer | float | boolean | list | map | enum
+#   required: true | false（字段是否必须存在）
+#   min_items: N（list 的最小元素数）
+#   enum_values: [a, b, c]（enum 的可选值）
+#   ref: schema_id（引用另一个 Schema 的结构）
+#   pattern: regex（string 的格式验证）
+#   validation: 自定义验证规则描述

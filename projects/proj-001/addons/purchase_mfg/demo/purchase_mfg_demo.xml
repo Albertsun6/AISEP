@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- ══════════════════════════════════════════════════════════════
+             purchase_mfg: 演示数据
+             - 3 个供应商
+             - 3 个原料产品
+             - 2 个采购订单（1 草稿 + 1 已确认）
+             ══════════════════════════════════════════════════════════════ -->
+
+        <!-- === 供应商 === -->
+        <record id="vendor_huanan" model="res.partner">
+            <field name="name">华南电子有限公司</field>
+            <field name="phone">0755-8888-1001</field>
+            <field name="email">sales@huananelec.com</field>
+            <field name="street">深圳市南山区科技园路 88 号</field>
+            <field name="supplier_rank">1</field>
+        </record>
+
+        <record id="vendor_yongxing" model="res.partner">
+            <field name="name">永兴材料科技有限公司</field>
+            <field name="phone">0571-6666-2002</field>
+            <field name="email">contact@yongxingmat.com</field>
+            <field name="street">杭州市滨江区长河路 66 号</field>
+            <field name="supplier_rank">1</field>
+        </record>
+
+        <record id="vendor_zhengtai" model="res.partner">
+            <field name="name">正泰科技集团</field>
+            <field name="phone">021-5555-3003</field>
+            <field name="email">info@zhengtaitech.com</field>
+            <field name="street">上海市浦东新区张江路 100 号</field>
+            <field name="supplier_rank">1</field>
+        </record>
+
+        <!-- === 原料产品 === -->
+        <record id="product_raw_a" model="product.product">
+            <field name="name">原料A — 铝合金板</field>
+            <field name="type">product</field>
+            <field name="list_price">25.00</field>
+            <field name="standard_price">20.00</field>
+        </record>
+
+        <record id="product_raw_b" model="product.product">
+            <field name="name">原料B — 电子元件包</field>
+            <field name="type">product</field>
+            <field name="list_price">8.50</field>
+            <field name="standard_price">6.00</field>
+        </record>
+
+        <record id="product_raw_c" model="product.product">
+            <field name="name">原料C — 塑料外壳</field>
+            <field name="type">product</field>
+            <field name="list_price">3.00</field>
+            <field name="standard_price">2.00</field>
+        </record>
+
+        <!-- === 采购订单 1：草稿询价单 === -->
+        <record id="po_draft_001" model="purchase.order">
+            <field name="partner_id" ref="vendor_huanan"/>
+            <field name="date_order">2026-03-10 09:00:00</field>
+        </record>
+
+        <record id="po_draft_001_line1" model="purchase.order.line">
+            <field name="order_id" ref="po_draft_001"/>
+            <field name="product_id" ref="product_raw_a"/>
+            <field name="product_qty">100</field>
+            <field name="price_unit">20.00</field>
+            <field name="date_planned">2026-03-20 09:00:00</field>
+        </record>
+
+        <record id="po_draft_001_line2" model="purchase.order.line">
+            <field name="order_id" ref="po_draft_001"/>
+            <field name="product_id" ref="product_raw_b"/>
+            <field name="product_qty">500</field>
+            <field name="price_unit">6.00</field>
+            <field name="date_planned">2026-03-20 09:00:00</field>
+        </record>
+
+        <!-- === 采购订单 2：已确认的采购订单 === -->
+        <record id="po_confirmed_002" model="purchase.order">
+            <field name="partner_id" ref="vendor_yongxing"/>
+            <field name="date_order">2026-03-08 14:00:00</field>
+        </record>
+
+        <record id="po_confirmed_002_line1" model="purchase.order.line">
+            <field name="order_id" ref="po_confirmed_002"/>
+            <field name="product_id" ref="product_raw_c"/>
+            <field name="product_qty">1000</field>
+            <field name="price_unit">2.00</field>
+            <field name="date_planned">2026-03-15 09:00:00</field>
+        </record>
+
+    </data>
+</odoo>

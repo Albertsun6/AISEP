@@ -1,0 +1,42 @@
+# Odoo 17 本地测试环境
+# 用途：验证自定义模块（sale_mfg, stock_mfg, purchase_mfg, mrp_mfg）
+# 启动：docker compose up -d
+# 访问：http://localhost:8069
+# 默认账号：admin / admin（首次启动时创建数据库即可）
+
+services:
+  odoo:
+    image: odoo:17.0
+    container_name: aisep-odoo
+    depends_on:
+      - db
+    ports:
+      - "18069:8069"
+    volumes:
+      # 挂载自定义模块
+      - ./addons:/mnt/extra-addons
+      # 持久化 Odoo 数据（filestore 等）
+      - odoo-data:/var/lib/odoo
+    environment:
+      - HOST=db
+      - PORT=5432
+      - USER=odoo
+      - PASSWORD=odoo
+    command: >
+      --database=aisep_mfg
+      --load-language=zh_CN
+
+  db:
+    image: postgres:16-alpine
+    container_name: aisep-postgres
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=odoo
+      - POSTGRES_PASSWORD=odoo
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+
+volumes:
+  odoo-data:
+  pg-data:

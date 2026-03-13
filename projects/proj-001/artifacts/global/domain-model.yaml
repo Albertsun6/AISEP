@@ -1,0 +1,229 @@
+# S1 制品：领域模型
+# 项目：制造业ERP (proj-001)
+# 生成时间：2026-03-12T19:35:00+08:00
+
+domain_model:
+  bounded_contexts:
+    # ═══ 核心域 ═══
+    - name: "生产管理"
+      type: core
+      description: "管理产品的物料构成、生产计划与执行、工序安排。是制造业 ERP 的核心竞争力所在。"
+      aggregates:
+        - name: "物料清单"
+          root_entity: "mrp.bom"
+          invariants:
+            - "BOM 子件数量必须 > 0"
+            - "BOM 不可自引用（循环检测）"
+            - "BOM 层级不超过 10 层"
+          entities:
+            - name: "BOM 行（子件）"
+              attributes: [product_id, product_qty, product_uom_id]
+              business_rules:
+                - "子件产品不可与父件产品相同"
+          value_objects:
+            - "单位用量（quantity per unit）"
+
+        - name: "生产工单"
+          root_entity: "mrp.production"
+          invariants:
+            - "生产数量必须 > 0"
+            - "状态流转必须遵循：draft → confirmed → progress → done"
+            - "已完工的工单不可反向修改数量"
+          entities:
+            - name: "原料消耗行"
+              attributes: [product_id, product_qty, quantity_done]
+              business_rules:
+                - "实际消耗量可与计划不同，但需记录差异"
+            - name: "成品产出行"
+              attributes: [product_id, qty_producing]
+          value_objects:
+            - "计划日期范围（date_start, date_finished）"
+
+        - name: "工艺路线"
+          root_entity: "mrp.routing"
+          invariants:
+            - "工艺路线至少包含 1 道工序"
+            - "工序顺序不可有循环"
+          entities:
+            - name: "工序"
+              attributes: [name, workcenter_id, time_cycle, sequence]
+              business_rules:
+                - "每道工序必须关联一个工作中心"
+          value_objects:
+            - "标准工时（time_cycle_manual）"
+
+      domain_events:
+        - "生产工单-已确认（production.confirmed）"
+        - "生产工单-已完工（production.done）"
+        - "物料-已领取（materials.consumed）"
+      commands:
+        - "创建-生产工单"
+        - "确认-生产工单"
+        - "报工-完成生产"
+        - "创建-物料清单"
+
+    # ═══ 支撑域 ═══
+    - name: "采购管理"
+      type: supporting
+      description: "管理供应商、采购流程和收货。为生产提供原材料供给保障。"
+      aggregates:
+        - name: "采购订单"
+          root_entity: "purchase.order"
+          invariants:
+            - "采购订单必须关联供应商"
+            - "订单行金额 = 数量 × 单价"
+            - "状态流转：draft → sent → purchase → done"
+          entities:
+            - name: "采购订单行"
+              attributes: [product_id, product_qty, price_unit, date_planned]
+              business_rules:
+                - "单价必须 ≥ 0"
+                - "数量必须 > 0"
+          value_objects:
+            - "订单总额（amount_total）"
+            - "税额（amount_tax）"
+
+        - name: "供应商"
+          root_entity: "res.partner"
+          invariants:
+            - "供应商名称不可为空"
+          entities: []
+          value_objects:
+            - "联系方式（phone, email）"
+            - "付款条件（payment_term）"
+
+      domain_events:
+        - "采购订单-已确认（purchase.confirmed）"
+        - "到货-已接收（goods.received）"
+      commands:
+        - "创建-询价单"
+        - "确认-采购订单"
+        - "接收-到货"
+
+    - name: "库存管理"
+      type: supporting
+      description: "管理仓库、库位、出入库操作和盘点。为所有业务提供物料可用性保障。"
+      aggregates:
+        - name: "库存移动"
+          root_entity: "stock.picking"
+          invariants:
+            - "出库数量不可超过可用库存"
+            - "调拨必须有源库位和目标库位"
+            - "状态流转：draft → waiting → ready → done"
+          entities:
+            - name: "库存移动行"
+              attributes: [product_id, product_uom_qty, quantity_done, location_id, location_dest_id]
+              business_rules:
+                - "实际出库量不可超过计划量的 120%（防误操作）"
+          value_objects:
+            - "移动类型（incoming / outgoing / internal）"
+
+        - name: "库存量"
+          root_entity: "stock.quant"
+          invariants:
+            - "库存量不可为负数（除非启用负库存策略）"
+          entities: []
+          value_objects:
+            - "批次/序列号（lot_id）"
+            - "库位（location_id）"
+
+      domain_events:
+        - "入库-已完成（receipt.done）"
+        - "出库-已完成（delivery.done）"
+        - "盘点-差异已确认（adjustment.confirmed）"
+      commands:
+        - "执行-入库"
+        - "执行-出库"
+        - "创建-库存调拨"
+        - "发起-盘点"
+        - "确认-盘点差异"
+
+    # ═══ 通用域 ═══
+    - name: "销售管理"
+      type: generic
+      description: "管理客户、报价和销售订单。触发下游发货和生产需求。"
+      aggregates:
+        - name: "销售订单"
+          root_entity: "sale.order"
+          invariants:
+            - "销售订单必须关联客户"
+            - "订单行金额 = 数量 × 单价"
+            - "状态流转：draft → sent → sale → done"
+          entities:
+            - name: "销售订单行"
+              attributes: [product_id, product_uom_qty, price_unit, discount]
+              business_rules:
+                - "折扣范围 0-100%"
+                - "数量必须 > 0"
+          value_objects:
+            - "订单总额（amount_total）"
+            - "客户参考号（client_order_ref）"
+
+        - name: "价目表"
+          root_entity: "product.pricelist"
+          invariants:
+            - "价目表至少有 1 条规则"
+          entities:
+            - name: "价格规则"
+              attributes: [product_id, min_quantity, fixed_price, percent_price]
+          value_objects:
+            - "价格计算方式（fixed / percentage / formula）"
+
+      domain_events:
+        - "销售订单-已确认（sale.confirmed）"
+        - "发货单-已创建（delivery.created）"
+      commands:
+        - "创建-报价单"
+        - "确认-销售订单"
+        - "生成-发货单"
+
+  # ═══ Context Map ═══
+  context_map:
+    relationships:
+      - upstream: "销售管理"
+        downstream: "库存管理"
+        pattern: Conformist
+        description: "销售确认后自动生成发货单（出库指令）。库存服从销售的发货要求。"
+
+      - upstream: "销售管理"
+        downstream: "生产管理"
+        pattern: ACL
+        description: "销售订单触发 MRP 计算生产需求。生产有自己的领域逻辑，不直接依赖销售数据结构。"
+
+      - upstream: "生产管理"
+        downstream: "库存管理"
+        pattern: Conformist
+        description: "生产领料触发出库，成品入库触发入库。库存服从生产的物料需求。"
+
+      - upstream: "生产管理"
+        downstream: "采购管理"
+        pattern: ACL
+        description: "MRP 计算发现物料不足时自动生成采购申请。采购有自己的供应商管理和价格协商逻辑。"
+
+      - upstream: "采购管理"
+        downstream: "库存管理"
+        pattern: Conformist
+        description: "采购到货后触发入库。库存服从采购的收货指令。"
+
+  # ═══ 统一语言引用 ═══
+  ubiquitous_language:
+    - term: "物料清单"
+      english: "BOM"
+      definition: "定义产品由哪些原材料/子件组成及数量关系"
+      context: "生产管理"
+    - term: "生产工单"
+      english: "Manufacturing Order"
+      definition: "一次生产任务，指定产品、数量、计划日期"
+      context: "生产管理"
+    - term: "采购订单"
+      english: "Purchase Order"
+      definition: "向供应商发出的正式采购请求"
+      context: "采购管理"
+    - term: "库存移动"
+      english: "Stock Picking"
+      definition: "物料从一个库位到另一个库位的移动记录"
+      context: "库存管理"
+    - term: "销售订单"
+      english: "Sales Order"
+      definition: "客户确认的正式购买请求"
+      context: "销售管理"

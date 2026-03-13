@@ -1,0 +1,170 @@
+---
+description: "S3 架构设计 — 技术栈确认 + 全局数据模型 + 安全模型"
+context:
+  always:
+    - "AISEP.md"
+    - "constitution.md"
+    - "glossary.yaml"
+  load:
+    - "artifacts/global/slice-plan.yaml"
+    - ".aisep/templates/artifacts/s3-architecture.tmpl.yaml"
+  load_summary:
+    - "artifacts/global/domain-model.yaml"
+    - "artifacts/global/functional.yaml"
+  exclude:
+    - "history/**"
+    - "artifacts/slices/**"
+    - "artifacts/changes/**"
+---
+
+# S3: 架构设计
+
+> [!IMPORTANT]
+> S3 是**一次性**阶段，必须覆盖所有 Slice 的全局视野。数据模型需全局一致性，不能按 Slice 分批做。
+
+## 前置条件
+
+- S2 Gate 已通过
+- `slice-plan.yaml` 存在且 Slice 划分已确认
+- 技术栈需在本阶段结束前确定
+
+## 输入
+
+- `domain-model.yaml`（摘要版）
+- `functional.yaml`（摘要版）
+- `slice-plan.yaml`（完整版）
+
+## 加载方法论
+
+- **必须**：C4 Model（`.agents/skills/methodologies/architecture/c4-model/SKILL.md`）
+- **可选**：ADR（`.agents/skills/methodologies/architecture/adr/SKILL.md`）
+
+---
+
+## 活动
+
+### 步骤 1: 技术栈确认
+
+**决策流程**：
+
+```
+project.yaml.tech_stack 有值？
+  ├── YES → 加载对应 Framework Skill → 步骤 2
+  └── NO  → AI 推荐技术栈
+              ├── 分析需求特征（模块数、复杂度、UI 需求）
+              ├── 提出推荐 + 备选 + 理由
+              ├── 🗣️ 用户确认选择
+              └── 更新 project.yaml.tech_stack → 触发 Gating
+```
+
+**Gating 触发说明**：
+- 技术栈确认后，Pipeline 运行器加载对应 Framework Skill（如 `odoo17/SKILL.md`）
+- Framework Skill 的 `best-practices.md`、`pitfalls.md`、`api-reference.md` 进入 L1 上下文
+- 后续步骤的设计必须参照 Framework Skill 的约束
+
+**交互节点**：
+- 🗣️ 如需 AI 推荐技术栈，必须展示对比矩阵 + 理由，用户确认后才继续
+
+### 步骤 2: Bounded Context → 技术模块映射
+
+**AI 执行指引**：
+1. 将 DDD 的 Bounded Context 映射为技术模块
+2. 参照 Framework Skill 的 `standard_modules` 映射（如 `manufacturing → mrp`）
+3. 确定每个模块与标准模块的关系：
+   - `inherit` — 继承扩展标准模块
+   - `new` — 全新自定义模块
+   - `depend` — 仅依赖，不修改
+4. 生成模块依赖图
+
+### 步骤 3: 数据模型设计（字段级）
+
+**AI 执行指引**：
+1. 按 Framework Skill 的 ORM 规范，为**所有 Slice** 的 Model 设计字段
+2. 每个字段定义：
+   - 类型（Char, Integer, Float, Date, Selection, Many2one, One2many, Many2many）
+   - 约束（required, unique, index）
+   - 计算字段（compute + depends）
+   - 帮助文本（help）
+3. 定义 `_sql_constraints`（数据库级约束）
+4. 检查字段命名是否符合 `naming.yaml` 规范
+
+**交互节点**：
+- 🗣️ 按模块展示数据模型设计（表格形式），用户逐模块确认
+
+**异常处理**：
+- 发现 S1 领域模型不够详细 → 建议回退 S1 补充（需用户确认）
+- 跨模块字段冲突 → 明确标注并讨论解决方案
+
+### 步骤 4: 安全模型设计
+
+**AI 执行指引**：
+1. 定义安全组（Groups）：用户角色分类（如 Manager, User, Viewer）
+2. 定义 ACL（`ir.model.access.csv`）：每个 Group 对每个 Model 的 CRUD 权限
+3. 定义 Record Rules：行级权限（如"用户只能看到自己部门的数据"）
+
+### 步骤 5: 部署架构规划
+
+**AI 执行指引**：
+1. 参照 Framework Skill 的 `deployment` 配置
+2. 确定运行环境：Docker / 裸机 / 云
+3. 确定数据库方案
+4. 初步确定端口、域名等配置
+
+### 步骤 6: 关键决策记录（ADR）
+
+**ADR 写入触发条件**（出现以下任一情况时记录 ADR）：
+- 技术栈选择（尤其是多个备选方案的情况）
+- 偏离 Framework Skill 默认建议的设计决策
+- 性能与维护性的权衡选择
+- 安全模型的特殊设计
+
+**ADR 格式**：
+```markdown
+# ADR-{NNN}: {决策标题}
+## 背景（Context）
+## 决策（Decision）
+## 理由（Rationale）
+## 后果（Consequences）
+## 状态：accepted | superseded | deprecated
+```
+
+---
+
+## 输出
+
+- `artifacts/global/architecture.yaml`（必须）— 按 `s3-architecture.tmpl.yaml` 格式
+  - 模块列表 + 依赖图
+  - 完整数据模型（所有 Model + 字段）
+  - 安全模型（Groups + ACL + Record Rules）
+  - 部署方案
+- `adr/001-*.md`...（可选）— 关键架构决策记录
+
+## Gate 检查清单
+
+### 技术栈
+- [ ] 技术栈是否确认？Framework Skill 是否已加载？
+- [ ] 更新 `project.yaml.tech_stack`?
+
+### 数据模型
+- [ ] 所有 Slice 的 Model 是否都有字段级定义？
+- [ ] 模块边界是否与 Bounded Context 对齐？
+- [ ] 字段命名是否符合 `naming.yaml`？
+- [ ] Many2one 字段是否有 `index=True`？
+- [ ] 计算字段的依赖链是否无环？
+
+### 安全模型
+- [ ] 每个 Model 是否定义了 ACL？
+- [ ] 安全组划分是否合理？
+- [ ] 敏感数据是否有 Record Rules？
+
+### 部署
+- [ ] 部署方案是否可行？
+- [ ] 环境变量列表是否定义？
+
+## Gate 通过后
+
+1. **Compaction**：生成 `architecture.summary.yaml`（保留模块依赖图、数据模型概要、安全模型类型）
+2. **状态更新**：`pipeline_state.stages.s3.status = "completed"`, `gate_passed = true`
+3. **推进**：`current_stage` → `s4-design`（进入 Slice 循环）
+4. **Gate 日志**：追加记录
+5. **关键过渡**：从此进入 S4-S6 Slice 循环模式，按 `slice-plan.yaml` 的拓扑序依次处理

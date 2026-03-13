@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ══════════════════════════════════════════════════════════════
+         sale_mfg: 安全组和 Record Rules
+         ══════════════════════════════════════════════════════════════ -->
+
+    <!-- 安全组分类 -->
+    <record id="module_category_sale_mfg" model="ir.module.category">
+        <field name="name">销售管理扩展</field>
+        <field name="sequence">30</field>
+    </record>
+
+    <!-- 安全组：销售用户 -->
+    <record id="group_sale_user" model="res.groups">
+        <field name="name">销售用户</field>
+        <field name="category_id" ref="sale_mfg.module_category_sale_mfg"/>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        <field name="comment">基础销售权限：创建报价/订单，查看客户。</field>
+    </record>
+
+    <!-- Record Rule: 销售订单 — 当前公司数据隔离 (P3-04) -->
+    <record id="rule_sale_order_company" model="ir.rule">
+        <field name="name">销售订单：当前公司</field>
+        <field name="model_id" ref="sale.model_sale_order"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        <field name="groups" eval="[(4, ref('sale_mfg.group_sale_user'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+</odoo>

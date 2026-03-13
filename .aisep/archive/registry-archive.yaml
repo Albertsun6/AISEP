@@ -1,0 +1,11 @@
+# .aisep/archive/registry-archive.yaml
+# 归档项目注册表 — 由 /project archive 命令自动迁移
+# 保留归档项目的基本信息和摘要，主注册表只保留活跃项目
+archived_projects: []
+  # 示例：
+  # - id: "proj-001"
+  #   name: "制造业ERP"
+  #   stage: "s8-completed"
+  #   archived_at: "2026-03-15"
+  #   summary: "4模块/1688行/12Gates全过"
+  #   project_dir: "projects/proj-001/"

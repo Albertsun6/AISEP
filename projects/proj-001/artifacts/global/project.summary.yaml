@@ -1,0 +1,37 @@
+# S0 制品摘要（Compaction）
+# 由 Gate 通过后自动生成
+# 最后更新：2026-03-13T00:55:00+08:00
+project_summary:
+  name: "制造业ERP"
+  id: "proj-001"
+  tech_stack: "odoo17"
+  modules: [生产管理, 采购管理, 库存管理, 销售管理]
+  module_count: 4
+  existing_system: "Excel"
+  development_mode: "ai-assisted"
+
+  progress:
+    completed_stages: [S0, S1, S2, S3]
+    current_stage: "S4/S5 (按 Slice 循环)"
+    completed_slices:
+      - { id: "SLICE-01", name: "销售基础流程", module: "sale_mfg" }
+      - { id: "SLICE-02", name: "库存基础 + 出入库", module: "stock_mfg" }
+      - { id: "SLICE-03", name: "采购全流程", module: "purchase_mfg" }
+      - { id: "SLICE-04", name: "BOM + 生产计划", module: "mrp_mfg" }
+      - { id: "SLICE-05", name: "生产执行与报工", module: "mrp_mfg" }
+      - { id: "SLICE-06", name: "工艺路线 + 生产建议", module: "mrp_mfg" }
+      - { id: "SLICE-07", name: "高级功能", module: "stock_mfg + sale_mfg" }
+    pending_slices: []
+    next_slice: "全部完成"
+
+  deployment:
+    docker: true
+    url: "http://localhost:18069"
+    status: "verified"
+
+  key_decisions:
+    - "4 个核心模块：生产、采购、库存、销售"
+    - "技术栈 Odoo 17 已确认"
+    - "现有系统为 Excel，S1 需做 Gap 分析"
+    - "AI 辅助开发，无人工团队"
+    - "Docker 部署验证通过（Odoo 17 + PG 16）"

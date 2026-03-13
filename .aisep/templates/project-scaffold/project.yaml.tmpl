@@ -1,0 +1,35 @@
+# 项目元数据模板
+# 占位符：{{project_id}}, {{project_name}}, {{tech_stack}}, {{timestamp}}
+project:
+  id: "{{project_id}}"
+  name: "{{project_name}}"
+  tech_stack: "{{tech_stack}}"
+
+  _meta:
+    template_version: "1.0"
+    created_at: "{{timestamp}}"
+
+  pipeline_state:
+    current_stage: "s0-init"
+    stages:
+      s0: { status: "in_progress", gate_passed: false }
+      s1: { status: "pending", gate_passed: false }
+      s2: { status: "pending", gate_passed: false }
+      s3: { status: "pending", gate_passed: false }
+      s4: { status: "pending", gate_passed: false }
+      s5: { status: "pending", gate_passed: false }
+      s6: { status: "pending", gate_passed: false }
+      s7: { status: "pending", gate_passed: false }
+
+  constraints: {}
+  existing_system: ""
+
+  # 项目级方法论覆盖（可选）
+  # methodology_overrides:
+  #   s1:
+  #     required: [event-storming]
+  #     optional: [ddd]
+
+  # 项目级 Gate 覆盖（可选）
+  # gate_overrides:
+  #   s6: auto

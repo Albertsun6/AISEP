@@ -1,0 +1,110 @@
+# S2 制品 Schema: 功能需求规格
+# 验证目标: artifacts/global/functional.yaml
+
+_meta:
+  schema_id: s2-functional
+  version: "1.0"
+  stage: s2
+  description: "功能需求 — User Stories + 验收标准 + INVEST 检查。"
+
+schema:
+  root: functional
+  fields:
+    modules:
+      type: list
+      required: true
+      min_items: 1
+      items:
+        type: map
+        fields:
+          module_id:
+            type: string
+            required: true
+          module_name:
+            type: string
+            required: true
+          bounded_context:
+            type: string
+            required: true
+            validation: "须对应 domain-model.yaml 中的 Bounded Context"
+          stories:
+            type: list
+            required: true
+            min_items: 1
+            items:
+              type: map
+              fields:
+                id:
+                  type: string
+                  required: true
+                  pattern: "^US-\\d{3,}$"
+                title:
+                  type: string
+                  required: true
+                as_a:
+                  type: string
+                  required: true
+                i_want:
+                  type: string
+                  required: true
+                so_that:
+                  type: string
+                  required: true
+                priority:
+                  type: enum
+                  required: true
+                  enum_values: [Must, Should, Could, "Won't"]
+                acceptance_criteria:
+                  type: list
+                  required: true
+                  min_items: 1
+                  items:
+                    type: map
+                    fields:
+                      given:
+                        type: string
+                        required: true
+                      when:
+                        type: string
+                        required: true
+                      then:
+                        type: string
+                        required: true
+                invest_check:
+                  type: map
+                  required: true
+                  fields:
+                    independent:
+                      type: boolean
+                      required: true
+                    negotiable:
+                      type: boolean
+                      required: true
+                    valuable:
+                      type: boolean
+                      required: true
+                    estimable:
+                      type: boolean
+                      required: true
+                    small:
+                      type: boolean
+                      required: true
+                    testable:
+                      type: boolean
+                      required: true
+
+gate_validations:
+  - rule: "至少有 1 个 module"
+    severity: error
+  - rule: "每个 module 至少有 1 个 Story"
+    severity: error
+  - rule: "每个 Story 至少有 1 条验收标准 (AC)"
+    severity: error
+  - rule: "每个 Story 的 INVEST 6 要素全部为 true"
+    severity: warning
+  - rule: "Must 优先级的 Story 不超过总数的 60%"
+    severity: warning
+  - rule: "Story ID 全局唯一"
+    severity: error
+  - rule: "bounded_context 须匹配 domain-model.yaml 的 Context 名称"
+    severity: error

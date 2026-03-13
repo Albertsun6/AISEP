@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ══════════════════════════════════════════════════════════════
+         sale_mfg: 销售订单视图扩展
+         继承标准 sale_management 视图，添加 delivery_status 字段
+         ══════════════════════════════════════════════════════════════ -->
+
+    <!-- Form 视图继承 — 添加发货状态字段 -->
+    <record id="view_sale_order_form_inherit_mfg" model="ir.ui.view">
+        <field name="name">sale.order.form.inherit.mfg</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="priority">20</field>
+        <field name="arch" type="xml">
+            <!-- 在 partner_shipping_id 之后添加发货状态 -->
+            <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="delivery_status"
+                       widget="badge"
+                       decoration-info="delivery_status == 'pending'"
+                       decoration-warning="delivery_status == 'partial'"
+                       decoration-success="delivery_status == 'full'"
+                       readonly="1"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Tree 视图继承 — 在列表中添加发货状态列 -->
+    <record id="view_sale_order_tree_inherit_mfg" model="ir.ui.view">
+        <field name="name">sale.order.tree.inherit.mfg</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_quotation_tree"/>
+        <field name="priority">20</field>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='state']" position="before">
+                <field name="delivery_status"
+                       widget="badge"
+                       decoration-info="delivery_status == 'pending'"
+                       decoration-warning="delivery_status == 'partial'"
+                       decoration-success="delivery_status == 'full'"
+                       optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Tree 视图继承（销售订单视图） -->
+    <record id="view_sale_order_tree_inherit_mfg2" model="ir.ui.view">
+        <field name="name">sale.order.tree.inherit.mfg2</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_tree"/>
+        <field name="priority">20</field>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='state']" position="before">
+                <field name="delivery_status"
+                       widget="badge"
+                       decoration-info="delivery_status == 'pending'"
+                       decoration-warning="delivery_status == 'partial'"
+                       decoration-success="delivery_status == 'full'"
+                       optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

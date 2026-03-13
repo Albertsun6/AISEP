@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- ══════════════════════════════════════════════════
+             演示数据 — mrp_mfg 模块
+             产品：成品（主板组件）+ 2 个子件（电阻、电容）
+             BOM：主板组件由电阻×10 + 电容×20 组成
+             工单：2 个草稿
+             ══════════════════════════════════════════════════ -->
+
+        <!-- ── 产品模板 ── -->
+        <record id="product_tmpl_mainboard" model="product.template">
+            <field name="name">主板组件 A</field>
+            <field name="default_code">MFG-FP-001</field>
+            <field name="type">product</field>
+            <field name="categ_id" ref="product.product_category_all"/>
+            <field name="list_price">500.0</field>
+            <field name="standard_price">320.0</field>
+        </record>
+
+        <record id="product_tmpl_resistor" model="product.template">
+            <field name="name">电阻 R10K</field>
+            <field name="default_code">MFG-RM-001</field>
+            <field name="type">product</field>
+            <field name="categ_id" ref="product.product_category_all"/>
+            <field name="list_price">0.5</field>
+            <field name="standard_price">0.2</field>
+        </record>
+
+        <record id="product_tmpl_capacitor" model="product.template">
+            <field name="name">电容 100μF</field>
+            <field name="default_code">MFG-RM-002</field>
+            <field name="type">product</field>
+            <field name="categ_id" ref="product.product_category_all"/>
+            <field name="list_price">1.0</field>
+            <field name="standard_price">0.5</field>
+        </record>
+
+        <!-- ── BOM：主板组件 A ── -->
+        <record id="bom_mainboard_assembly" model="mrp.bom">
+            <field name="product_tmpl_id" ref="product_tmpl_mainboard"/>
+            <field name="product_qty">1.0</field>
+            <field name="state">active</field>
+        </record>
+
+        <!-- BOM 行：电阻×10 -->
+        <record id="bom_line_resistor" model="mrp.bom.line">
+            <field name="bom_id" ref="bom_mainboard_assembly"/>
+            <field name="product_id" search="[('product_tmpl_id','=',ref('product_tmpl_resistor'))]" model="product.product"/>
+            <field name="product_qty">10.0</field>
+            <field name="sequence">10</field>
+        </record>
+
+        <!-- BOM 行：电容×20 -->
+        <record id="bom_line_capacitor" model="mrp.bom.line">
+            <field name="bom_id" ref="bom_mainboard_assembly"/>
+            <field name="product_id" search="[('product_tmpl_id','=',ref('product_tmpl_capacitor'))]" model="product.product"/>
+            <field name="product_qty">20.0</field>
+            <field name="sequence">20</field>
+        </record>
+
+        <!-- ── 生产工单 1：草稿 ── -->
+        <record id="production_order_draft" model="mrp.production">
+            <field name="product_id" search="[('product_tmpl_id','=',ref('product_tmpl_mainboard'))]" model="product.product"/>
+            <field name="bom_id" ref="bom_mainboard_assembly"/>
+            <field name="product_qty">50.0</field>
+            <field name="date_start" eval="(DateTime.today() + timedelta(days=3)).strftime('%Y-%m-%d 08:00:00')"/>
+        </record>
+
+        <!-- ── 生产工单 2：草稿（较大批量） ── -->
+        <record id="production_order_draft_large" model="mrp.production">
+            <field name="product_id" search="[('product_tmpl_id','=',ref('product_tmpl_mainboard'))]" model="product.product"/>
+            <field name="bom_id" ref="bom_mainboard_assembly"/>
+            <field name="product_qty">200.0</field>
+            <field name="date_start" eval="(DateTime.today() + timedelta(days=7)).strftime('%Y-%m-%d 08:00:00')"/>
+        </record>
+
+    </data>
+</odoo>

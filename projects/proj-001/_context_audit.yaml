@@ -1,0 +1,45 @@
+# AISEP 上下文审计日志
+# 由 /tidy 自动追加，保留最近 10 条
+
+audit_log:
+  - session_date: "2026-03-13"
+    session_topic: "AISEP 架构探讨：用户呈现形式 + 上下文体积控制"
+    stage: "系统设计（非项目阶段）"
+    slice: null
+
+    files:
+      # 系统文件
+      - { path: ".aisep/docs/system-guide.md", times: 2, verdict: "essential" }
+      - { path: ".aisep/docs/architecture.md", times: 2, verdict: "essential" }
+      - { path: ".aisep/docs/context-loading-protocol.md", times: 2, verdict: "essential" }
+      - { path: "AISEP.md", times: 1, verdict: "referenced" }
+      - { path: ".aisep/config.yaml", times: 1, verdict: "referenced" }
+      - { path: ".aisep/docs/methodology-layer.md", times: 1, verdict: "referenced" }
+      - { path: ".aisep/docs/implementation_plan.md", times: 1, verdict: "referenced" }
+      - { path: ".aisep/backlog.md", times: 1, verdict: "referenced" }
+      - { path: ".aisep/knowledge/index.yaml", times: 1, verdict: "referenced" }
+
+      # 项目文件
+      - { path: "projects/proj-001/artifacts/global/retrospective.yaml", times: 1, verdict: "referenced" }
+
+      # 外部知识
+      - { path: "~/.gemini/antigravity/knowledge/progressive_disclosure_pattern/artifacts/pattern_overview.md", times: 1, verdict: "referenced" }
+
+      # 工作文件
+      - { path: "note.md", times: 1, verdict: "referenced" }
+      - { path: ".agents/workflows/tidy.md", times: 2, verdict: "essential" }
+
+    late_discoveries: []  # 本轮无迟到发现
+
+    topic_drift:
+      anchor: "AISEP 架构探讨（用户呈现形式 + 上下文体积控制）"
+      events:
+        - at: "中段"
+          topic: "Aider 和 Continue 工具介绍"
+          severity: "minor"
+          note: "用户主动要求介绍，属于合理的知识扩展"
+        - at: "中后段"
+          topic: "直接修改 /tidy workflow — 从讨论转为实施"
+          severity: "minor"
+          note: "用户主动选择实施路径（选项 2），自然从探讨过渡到执行"
+      recommendation: "本轮两次 minor 偏移均由用户主动驱动，合理。无 major 偏移。"

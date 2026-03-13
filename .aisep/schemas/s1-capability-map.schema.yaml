@@ -1,0 +1,112 @@
+# S1 制品 Schema: 能力图谱
+# 验证目标: artifacts/global/capability-map.yaml
+
+_meta:
+  schema_id: s1-capability-map
+  version: "1.0"
+  stage: s1
+  description: "业务能力图谱 — TOGAF BA 能力树 + 可选 Gap 分析。"
+
+schema:
+  root: capability_map
+  fields:
+    capabilities:
+      type: list
+      required: true
+      min_items: 1
+      items:
+        type: map
+        fields:
+          id:
+            type: string
+            required: true
+            pattern: "^CAP-\\d{3}$"
+          name:
+            type: string
+            required: true
+          level:
+            type: enum
+            required: true
+            enum_values: [L1, L2, L3]
+            validation: "L1=战略能力, L2=业务能力, L3=操作能力"
+          parent_id:
+            type: string
+            required: false
+            validation: "L2/L3 必须有 parent，L1 无 parent"
+          maturity:
+            type: enum
+            required: false
+            enum_values: [none, basic, standard, advanced, optimized]
+          priority:
+            type: enum
+            required: false
+            enum_values: [Must, Should, Could, "Won't"]
+          related_processes:
+            type: list
+            required: false
+            items:
+              type: string
+          bounded_context:
+            type: string
+            required: false
+            validation: "关联 domain-model.yaml 的 Bounded Context"
+
+    gap_analysis:
+      type: map
+      required: false
+      validation: "仅当 project.yaml.existing_system 非空时必填"
+      fields:
+        baseline:
+          type: list
+          required: true
+          items:
+            type: map
+            fields:
+              capability_id:
+                type: string
+                required: true
+              current_system:
+                type: string
+                required: true
+              coverage:
+                type: enum
+                required: true
+                enum_values: [full, partial, none]
+        target:
+          type: list
+          required: true
+          items:
+            type: map
+            fields:
+              capability_id:
+                type: string
+                required: true
+              target_system:
+                type: string
+                required: true
+        gaps:
+          type: list
+          required: true
+          items:
+            type: map
+            fields:
+              capability_id:
+                type: string
+                required: true
+              gap_type:
+                type: enum
+                required: true
+                enum_values: [new_build, migration, integration, manual]
+              description:
+                type: string
+                required: true
+
+gate_validations:
+  - rule: "至少有 1 个 L1 能力"
+    severity: error
+  - rule: "每个 L2/L3 能力须有 parent_id"
+    severity: error
+  - rule: "如 project.yaml.existing_system 非空，gap_analysis 须存在"
+    severity: error
+  - rule: "gap_analysis.gaps 须覆盖所有 coverage != full 的 baseline 项"
+    severity: warning

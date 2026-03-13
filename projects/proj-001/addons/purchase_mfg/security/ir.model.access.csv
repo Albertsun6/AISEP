@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_partner_purchase_user,res.partner.purchase.user,base.model_res_partner,purchase_mfg.group_purchase_user,1,1,1,0
+access_purchase_order_purchase_user,purchase.order.purchase.user,purchase.model_purchase_order,purchase_mfg.group_purchase_user,1,1,1,0
+access_purchase_order_line_purchase_user,purchase.order.line.purchase.user,purchase.model_purchase_order_line,purchase_mfg.group_purchase_user,1,1,1,1

@@ -1,0 +1,161 @@
+# S7 制品 Schema: 部署配置
+# 验证目标: artifacts/global/deployment.yaml
+
+_meta:
+  schema_id: s7-deployment
+  version: "1.0"
+  stage: s7
+  description: "部署配置 — 环境定义、容器配置、初始化脚本。"
+
+schema:
+  root: deployment
+  fields:
+    target:
+      type: enum
+      required: true
+      enum_values: [docker, bare-metal, cloud]
+
+    environments:
+      type: list
+      required: true
+      min_items: 1
+      items:
+        type: map
+        fields:
+          name:
+            type: enum
+            required: true
+            enum_values: [development, staging, production]
+          config:
+            type: map
+            required: true
+            fields:
+              port:
+                type: integer
+                required: true
+              workers:
+                type: integer
+                required: false
+              memory_limit:
+                type: string
+                required: false
+              log_level:
+                type: enum
+                required: false
+                enum_values: [debug, info, warning, error, critical]
+
+    docker:
+      type: map
+      required: false
+      validation: "target 为 docker 时必填"
+      fields:
+        base_image:
+          type: string
+          required: true
+          validation: "如 odoo:17.0"
+        services:
+          type: list
+          required: true
+          min_items: 1
+          items:
+            type: map
+            fields:
+              name:
+                type: string
+                required: true
+              image:
+                type: string
+                required: true
+              ports:
+                type: list
+                required: false
+              volumes:
+                type: list
+                required: false
+              environment:
+                type: list
+                required: false
+                items:
+                  type: string
+                validation: "环境变量引用，如 ${DB_HOST}"
+
+    env_variables:
+      type: list
+      required: true
+      min_items: 1
+      items:
+        type: map
+        fields:
+          name:
+            type: string
+            required: true
+          description:
+            type: string
+            required: true
+          required:
+            type: boolean
+            required: true
+          default:
+            type: string
+            required: false
+          sensitive:
+            type: boolean
+            required: true
+            validation: "标记为 sensitive 的变量不可出现在版本管理中"
+
+    initialization:
+      type: map
+      required: true
+      fields:
+        database_setup:
+          type: string
+          required: true
+          validation: "数据库创建命令或脚本引用"
+        module_install:
+          type: string
+          required: true
+          validation: "模块安装命令（按拓扑序）"
+        post_install:
+          type: list
+          required: false
+          items:
+            type: string
+          validation: "安装后的额外步骤"
+
+    backup:
+      type: map
+      required: false
+      fields:
+        strategy:
+          type: string
+          required: true
+        frequency:
+          type: string
+          required: true
+        retention:
+          type: string
+          required: true
+
+    generated_files:
+      type: list
+      required: true
+      min_items: 1
+      items:
+        type: string
+      validation: "生成的部署文件列表（Dockerfile, docker-compose.yml 等）"
+
+gate_validations:
+  - rule: "至少定义 1 个 environment"
+    severity: error
+  - rule: "target 为 docker 时 docker 字段须存在"
+    severity: error
+  - rule: "至少有 1 个 env_variable"
+    severity: error
+  - rule: "所有 sensitive 环境变量不可有硬编码的 default 值"
+    severity: error
+  - rule: "initialization.database_setup 和 module_install 须非空"
+    severity: error
+  - rule: "generated_files 中的文件须实际存在"
+    severity: warning
+  - rule: "production 环境的 log_level 不应为 debug"
+    severity: warning

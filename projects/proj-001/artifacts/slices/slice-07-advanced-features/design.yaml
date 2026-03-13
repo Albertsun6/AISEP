@@ -1,0 +1,60 @@
+# S4 制品：Slice 7 详细设计
+# Slice：SLICE-07 — 高级功能（调拨/盘点/定价/维护）
+# 生成时间：2026-03-13T00:50:00+08:00
+
+slice_design:
+  slice_id: "SLICE-07"
+  slice_name: "高级功能（调拨/盘点/定价/维护）"
+  description: "跨模块轻量增强：库存调拨、盘点、价目表、供应商/客户编辑"
+
+  stories:
+    - "US-025"  # 创建库存调拨
+    - "US-029"  # 发起盘点
+    - "US-030"  # 确认盘点差异
+    - "US-016"  # 编辑供应商信息
+    - "US-020"  # 修改或取消采购订单
+    - "US-022"  # 查看收货记录
+    - "US-038"  # 编辑客户信息
+    - "US-039"  # 创建价目表
+    - "US-040"  # 配置价格规则
+
+  # ══════════════════════════════════════════════════════════════
+  # 设计策略
+  # ══════════════════════════════════════════════════════════════
+  # 全部 9 个故事的功能已在标准 Odoo 中实现：
+  # - US-025 库存调拨：stock.picking（internal transfer）— 标准功能
+  # - US-029/030 盘点：stock.quant（inventory adjustment）— 标准功能
+  # - US-016 编辑供应商：res.partner — 标准功能
+  # - US-020 修改/取消采购：purchase.order — 标准功能
+  # - US-022 查看收货记录：stock.picking — 标准功能
+  # - US-038 编辑客户：res.partner — 标准功能
+  # - US-039/040 价目表：product.pricelist — 标准功能
+  #
+  # 本 Slice 策略：**确认标准功能覆盖 + 扩展模块添加中文菜单入口**
+  # 在 stock_mfg 模块添加调拨和盘点的自定义 View 增强
+  # 在 sale_mfg 模块添加价目表的 View 增强
+  # 供应商/客户编辑 + 采购修改/收货记录已在标准模块中完善，无需修改
+
+  modules_affected:
+    - module: "stock_mfg"
+      changes: "添加调拨+盘点相关 View 和菜单"
+    - module: "sale_mfg"
+      changes: "添加价目表依赖和 View 增强"
+    - module: "purchase_mfg"
+      changes: "无修改（标准功能已覆盖 US-016/020/022）"
+
+  file_manifest:
+    - path: "addons/stock_mfg/views/stock_transfer_views.xml"
+      action: create
+      content_hint: "库位管理 + 调拨增强视图 + 盘点/库存调整菜单入口"
+    - path: "addons/stock_mfg/__manifest__.py"
+      action: modify
+      content_hint: "追加 data 文件"
+    - path: "addons/sale_mfg/views/sale_pricelist_views.xml"
+      action: create
+      content_hint: "价目表管理视图增强"
+    - path: "addons/sale_mfg/__manifest__.py"
+      action: modify
+      content_hint: "追加 product 依赖和 data 文件"
+    total_files_new: 2
+    total_files_modified: 2

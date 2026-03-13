@@ -1,0 +1,23 @@
+id: "learn-007"
+title: "Odoo 版本间 API 破坏性变更"
+date: "2026-03-13"
+source_conversation: "5b33a8b3-2ee5-442d-aef7-089355de1724"
+source_project: "proj-001"
+source_slice: "SLICE-05"
+
+category: framework_gotcha
+tags: [odoo, migration, api-compatibility, pitfall]
+
+one_liner: "Odoo 大版本升级经常重命名字段，不向后兼容"
+
+analogy: |
+  像搬家后门牌号变了 — 地址（字段名）变了，但房子（功能）还在。
+  你得更新所有写了旧地址的信件。
+
+key_insights:
+  - "quantity_done → quantity 是 Odoo 17 的典型例子"
+  - "@api.depends 中引用错误字段名会在模块更新时才报错（延迟暴露）"
+  - "最佳实践：每个新版本项目，先建 pitfalls.md 收录已知 API 变更"
+  - "Odoo 官方 Upgrade Guide 是变更的权威来源"
+
+mastery: low

@@ -1,0 +1,28 @@
+id: "learn-002"
+title: "摩擦即特性（Friction is a Feature）"
+date: "2026-03-12"
+source_conversation: "2ee2bc90-2a34-4c0e-a2cd-4c955eec8fa1"
+
+category: system_design
+tags: [设计原则, 审批机制, 安全性, 人机协作]
+
+one_liner: "越重要的决定，人工参与度应该越高——摩擦不是缺陷，是保护"
+
+analogy: |
+  Git 的 merge conflict 需要你手动解决，而不是自动合并。
+  这不是 Git 的缺陷——正是因为冲突很重要，所以强制你亲自处理。
+  同理，铁律层（constitution）的修改要求手动编辑文件，不是效率问题，而是安全设计。
+
+key_insights:
+  - "分层审批的核心：参数层（轻审批）→ 策略层（逐条确认）→ 铁律层（手动编辑）"
+  - "Review Fatigue 是自进化系统的真正杀手：审批太多 → 盲批 → 失去人在回路的价值"
+  - "设计进化系统时最大的风险不是'进化不够'，而是'进化过度'"
+  - "注意力经济：进化频率 vs 审批质量是零和博弈"
+
+related_concepts:
+  - "Review Fatigue（审批疲劳）"
+  - "注意力经济（Attention Economy）"
+  - "Human-in-the-Loop"
+  - "learn-001: 递归问题与元层次思维"
+
+mastery: medium

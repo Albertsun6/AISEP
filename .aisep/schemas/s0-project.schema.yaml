@@ -1,0 +1,71 @@
+# S0 制品 Schema: 项目定义
+# 验证目标: artifacts/global/project.yaml
+
+_meta:
+  schema_id: s0-project
+  version: "1.0"
+  stage: s0
+  description: "项目初始化阶段的主制品，定义项目范围和约束。"
+
+schema:
+  root: project
+  fields:
+    name:
+      type: string
+      required: true
+      validation: "非空，2-100 字符"
+
+    description:
+      type: string
+      required: true
+      validation: "项目一句话描述，非空"
+
+    tech_stack:
+      type: string
+      required: false
+      validation: "可为空（S3 前确定）。非空时必须对应 .agents/skills/frameworks/ 下的目录名"
+      examples: ["odoo17", "react18", "fastapi"]
+
+    target_modules:
+      type: list
+      required: true
+      min_items: 1
+      items:
+        type: string
+      validation: "至少一个目标模块"
+
+    constraints:
+      type: map
+      required: true
+      fields:
+        budget:
+          type: string
+          required: false
+        timeline:
+          type: string
+          required: false
+        team_size:
+          type: integer
+          required: false
+
+    existing_system:
+      type: string
+      required: false
+      validation: "如非空，S1 将触发 Gap 分析"
+
+    tags:
+      type: list
+      required: false
+      items:
+        type: string
+
+# Gate 验证规则（Pipeline 运行器在 Gate 时检查）
+gate_validations:
+  - rule: "name 非空"
+    severity: error
+  - rule: "target_modules 至少有 1 项"
+    severity: error
+  - rule: "constraints 至少填写 1 个约束"
+    severity: warning
+  - rule: "如 tech_stack 非空，须匹配 skills/frameworks/ 下的目录"
+    severity: error

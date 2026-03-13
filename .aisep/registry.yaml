@@ -1,0 +1,14 @@
+# .aisep/registry.yaml
+# 项目注册表 — 只保留活跃项目，归档项目迁移到 registry-archive.yaml
+aisep_registry:
+  active_project: "proj-001"
+  projects:
+    - id: "proj-001"
+      name: "制造业ERP"
+      status: "s8-completed"
+      current_stage: "s8-completed"
+      created_at: "2026-03-12T18:05:00+08:00"
+      source_idea: "idea-001"
+
+  # 归档项目另存（保持主注册表轻量）
+  archive_ref: ".aisep/archive/registry-archive.yaml"

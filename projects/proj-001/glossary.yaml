@@ -1,0 +1,152 @@
+# 术语表 — proj-001 制造业ERP
+# 所有制品必须使用此表中的统一术语
+# S1 步骤 1 建立，24 个核心术语
+
+terms:
+  # ═══ 生产管理域 ═══
+  - zh: "物料清单"
+    en: "BOM (Bill of Materials)"
+    technical: "mrp.bom"
+    definition: "定义产品由哪些原材料/子件组成及数量关系"
+    status: "confirmed"
+
+  - zh: "生产工单"
+    en: "Manufacturing Order"
+    technical: "mrp.production"
+    definition: "一次生产任务，指定产品、数量、计划日期"
+    status: "confirmed"
+
+  - zh: "工艺路线"
+    en: "Routing"
+    technical: "mrp.routing"
+    definition: "产品生产经过的工序/工作中心序列"
+    status: "confirmed"
+
+  - zh: "工作中心"
+    en: "Work Center"
+    technical: "mrp.workcenter"
+    definition: "执行生产工序的物理位置或设备组"
+    status: "confirmed"
+
+  - zh: "工序"
+    en: "Operation"
+    technical: "mrp.routing.workcenter"
+    definition: "生产流程中的一个步骤"
+    status: "confirmed"
+
+  - zh: "半成品"
+    en: "Semi-finished Product"
+    technical: "product.product"
+    definition: "经过部分加工但尚未成为成品的物料"
+    status: "confirmed"
+
+  - zh: "产能"
+    en: "Capacity"
+    technical: "mrp.workcenter.capacity"
+    definition: "工作中心在单位时间内的最大产出能力"
+    status: "confirmed"
+
+  # ═══ 采购管理域 ═══
+  - zh: "采购订单"
+    en: "Purchase Order (PO)"
+    technical: "purchase.order"
+    definition: "向供应商发出的正式采购请求，包含物料、数量、价格、交期"
+    status: "confirmed"
+
+  - zh: "供应商"
+    en: "Vendor / Supplier"
+    technical: "res.partner"
+    definition: "提供原材料或服务的外部合作方"
+    status: "confirmed"
+
+  - zh: "询价单"
+    en: "Request for Quotation (RFQ)"
+    technical: "purchase.order"
+    definition: "向供应商询问价格和交期的初步请求"
+    status: "confirmed"
+
+  - zh: "收货"
+    en: "Goods Receipt"
+    technical: "stock.picking"
+    definition: "供应商送货到仓后的实物验收和入库登记"
+    status: "confirmed"
+
+  - zh: "采购申请"
+    en: "Purchase Requisition"
+    technical: "purchase.requisition"
+    definition: "内部部门提出的采购需求，需审批后转为 PO"
+    status: "confirmed"
+
+  - zh: "供应商评估"
+    en: "Vendor Evaluation"
+    technical: "vendor.evaluation"
+    definition: "对供应商的质量、交期、价格等维度评分"
+    status: "confirmed"
+
+  # ═══ 库存管理域 ═══
+  - zh: "仓库"
+    en: "Warehouse"
+    technical: "stock.warehouse"
+    definition: "存放物料的物理空间，可有多个库位"
+    status: "confirmed"
+
+  - zh: "库位"
+    en: "Stock Location"
+    technical: "stock.location"
+    definition: "仓库内的具体存储位置（如 A 区-01 排-03 层）"
+    status: "confirmed"
+
+  - zh: "入库"
+    en: "Stock In / Receipt"
+    technical: "stock.picking"
+    definition: "物料进入仓库的操作（采购入库、生产入库、退货入库）"
+    status: "confirmed"
+
+  - zh: "出库"
+    en: "Stock Out / Delivery"
+    technical: "stock.picking"
+    definition: "物料离开仓库的操作（生产领料、销售发货、报废）"
+    status: "confirmed"
+
+  - zh: "库存调拨"
+    en: "Internal Transfer"
+    technical: "stock.picking"
+    definition: "物料在不同仓库/库位之间的移动"
+    status: "confirmed"
+
+  - zh: "盘点"
+    en: "Inventory Adjustment"
+    technical: "stock.quant"
+    definition: "实物数量与系统数量的核对和差异处理"
+    status: "confirmed"
+
+  # ═══ 销售管理域 ═══
+  - zh: "销售订单"
+    en: "Sales Order (SO)"
+    technical: "sale.order"
+    definition: "客户确认的正式购买请求，含产品、数量、价格、交期"
+    status: "confirmed"
+
+  - zh: "客户"
+    en: "Customer"
+    technical: "res.partner"
+    definition: "购买产品或服务的外部方"
+    status: "confirmed"
+
+  - zh: "报价单"
+    en: "Quotation"
+    technical: "sale.order"
+    definition: "向客户提供的产品价格和条款初步方案"
+    status: "confirmed"
+
+  - zh: "发货单"
+    en: "Delivery Order"
+    technical: "stock.picking"
+    definition: "按销售订单安排的出库和送货指令"
+    status: "confirmed"
+
+  - zh: "价目表"
+    en: "Pricelist"
+    technical: "product.pricelist"
+    definition: "定义不同客户/场景下的产品定价规则"
+    status: "confirmed"

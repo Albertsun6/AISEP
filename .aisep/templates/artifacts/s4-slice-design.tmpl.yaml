@@ -1,0 +1,40 @@
+# S4 制品模板：Slice 详细设计
+# 输出文件：artifacts/slices/{slice-name}/design.yaml
+slice_design:
+  slice_id: ""
+  slice_name: ""
+  stories: []                # 引用 S2 的 Story ID
+  bounded_context: ""        # 引用 S1 的 Context
+
+  models:
+    - name: ""
+      inherit: ""            # 如 mail.thread（框架特有）
+      fields:
+        - name: ""
+          type: ""
+          description: ""
+      methods:
+        - name: ""
+          trigger: ""        # button | onchange | cron | api
+          description: ""
+          business_rule: ""
+
+  views:
+    - id: ""
+      type: ""               # form | tree | kanban | search | graph
+      model: ""
+      key_elements: []       # 展示的关键字段/按钮
+
+  menus:
+    - name: ""
+      parent: ""
+      action: ""
+      groups: []
+
+  data:
+    - file: ""               # demo 或 初始数据
+      type: ""               # demo | data
+
+  dependencies:
+    upstream_slices: []       # 依赖的已完成 Slice
+    external_modules: []     # 依赖的外部模块

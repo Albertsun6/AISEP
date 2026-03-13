@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ══════════════════════════════════════════════════════════════
+         stock_mfg: 安全组和 Record Rules
+         ══════════════════════════════════════════════════════════════ -->
+
+    <!-- 安全组分类 -->
+    <record id="module_category_stock_mfg" model="ir.module.category">
+        <field name="name">库存管理扩展</field>
+        <field name="sequence">20</field>
+    </record>
+
+    <!-- 安全组：制造用户（基础库存操作权限） -->
+    <record id="group_mfg_user" model="res.groups">
+        <field name="name">制造用户</field>
+        <field name="category_id" ref="stock_mfg.module_category_stock_mfg"/>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        <field name="comment">基础操作权限：查看库存，执行出入库操作。</field>
+    </record>
+
+    <!-- 安全组：制造管理员（含仓库/库位配置权限） -->
+    <record id="group_mfg_manager" model="res.groups">
+        <field name="name">制造管理员</field>
+        <field name="category_id" ref="stock_mfg.module_category_stock_mfg"/>
+        <field name="implied_ids" eval="[(4, ref('stock_mfg.group_mfg_user'))]"/>
+        <field name="comment">管理权限：配置仓库/库位，修改库存（盘点调整）。</field>
+    </record>
+
+    <!-- Record Rule: 仓库 — 当前公司 (P3-04) -->
+    <record id="rule_warehouse_company" model="ir.rule">
+        <field name="name">仓库：当前公司</field>
+        <field name="model_id" ref="stock.model_stock_warehouse"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        <field name="groups" eval="[(4, ref('stock_mfg.group_mfg_user'))]"/>
+    </record>
+
+    <!-- Record Rule: 出入库单 — 当前公司 (P3-04) -->
+    <record id="rule_picking_company" model="ir.rule">
+        <field name="name">出入库单：当前公司</field>
+        <field name="model_id" ref="stock.model_stock_picking"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        <field name="groups" eval="[(4, ref('stock_mfg.group_mfg_user'))]"/>
+    </record>
+
+</odoo>

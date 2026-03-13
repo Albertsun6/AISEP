@@ -1,0 +1,39 @@
+# S2 制品摘要（Compaction）
+# 由 S2 Gate 通过后自动生成
+functional_summary:
+  total_stories: 40
+  modules:
+    - module: "生产管理"
+      story_count: 13
+      must: 9
+      should: 4
+      could: 0
+    - module: "采购管理"
+      story_count: 9
+      must: 6
+      should: 3
+      could: 0
+    - module: "库存管理"
+      story_count: 9
+      must: 5
+      should: 4
+      could: 0
+    - module: "销售管理"
+      story_count: 9
+      must: 7
+      should: 1
+      could: 2
+  moscow_distribution:
+    Must: 24   # 60%
+    Should: 10 # 25%
+    Could: 6   # 15%
+  invest_pass_rate: "38/40 full pass, 2 with Independent=false (cross-domain dependency)"
+  crud_coverage: "12 models, 4 complete, 8 acceptable (Delete=Won't), 0 missing"
+
+slice_summary:
+  total_slices: 7
+  mvp_scope: "Slice 1-5 (28 stories, 全部 Must covered)"
+  enhancement_scope: "Slice 6-7 (12 stories, Should + Could)"
+  critical_path: "SLICE-01 → SLICE-02 → SLICE-04 → SLICE-05"
+  circular_dependencies: false
+  estimated_total_lines: "2500-3800"

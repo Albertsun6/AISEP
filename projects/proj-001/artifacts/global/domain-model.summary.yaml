@@ -1,0 +1,21 @@
+# S1 制品摘要（Compaction）
+domain_model_summary:
+  contexts: 4
+  context_list: [生产管理(core), 采购管理(supporting), 库存管理(supporting), 销售管理(generic)]
+  aggregates: 10
+  aggregate_list: [BOM, 生产工单, 工艺路线, 采购订单, 供应商, 库存移动, 库存量, 销售订单, 价目表]
+  context_map_relationships: 5
+  key_patterns: [ACL(销售→生产, 生产→采购), Conformist(销售→库存, 生产→库存, 采购→库存)]
+  key_decisions:
+    - "生产管理为唯一核心域"
+    - "MRP 计算连接销售→生产→采购三条链路"
+    - "所有业务最终触发库存变动（库存为枢纽）"
+
+capability_map_summary:
+  l1_capabilities: 4
+  l2_capabilities: 13
+  gap_analysis:
+    new_build: [生产管理, 采购管理]
+    migration: [库存管理, 销售管理]
+    baseline: "Excel"
+    target: "Odoo 17"

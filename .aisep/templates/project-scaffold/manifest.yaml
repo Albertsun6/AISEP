@@ -1,0 +1,11 @@
+# 项目脚手架模板
+template:
+  version: "1.0"
+  description: "AISEP 标准项目脚手架"
+  changelog:
+    - version: "1.0"
+      date: "2026-03-12"
+      changes:
+        - "初始版本"
+        - "包含 project.yaml, constitution.md, glossary.yaml, ADR 模板"
+        - "artifacts 目录含 global/ + slices/ + changes/"

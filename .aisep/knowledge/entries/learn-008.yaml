@@ -1,0 +1,28 @@
+id: "learn-008"
+title: "Vertical Slice 架构"
+date: "2026-03-13"
+source_conversation: "5b33a8b3-2ee5-442d-aef7-089355de1724"
+source_project: "proj-001"
+
+category: architecture
+tags: [architecture, methodology, delivery, agile]
+
+one_liner: "按业务功能纵切而非按技术层横切，每个 Slice 交付一个完整的用户价值"
+
+analogy: |
+  切蛋糕用纵切（每块都有奶油+面包+水果），不用横切（单独拿走水果层）。
+  用户吃到的每一块都是完整的体验。
+
+key_insights:
+  - "Slice 内从 Model → View → Security → Demo 全覆盖"
+  - "Slice 间通过拓扑排序确保依赖正确"
+  - "MVP = 前 N 个 Slice（Must），增强 = 后续 Slice（Should/Could）"
+  - "Walking Skeleton = Slice 1，验证端到端可行性"
+  - "每个 Slice 独立可部署、独立可验证"
+
+related_concepts:
+  - "Walking Skeleton（极简端到端骨架）"
+  - "Feature Slicing（功能切片）"
+  - "INVEST 原则（Independent, Negotiable, Valuable, Estimable, Small, Testable）"
+
+mastery: medium

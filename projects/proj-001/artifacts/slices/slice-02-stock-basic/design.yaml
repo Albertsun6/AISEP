@@ -1,0 +1,123 @@
+# S4 制品：Slice 2 详细设计
+# Slice：SLICE-02 — 库存基础 + 出入库
+# 生成时间：2026-03-12T22:06:00+08:00
+
+slice_design:
+  slice_id: "SLICE-02"
+  slice_name: "库存基础 + 出入库"
+  module: "stock_mfg"
+  bounded_context: "库存管理"
+
+  stories:
+    - "US-027"  # 配置仓库
+    - "US-028"  # 管理库位
+    - "US-023"  # 执行入库
+    - "US-024"  # 执行出库
+    - "US-026"  # 查看出入库记录
+    - "US-031"  # 查看实时库存量
+
+  models:
+    - name: "stock.warehouse"
+      inherit: "stock.warehouse"
+      related_stories: ["US-027"]
+      scope_note: "标准仓库模型已满足需求，无需自定义字段"
+      custom_fields: []
+      custom_methods: []
+
+    - name: "stock.location"
+      inherit: "stock.location"
+      related_stories: ["US-028"]
+      scope_note: "标准库位模型已满足需求"
+      custom_fields: []
+      custom_methods: []
+
+    - name: "stock.picking"
+      inherit: "stock.picking"
+      related_stories: ["US-023", "US-024", "US-026"]
+      scope_note: "标准出入库操作已满足需求。本 Slice 不修改 picking 逻辑。"
+      custom_fields: []
+      custom_methods: []
+
+    - name: "stock.quant"
+      inherit: "stock.quant"
+      related_stories: ["US-031"]
+      scope_note: "标准库存量视图已满足需求"
+      custom_fields: []
+      custom_methods: []
+
+  views:
+    - id: "view_stock_picking_tree_inherit_mfg"
+      type: "tree"
+      model: "stock.picking"
+      inherit_id: "stock.vpicktree"
+      description: "出入库记录列表，添加 origin 列便于追溯来源"
+
+    - id: "view_stock_quant_tree_mfg"
+      type: "tree"
+      model: "stock.quant"
+      note: "复用标准库存量视图（stock.view_stock_quant_tree_editable）"
+
+  menus:
+    - id: "menu_stock_mfg_root"
+      name: "库存"
+      source: "stock.menu_stock_root"
+      note: "复用标准库存菜单（仓库/出入库/库存量均由标准模块提供）"
+
+    - id: "menu_stock_mfg_picking_history"
+      name: "出入库记录"
+      parent: "stock.menu_stock_root"
+      action: "action_stock_mfg_picking_history"
+      sequence: 25
+
+  actions:
+    - id: "action_stock_mfg_picking_history"
+      name: "出入库记录"
+      res_model: "stock.picking"
+      view_mode: "tree,form"
+      domain: "[('state', '=', 'done')]"
+      context: "{}"
+      help: "查看已完成的出入库操作记录。"
+
+  security:
+    groups:
+      - note: "复用 S3 定义的 group_mfg_user 和 group_mfg_manager"
+
+    acl:
+      - model: "stock.warehouse"
+        group_mfg_user: { read: 1, write: 0, create: 0, unlink: 0 }
+        group_mfg_manager: { read: 1, write: 1, create: 1, unlink: 0 }
+      - model: "stock.location"
+        group_mfg_user: { read: 1, write: 0, create: 0, unlink: 0 }
+        group_mfg_manager: { read: 1, write: 1, create: 1, unlink: 0 }
+      - model: "stock.picking"
+        group_mfg_user: { read: 1, write: 1, create: 1, unlink: 0 }
+      - model: "stock.move"
+        group_mfg_user: { read: 1, write: 1, create: 1, unlink: 0 }
+      - model: "stock.quant"
+        group_mfg_user: { read: 1, write: 0, create: 0, unlink: 0 }
+        group_mfg_manager: { read: 1, write: 1, create: 0, unlink: 0 }
+
+    record_rules:
+      - id: "rule_stock_company"
+        models: ["stock.warehouse", "stock.picking"]
+        domain: "[('company_id', 'in', company_ids)]"
+
+  dependencies:
+    upstream_slices: ["SLICE-01"]
+    upstream_reason: "销售确认后生成发货单（出库指令），sale_mfg 已安装"
+    external_modules: ["stock", "product"]
+
+  file_manifest:
+    module_root: "addons/stock_mfg/"
+    files:
+      - "__init__.py"
+      - "__manifest__.py"
+      - "models/__init__.py"
+      - "views/stock_picking_views.xml"
+      - "views/stock_mfg_menus.xml"
+      - "security/stock_mfg_security.xml"
+      - "security/ir.model.access.csv"
+      - "demo/stock_mfg_demo.xml"
+    total_files: 8
+    estimated_lines: "200-350"
+    note: "Slice 2 自定义量极少，标准 stock 模块几乎完全覆盖需求"

@@ -1,0 +1,59 @@
+# S0 可选制品 Schema: 技术调研
+# 验证目标: artifacts/global/research.yaml
+
+_meta:
+  schema_id: s0-research
+  version: "1.0"
+  stage: s0
+  description: "S0 可选输出 — 技术选型或竞品调研结果。"
+
+schema:
+  root: research
+  fields:
+    entries:
+      type: list
+      required: true
+      min_items: 1
+      items:
+        type: map
+        fields:
+          topic:
+            type: string
+            required: true
+            validation: "调研主题，非空"
+
+          context:
+            type: string
+            required: true
+            validation: "为什么需要调研"
+
+          conclusion:
+            type: string
+            required: true
+            validation: "调研结论"
+
+          decision:
+            type: string
+            required: true
+            validation: "最终决策"
+
+          confidence:
+            type: float
+            required: true
+            validation: "0.0 - 1.0 范围"
+            min: 0.0
+            max: 1.0
+
+          sources:
+            type: list
+            required: false
+            items:
+              type: string
+
+gate_validations:
+  - rule: "至少有 1 条 entry"
+    severity: error
+  - rule: "每条 entry 的 confidence 在 [0, 1] 范围内"
+    severity: error
+  - rule: "confidence < 0.7 的 entry 应在后续阶段 Gate 时重新审视"
+    severity: warning

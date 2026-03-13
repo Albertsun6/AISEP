@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ══════════════════════════════════════════════════
+         BOM Form View — 继承标准 mrp.bom 表单
+         添加：状态栏 + 激活/归档按钮 + state 字段
+         ══════════════════════════════════════════════════ -->
+    <record id="view_mrp_bom_form_inherit_mfg" model="ir.ui.view">
+        <field name="name">mrp.bom.form.inherit.mfg</field>
+        <field name="model">mrp.bom</field>
+        <field name="inherit_id" ref="mrp.mrp_bom_form_view"/>
+        <field name="priority">20</field>
+        <field name="arch" type="xml">
+            <!-- 在 sheet 前添加 header（状态栏 + 按钮） -->
+            <xpath expr="//sheet" position="before">
+                <header>
+                    <button name="action_activate"
+                            type="object"
+                            string="激活"
+                            class="btn-primary"
+                            invisible="state != 'draft'"/>
+                    <button name="action_archive_bom"
+                            type="object"
+                            string="归档"
+                            class="btn-secondary"
+                            invisible="state != 'active'"
+                            confirm="确定要归档此 BOM 吗？归档后将无法用于新工单。"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,active"/>
+                </header>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════
+         BOM Tree View — 继承标准列表，添加 state 列
+         ══════════════════════════════════════════════════ -->
+    <record id="view_mrp_bom_tree_inherit_mfg" model="ir.ui.view">
+        <field name="name">mrp.bom.tree.inherit.mfg</field>
+        <field name="model">mrp.bom</field>
+        <field name="inherit_id" ref="mrp.mrp_bom_tree_view"/>
+        <field name="priority">20</field>
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="state"
+                       widget="badge"
+                       decoration-info="state == 'draft'"
+                       decoration-success="state == 'active'"
+                       decoration-muted="state == 'archived'"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════
+         BOM Search View — 继承标准搜索，添加状态筛选
+         ══════════════════════════════════════════════════ -->
+    <record id="view_mrp_bom_search_inherit_mfg" model="ir.ui.view">
+        <field name="name">mrp.bom.search.inherit.mfg</field>
+        <field name="model">mrp.bom</field>
+        <field name="inherit_id" ref="mrp.view_mrp_bom_filter"/>
+        <field name="priority">20</field>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <separator/>
+                <filter name="filter_draft" string="草稿"
+                        domain="[('state', '=', 'draft')]"/>
+                <filter name="filter_active_state" string="生效"
+                        domain="[('state', '=', 'active')]"/>
+                <separator/>
+                <group expand="0" string="分组">
+                    <filter name="group_by_state" string="按状态"
+                            context="{'group_by': 'state'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

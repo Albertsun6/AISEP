@@ -1,0 +1,131 @@
+# S1 制品 Schema: 领域模型
+# 验证目标: artifacts/global/domain-model.yaml
+
+_meta:
+  schema_id: s1-domain-model
+  version: "1.0"
+  stage: s1
+  description: "领域模型 — DDD 限界上下文、聚合根、实体和 Context Map。"
+
+schema:
+  root: domain_model
+  fields:
+    bounded_contexts:
+      type: list
+      required: true
+      min_items: 1
+      items:
+        type: map
+        fields:
+          name:
+            type: string
+            required: true
+          type:
+            type: enum
+            required: true
+            enum_values: [core, supporting, generic]
+          description:
+            type: string
+            required: true
+          aggregates:
+            type: list
+            required: true
+            min_items: 1
+            items:
+              type: map
+              fields:
+                name:
+                  type: string
+                  required: true
+                root_entity:
+                  type: string
+                  required: true
+                invariants:
+                  type: list
+                  required: true
+                  min_items: 1
+                  items:
+                    type: string
+                  validation: "每个聚合根至少定义 1 个不变量"
+                entities:
+                  type: list
+                  required: false
+                  items:
+                    type: map
+                    fields:
+                      name:
+                        type: string
+                        required: true
+                      attributes:
+                        type: list
+                        required: false
+                      business_rules:
+                        type: list
+                        required: false
+                value_objects:
+                  type: list
+                  required: false
+          domain_events:
+            type: list
+            required: false
+          commands:
+            type: list
+            required: false
+
+    context_map:
+      type: map
+      required: true
+      fields:
+        relationships:
+          type: list
+          required: true
+          items:
+            type: map
+            fields:
+              upstream:
+                type: string
+                required: true
+              downstream:
+                type: string
+                required: true
+              pattern:
+                type: enum
+                required: true
+                enum_values: [ACL, OHS, SharedKernel, Conformist, Partnership]
+              description:
+                type: string
+                required: false
+
+    ubiquitous_language:
+      type: list
+      required: true
+      min_items: 1
+      items:
+        type: map
+        fields:
+          term:
+            type: string
+            required: true
+          english:
+            type: string
+            required: true
+          definition:
+            type: string
+            required: true
+          context:
+            type: string
+            required: true
+
+gate_validations:
+  - rule: "至少有 1 个 Bounded Context"
+    severity: error
+  - rule: "每个 Context 至少有 1 个 Aggregate"
+    severity: error
+  - rule: "每个 Aggregate 至少有 1 个 Invariant"
+    severity: warning
+  - rule: "context_map.relationships 须覆盖所有 Context 间的关系"
+    severity: warning
+  - rule: "ubiquitous_language 的 term 须与 glossary.yaml 一致"
+    severity: error
+  - rule: "Context type 中至少有 1 个 core"
+    severity: warning

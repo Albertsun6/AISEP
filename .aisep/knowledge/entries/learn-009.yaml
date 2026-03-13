@@ -1,0 +1,13 @@
+# learn-009: Repo Map — 用代码地图代替全量代码
+# 来源：AISEP 架构探讨 + Aider 设计理念
+# 日期：2026-03-13
+
+topic: "Repo Map — 代码地图模式"
+one_liner: "用 AST（Abstract Syntax Tree，抽象语法树）解析提取函数签名和类定义，生成一份低 token 的全局概览，替代全量代码加载"
+analogy: "像城市地铁图 — 只画站点和线路，不画每条街每栋楼，但你已经知道怎么到达任何地方"
+key_insights:
+  - "Aider 用 tree-sitter（一种增量解析器）扫描整个仓库，提取结构而非内容"
+  - "本质是 Progressive Disclosure 在代码层面的应用 — L1 看签名，L2 看实现"
+  - "AISEP 的等价物是 _map.yaml — 不扫描代码 AST，而是扫描 YAML 制品结构"
+  - "关键价值：让 LLM 在低 token 消耗下获得全局意识（Global Awareness）"
+tags: [context-engineering, progressive-disclosure, tooling]

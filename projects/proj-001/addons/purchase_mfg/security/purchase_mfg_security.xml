@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- ══════════════════════════════════════════════════════════════
+             purchase_mfg: 安全组 + Record Rules
+             ══════════════════════════════════════════════════════════════ -->
+
+        <!-- 模块分类 -->
+        <record id="module_category_purchase_mfg" model="ir.module.category">
+            <field name="name">采购管理扩展</field>
+            <field name="sequence">20</field>
+        </record>
+
+        <!-- 安全组：采购用户 -->
+        <record id="group_purchase_user" model="res.groups">
+            <field name="name">采购用户</field>
+            <field name="category_id" ref="purchase_mfg.module_category_purchase_mfg"/>
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        </record>
+
+        <!-- Record Rule: 采购订单公司隔离 -->
+        <record id="rule_purchase_order_company" model="ir.rule">
+            <field name="name">采购订单：当前公司</field>
+            <field name="model_id" ref="purchase.model_purchase_order"/>
+            <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+            <field name="groups" eval="[(4, ref('purchase_mfg.group_purchase_user'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+    </data>
+</odoo>

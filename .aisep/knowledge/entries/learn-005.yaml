@@ -1,0 +1,33 @@
+id: "learn-005"
+title: "Spec-Driven Development — 从 Vibe Coding 到约束生成"
+date: "2026-03-12"
+source_conversation: "b266db96-1748-4bd2-a84d-9463c8d5b449"
+
+category: engineering
+tags: [OpenSpec, SpecKit, specification, constitution, 变更隔离]
+
+one_liner: "AI 编码不是让 AI 自由发挥，而是先写清楚 Spec，让 AI 在约束内生成"
+
+analogy: |
+  传统编程 = 你自己砌砖。Vibe coding = 你随口说「建个房子」AI 就开始砌。
+  Spec-driven = 你先画好蓝图（承重墙在哪、窗户朝哪），AI 按图施工。
+  蓝图不对可以改，但 AI 不能擅自移承重墙。
+
+key_insights:
+  - "SpecKit 的 constitution.md = 项目宪法，不可变原则，AI 全程引用——本质是约束的约束"
+  - "OpenSpec 的变更隔离 = 每个 change 一个文件夹——防止不同功能的 AI 生成互相干扰"
+  - "AISEP 的 Slice 隔离借鉴了 OpenSpec：slices/{name}/ 里包含 design + code + tests"
+  - "Spec-driven 的四阶段（Specify → Plan → Tasks → Implement）本质上和 AISEP 的 S2→S4→S5 对应"
+  - "关键区别：SpecKit 面向单次变更，AISEP 面向整个项目生命周期（含多 Slice 迭代）"
+
+related_concepts:
+  - "Design by Contract（契约式设计）"
+  - "learn-002: 摩擦即特性"
+  - "约束下的探索（Constrained Exploration）"
+
+references:
+  - "GitHub Spec Kit — github.com/github/spec-kit"
+  - "OpenSpec — github.com/openspec-ai/openspec"
+  - "Martin Fowler: Spec-Driven Development"
+
+mastery: low

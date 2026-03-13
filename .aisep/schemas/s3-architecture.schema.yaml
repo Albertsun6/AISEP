@@ -1,0 +1,207 @@
+# S3 制品 Schema: 架构设计
+# 验证目标: artifacts/global/architecture.yaml
+
+_meta:
+  schema_id: s3-architecture
+  version: "1.0"
+  stage: s3
+  description: "架构设计 — 技术栈、模块结构、数据模型、安全模型、部署方案。"
+
+schema:
+  root: architecture
+  fields:
+    tech_stack:
+      type: map
+      required: true
+      fields:
+        framework:
+          type: string
+          required: true
+          validation: "须对应 .agents/skills/frameworks/ 下的目录名"
+        language:
+          type: string
+          required: true
+        database:
+          type: string
+          required: true
+        additional:
+          type: list
+          required: false
+          items:
+            type: string
+
+    modules:
+      type: list
+      required: true
+      min_items: 1
+      items:
+        type: map
+        fields:
+          module_name:
+            type: string
+            required: true
+          bounded_context:
+            type: string
+            required: true
+            validation: "须对应 domain-model.yaml 的 Context"
+          relation_to_standard:
+            type: enum
+            required: true
+            enum_values: [inherit, new, depend]
+            validation: "与框架标准模块的关系"
+          dependencies:
+            type: list
+            required: true
+            items:
+              type: string
+          models:
+            type: list
+            required: true
+            min_items: 1
+            items:
+              type: map
+              fields:
+                name:
+                  type: string
+                  required: true
+                  validation: "技术名，如 mrp.bom"
+                business_name:
+                  type: string
+                  required: true
+                  validation: "须对应 glossary.yaml 术语"
+                type:
+                  type: enum
+                  required: true
+                  enum_values: [aggregate_root, entity, value_object, transient]
+                inherit:
+                  type: list
+                  required: false
+                  items:
+                    type: string
+                  validation: "框架 mixin，如 mail.thread"
+                fields:
+                  type: list
+                  required: true
+                  min_items: 1
+                  items:
+                    type: map
+                    fields:
+                      name:
+                        type: string
+                        required: true
+                      type:
+                        type: string
+                        required: true
+                        validation: "字段类型，如 Char, Integer, Many2one 等"
+                      required:
+                        type: boolean
+                        required: false
+                      index:
+                        type: boolean
+                        required: false
+                      description:
+                        type: string
+                        required: false
+                      compute:
+                        type: string
+                        required: false
+                        validation: "计算方法名（如有）"
+                      depends:
+                        type: list
+                        required: false
+                        items:
+                          type: string
+                        validation: "compute 依赖的字段（如有 compute 则必填）"
+                sql_constraints:
+                  type: list
+                  required: false
+                  items:
+                    type: map
+                    fields:
+                      name:
+                        type: string
+                        required: true
+                      definition:
+                        type: string
+                        required: true
+                      message:
+                        type: string
+                        required: true
+                access_control:
+                  type: map
+                  required: true
+                  fields:
+                    groups:
+                      type: list
+                      required: true
+                      items:
+                        type: string
+                    record_rules:
+                      type: list
+                      required: false
+
+    security_model:
+      type: map
+      required: true
+      fields:
+        groups:
+          type: list
+          required: true
+          min_items: 1
+          items:
+            type: map
+            fields:
+              name:
+                type: string
+                required: true
+              implied_groups:
+                type: list
+                required: false
+              description:
+                type: string
+                required: false
+        acl_strategy:
+          type: string
+          required: true
+
+    deployment:
+      type: map
+      required: true
+      fields:
+        target:
+          type: enum
+          required: true
+          enum_values: [docker, bare-metal, cloud]
+        environments:
+          type: list
+          required: true
+          min_items: 1
+          items:
+            type: string
+
+    adr:
+      type: list
+      required: false
+      items:
+        type: string
+      validation: "引用 adr/ 目录下的文件名"
+
+gate_validations:
+  - rule: "tech_stack.framework 须对应 skills/frameworks/ 下的目录"
+    severity: error
+  - rule: "所有 slice-plan 中的 Model 须在 modules.models 中有定义"
+    severity: error
+  - rule: "每个 Model 至少有 1 个字段"
+    severity: error
+  - rule: "有 compute 的字段须有对应的 depends"
+    severity: error
+  - rule: "Many2one 字段建议设 index: true"
+    severity: warning
+  - rule: "每个 Model 须有 access_control 定义"
+    severity: error
+  - rule: "security_model.groups 至少有 1 个 group"
+    severity: error
+  - rule: "模块间依赖关系无环形依赖"
+    severity: error
+  - rule: "business_name 须匹配 glossary.yaml 的 term"
+    severity: warning

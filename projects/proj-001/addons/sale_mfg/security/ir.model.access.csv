@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_res_partner_sale_user,res.partner.sale_user,base.model_res_partner,sale_mfg.group_sale_user,1,1,1,0
+access_sale_order_sale_user,sale.order.sale_user,sale.model_sale_order,sale_mfg.group_sale_user,1,1,1,0
+access_sale_order_line_sale_user,sale.order.line.sale_user,sale.model_sale_order_line,sale_mfg.group_sale_user,1,1,1,1

@@ -1,0 +1,27 @@
+# 命名规范
+naming:
+  # Python
+  model_name: "模块名.业务名（小写点分隔）"    # 如 mrp.bom
+  model_class: "PascalCase"                      # 如 MrpBom
+  field_name: "snake_case"                       # 如 product_qty
+  method_name: "snake_case"                      # 如 action_confirm
+  method_prefix:
+    action: "action_"                            # 按钮触发方法
+    compute: "_compute_"                         # 计算字段方法
+    inverse: "_inverse_"                         # 逆向计算
+    search: "_search_"                           # 自定义搜索
+    onchange: "_onchange_"                       # UI 联动（慎用）
+    check: "_check_"                             # 约束检查
+
+  # XML
+  view_id: "view_{model}_{type}"                 # 如 view_bom_form
+  action_id: "action_{model}"                    # 如 action_bom
+  menu_id: "menu_{module}_{area}"                # 如 menu_mrp_bom
+  sequence_id: "seq_{model}"                     # 如 seq_production_order
+  group_id: "group_{module}_{role}"              # 如 group_mrp_manager
+
+  # 文件
+  python_file: "models/{model_short}.py"         # 如 models/bom.py
+  view_file: "views/{model_short}_views.xml"     # 如 views/bom_views.xml
+  security_file: "security/ir.model.access.csv"
+  data_file: "data/{module}_data.xml"

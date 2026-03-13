@@ -1,0 +1,24 @@
+# learn-011: 上下文围栏（Context Fence）模式
+# 来源：AISEP backlog 落地
+# 日期：2026-03-13
+
+topic: "Context Fence — 上下文围栏模式"
+one_liner: "通过显式声明「不要看什么」（Negative Prompting）来控制 AI 上下文范围，比声明「要看什么」更可靠"
+analogy: "像城市的禁飞区 — 你不需要告诉飞行员每条可飞的航线，只需划出禁区，剩下的空间自由飞行"
+key_insights:
+  - "排除法比包含法更稳定 — AI 可能会自发搜索到不该看的文件，但硬排除可以从入口层拦截"
+  - "围栏随项目生命周期动态变化 — /project switch 自动将旧项目围栏，/project archive 永久围栏"
+  - "白名单例外机制防止过度围栏 — 知识库、进化数据、系统文档始终可跨项目访问"
+
+category: context_engineering
+tags: [context-engineering, negative-prompting, multi-project, isolation]
+source_conversation: "AISEP backlog 落地"
+date: "2026-03-13"
+
+readiness:
+  level: "L0-project"
+  evaluated_at: "2026-03-13"
+  projects_validated: ["proj-001"]
+  reuse_count: 0
+  stability: "untested"
+  promotion_blocked_by: "首次提出，需多项目验证"

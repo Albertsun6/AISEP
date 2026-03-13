@@ -1,0 +1,530 @@
+# S4 制品：Slice 1 详细设计
+# 项目：制造业ERP (proj-001)
+# Slice：SLICE-01 — 销售基础流程 (Walking Skeleton)
+# 生成时间：2026-03-12T21:52:00+08:00
+
+slice_design:
+  slice_id: "SLICE-01"
+  slice_name: "销售基础流程"
+  description: "客户管理 + 报价单 → 销售订单全流程。验证 Odoo 17 技术栈可行性。"
+  bounded_context: "销售管理"
+  module: "sale_mfg"
+
+  stories:
+    - "US-036"  # 创建客户
+    - "US-037"  # 查看客户列表
+    - "US-032"  # 创建报价单
+    - "US-033"  # 确认销售订单
+    - "US-034"  # 查看销售订单列表
+    - "US-035"  # 查看销售订单详情与发货状态
+
+  # ══════════════════════════════════════════════════════════════
+  # Model 详细设计
+  # ══════════════════════════════════════════════════════════════
+  models:
+    # ── res.partner (客户) ──
+    # 继承标准 res.partner，本 Slice 仅使用 customer 特性
+    - name: "res.partner"
+      class_name: "ResPartner"
+      inherit: "res.partner"
+      _inherit_type: "class"           # _inherit = 'res.partner'，无 _name
+      related_stories: ["US-036", "US-037"]
+      slice_scope_note: "本 Slice 仅处理客户侧。供应商侧在 Slice 3 处理。"
+
+      fields:
+        # 本 Slice 使用的标准字段（无需新增代码，仅列出用到的）
+        - name: "name"
+          type: "Char"
+          string: "客户名称"
+          required: true
+          index: true
+          source: inherited
+        - name: "phone"
+          type: "Char"
+          string: "电话"
+          source: inherited
+        - name: "email"
+          type: "Char"
+          string: "邮箱"
+          source: inherited
+        - name: "street"
+          type: "Char"
+          string: "地址"
+          source: inherited
+        - name: "city"
+          type: "Char"
+          string: "城市"
+          source: inherited
+        - name: "customer_rank"
+          type: "Integer"
+          string: "客户等级"
+          source: inherited
+          note: "创建客户时自动设为 1"
+        - name: "property_payment_term_id"
+          type: "Many2one"
+          comodel: "account.payment.term"
+          string: "付款条件"
+          source: inherited
+
+      methods:
+        # 本 Slice 无需 override 任何方法
+        # Odoo 标准的 create/write/search 已满足 US-036/037 需求
+        []
+
+      constraints:
+        # 标准约束：name 非空（已由 required=True 保证）
+        sql_constraints: []
+        api_constrains: []
+
+    # ── sale.order (销售订单/报价单) ──
+    - name: "sale.order"
+      class_name: "SaleOrder"
+      inherit: "sale.order"
+      _inherit_type: "class"
+      related_stories: ["US-032", "US-033", "US-034", "US-035"]
+
+      fields:
+        # === 标准字段（本 Slice 使用） ===
+        - name: "partner_id"
+          type: "Many2one"
+          comodel: "res.partner"
+          string: "客户"
+          required: true
+          index: true
+          domain: "[('customer_rank', '>', 0)]"
+          source: inherited
+        - name: "order_line"
+          type: "One2many"
+          comodel: "sale.order.line"
+          inverse_name: "order_id"
+          string: "订单行"
+          source: inherited
+        - name: "pricelist_id"
+          type: "Many2one"
+          comodel: "product.pricelist"
+          string: "价目表"
+          source: inherited
+          note: "本 Slice 使用默认价目表，Slice 7 实现自定义价目表"
+        - name: "state"
+          type: "Selection"
+          selection: "[('draft','报价单'),('sent','已发送'),('sale','销售订单'),('done','已锁定'),('cancel','已取消')]"
+          string: "状态"
+          default: "draft"
+          source: inherited
+        - name: "name"
+          type: "Char"
+          string: "订单编号"
+          readonly: true
+          source: inherited
+          note: "自动生成序列号（S00001 格式）"
+        - name: "date_order"
+          type: "Datetime"
+          string: "订单日期"
+          required: true
+          index: true
+          source: inherited
+        - name: "amount_untaxed"
+          type: "Monetary"
+          string: "未税金额"
+          compute: "_amount_all"
+          store: true
+          source: inherited
+        - name: "amount_total"
+          type: "Monetary"
+          string: "总金额"
+          compute: "_amount_all"
+          store: true
+          source: inherited
+        - name: "picking_ids"
+          type: "One2many"
+          comodel: "stock.picking"
+          string: "发货单"
+          source: inherited
+          note: "本 Slice 仅展示发货单状态（只读），Slice 2 实现实际发货"
+
+        # === 自定义字段 ===
+        - name: "delivery_status"
+          type: "Selection"
+          selection: "[('pending','待发货'),('partial','部分发货'),('full','已全部发货')]"
+          string: "发货状态"
+          compute: "_compute_delivery_status"
+          store: true
+          depends: ["picking_ids.state"]
+          source: custom
+
+      methods:
+        - name: "action_confirm"
+          trigger: "button"
+          description: "确认报价单 → 转为销售订单"
+          business_rule: |
+            1. 调用 super().action_confirm() 执行标准确认逻辑
+            2. 标准逻辑自动：状态 draft → sale，生成发货单（stock.picking）
+            3. 本 Slice 无额外自定义逻辑
+          related_story: "US-033"
+          override: false  # 本 Slice 使用标准行为，不需要 override
+
+        - name: "_compute_delivery_status"
+          trigger: "compute"
+          description: "根据关联发货单状态计算发货进度"
+          business_rule: |
+            for order in self:
+                pickings = order.picking_ids
+                if not pickings:
+                    order.delivery_status = 'pending'
+                elif all(p.state == 'done' for p in pickings):
+                    order.delivery_status = 'full'
+                elif any(p.state == 'done' for p in pickings):
+                    order.delivery_status = 'partial'
+                else:
+                    order.delivery_status = 'pending'
+          related_story: "US-035"
+          override: true   # 自定义计算字段
+
+      constraints:
+        sql_constraints: []
+        api_constrains: []
+        note: "标准 sale.order 已有 amount 非负等约束"
+
+    # ── sale.order.line (销售订单行) ──
+    - name: "sale.order.line"
+      class_name: "SaleOrderLine"
+      inherit: "sale.order.line"
+      _inherit_type: "class"
+      related_stories: ["US-032"]
+
+      fields:
+        - name: "order_id"
+          type: "Many2one"
+          comodel: "sale.order"
+          string: "销售订单"
+          required: true
+          index: true
+          ondelete: "cascade"
+          source: inherited
+        - name: "product_id"
+          type: "Many2one"
+          comodel: "product.product"
+          string: "产品"
+          required: true
+          index: true
+          source: inherited
+        - name: "product_uom_qty"
+          type: "Float"
+          string: "数量"
+          required: true
+          default: 1.0
+          source: inherited
+        - name: "price_unit"
+          type: "Float"
+          string: "单价"
+          required: true
+          source: inherited
+          note: "如客户有价目表，选择产品时自动填充单价"
+        - name: "discount"
+          type: "Float"
+          string: "折扣(%)"
+          default: 0.0
+          source: inherited
+        - name: "price_subtotal"
+          type: "Monetary"
+          string: "小计"
+          compute: "_compute_amount"
+          store: true
+          source: inherited
+
+      methods:
+        - name: "product_id_change"
+          trigger: "onchange"
+          description: "选择产品时自动填充单价和名称"
+          business_rule: |
+            标准 onchange 逻辑：
+            1. 根据产品 + 价目表获取单价
+            2. 自动填充产品描述
+            本 Slice 使用标准行为，无 override
+          related_story: "US-032 (AC: 产品已配置价目表时，单价自动填充)"
+          override: false
+
+      constraints:
+        sql_constraints:
+          - name: "qty_positive"
+            expression: "CHECK(product_uom_qty > 0)"
+            message: "销售数量必须大于零"
+        api_constrains:
+          - name: "_check_product_uom_qty"
+            fields: ["product_uom_qty"]
+            rule: "数量 ≤ 0 时阻止保存"
+            related_story: "US-032 (AC: 数量 ≤ 0 → 系统阻止保存)"
+
+  # ══════════════════════════════════════════════════════════════
+  # View 设计
+  # ══════════════════════════════════════════════════════════════
+  views:
+    # ── 客户 Views ──
+    - id: "view_partner_customer_form"
+      type: "form"
+      model: "res.partner"
+      inherit_id: null                   # 使用标准 form 视图
+      note: "标准 res.partner form 已满足需求，无需自定义"
+      key_elements:
+        - "name (必填)"
+        - "phone"
+        - "email"
+        - "street / city"
+        - "property_payment_term_id"
+
+    - id: "view_partner_customer_tree"
+      type: "tree"
+      model: "res.partner"
+      inherit_id: null
+      note: "标准 tree 视图已满足，通过 Action domain 过滤只显示客户"
+      key_elements:
+        - "name"
+        - "phone"
+        - "email"
+        - "city"
+
+    - id: "view_partner_customer_search"
+      type: "search"
+      model: "res.partner"
+      inherit_id: null
+      note: "标准 search 视图已满足搜索需求"
+      key_elements:
+        - "name（搜索）"
+        - "phone（搜索）"
+        - "email（搜索）"
+
+    # ── 销售订单 Views ──
+    - id: "view_sale_order_form_inherit"
+      type: "form"
+      model: "sale.order"
+      inherit_id: "sale.view_order_form"
+      description: "继承标准销售订单表单，添加发货状态字段"
+      layout:
+        header:
+          - statusbar: "state (draft → sent → sale → done)"
+          - button: "action_confirm (确认 → 仅 draft 状态可见)"
+        sheet:
+          group_left:
+            - "partner_id (客户)"
+            - "date_order (订单日期)"
+          group_right:
+            - "delivery_status (发货状态，自定义)"
+          notebook:
+            - page: "订单明细"
+              content: "order_line (tree editable=bottom)"
+              columns: ["product_id", "product_uom_qty", "price_unit", "discount", "price_subtotal"]
+            - page: "其他信息"
+              content: "pricelist_id"
+          totals:
+            - "amount_untaxed"
+            - "amount_total"
+
+    - id: "view_sale_order_tree"
+      type: "tree"
+      model: "sale.order"
+      inherit_id: "sale.view_quotation_tree"
+      note: "继承标准列表，添加 delivery_status 列"
+      key_elements:
+        - "name (订单编号)"
+        - "partner_id (客户)"
+        - "date_order (日期)"
+        - "amount_total (总金额)"
+        - "state (状态)"
+        - "delivery_status (发货状态，自定义)"
+
+    - id: "view_sale_order_search"
+      type: "search"
+      model: "sale.order"
+      inherit_id: "sale.sale_order_view_search_inherit_sale"
+      note: "标准搜索 + 按状态筛选"
+      key_elements:
+        - "name（搜索）"
+        - "partner_id（搜索）"
+        - filter: "state = draft → 报价单"
+        - filter: "state = sale → 销售订单"
+        - group_by: "partner_id"
+        - group_by: "state"
+
+  # ══════════════════════════════════════════════════════════════
+  # Menu 与 Action 设计
+  # ══════════════════════════════════════════════════════════════
+  menus:
+    # 顶级菜单：使用 Odoo 标准的 "销售" 菜单
+    - id: "menu_sale_root"
+      name: "销售"
+      source: "sale.sale_menu_root"      # Odoo 标准菜单
+      note: "使用标准销售模块的顶级菜单"
+
+    # 子菜单 1：客户
+    - id: "menu_sale_mfg_customers"
+      name: "客户"
+      parent: "sale.sale_menu_root"
+      action: "action_sale_mfg_customers"
+      sequence: 20
+      groups: ["sale_mfg.group_sale_user"]
+
+    # 子菜单 2：报价单（标准已有）
+    - id: "menu_sale_quotations"
+      name: "报价单"
+      source: "sale.menu_sale_quotations"
+      note: "使用标准报价单菜单"
+
+    # 子菜单 3：销售订单（标准已有）
+    - id: "menu_sale_orders"
+      name: "销售订单"
+      source: "sale.menu_sale_order"
+      note: "使用标准销售订单菜单"
+
+  actions:
+    - id: "action_sale_mfg_customers"
+      name: "客户"
+      type: "ir.actions.act_window"
+      res_model: "res.partner"
+      view_mode: "tree,form"
+      domain: "[('customer_rank', '>', 0)]"
+      context: "{'default_customer_rank': 1}"
+      help: "创建和管理您的客户信息。"
+
+  # ══════════════════════════════════════════════════════════════
+  # Wizard 设计
+  # ══════════════════════════════════════════════════════════════
+  wizards: []   # Slice 1 无向导需求
+
+  # ══════════════════════════════════════════════════════════════
+  # Security 细化
+  # ══════════════════════════════════════════════════════════════
+  security:
+    groups:
+      - id: "group_sale_user"
+        name: "销售用户"
+        category: "sale_mfg"
+        implied_ids: ["base.group_user"]
+
+    acl:
+      # id, name, model_id:id, group_id:id, read, write, create, unlink
+      - id: "access_partner_sale_user"
+        model: "res.partner"
+        group: "sale_mfg.group_sale_user"
+        perm: { read: 1, write: 1, create: 1, unlink: 0 }
+
+      - id: "access_sale_order_sale_user"
+        model: "sale.order"
+        group: "sale_mfg.group_sale_user"
+        perm: { read: 1, write: 1, create: 1, unlink: 0 }
+
+      - id: "access_sale_order_line_sale_user"
+        model: "sale.order.line"
+        group: "sale_mfg.group_sale_user"
+        perm: { read: 1, write: 1, create: 1, unlink: 1 }
+
+    record_rules:
+      - id: "rule_sale_order_company"
+        name: "销售订单：当前公司"
+        model: "sale.order"
+        domain: "[('company_id', 'in', company_ids)]"
+        groups: ["sale_mfg.group_sale_user"]
+
+  # ══════════════════════════════════════════════════════════════
+  # Demo 数据
+  # ══════════════════════════════════════════════════════════════
+  data:
+    - file: "demo/sale_mfg_demo.xml"
+      type: demo
+      description: |
+        演示数据：
+        - 3 个客户（大华制造、明远科技、鑫诚贸易）
+        - 3 个产品（成品A、成品B、成品C）— 使用标准 product.product
+        - 2 个报价单（1 个草稿、1 个已确认为订单）
+
+  # ══════════════════════════════════════════════════════════════
+  # 依赖关系
+  # ══════════════════════════════════════════════════════════════
+  dependencies:
+    upstream_slices: []                  # Walking Skeleton — 零依赖
+    external_modules:
+      - "sale_management"                # Odoo 标准销售模块
+      - "stock"                          # 发货单（picking_ids 只读展示）
+      - "product"                        # 产品主数据
+    notes: |
+      Slice 1 是 Walking Skeleton，独立可运行。
+      stock 模块在本 Slice 中仅用于展示发货状态（只读），
+      实际出入库操作在 Slice 2 实现。
+
+  # ══════════════════════════════════════════════════════════════
+  # Slice 1 文件清单（S5 代码生成用）
+  # ══════════════════════════════════════════════════════════════
+  file_manifest:
+    module_root: "addons/sale_mfg/"
+    files:
+      - path: "__init__.py"
+        action: create
+        content_hint: "from . import models"
+      - path: "__manifest__.py"
+        action: create
+        content_hint: "name, version, depends, data list"
+      - path: "models/__init__.py"
+        action: create
+        content_hint: "from . import sale_order"
+      - path: "models/sale_order.py"
+        action: create
+        content_hint: "SaleOrder(_inherit='sale.order') + delivery_status compute"
+      - path: "models/sale_order_line.py"
+        action: create
+        content_hint: "SaleOrderLine(_inherit='sale.order.line') + qty constraint"
+      - path: "views/sale_order_views.xml"
+        action: create
+        content_hint: "form inherit + tree inherit (添加 delivery_status)"
+      - path: "views/sale_mfg_menus.xml"
+        action: create
+        content_hint: "客户菜单 + action (domain customer_rank)"
+      - path: "security/ir.model.access.csv"
+        action: create
+        content_hint: "3 ACL rules (partner, sale.order, sale.order.line)"
+      - path: "security/sale_mfg_security.xml"
+        action: create
+        content_hint: "group_sale_user + company record rule"
+      - path: "demo/sale_mfg_demo.xml"
+        action: create
+        content_hint: "3 customers + 2 quotations"
+    total_files: 10
+    estimated_lines: "300-450"
+
+  # ══════════════════════════════════════════════════════════════
+  # Story ↔ 设计追溯矩阵
+  # ══════════════════════════════════════════════════════════════
+  traceability:
+    - story: "US-036 创建客户"
+      model: "res.partner"
+      view: "form (标准)"
+      method: "create (标准)"
+      ac_coverage: "name required + 标准字段 → ✅"
+
+    - story: "US-037 查看客户列表"
+      model: "res.partner"
+      view: "tree (标准) + search (标准)"
+      method: "search (标准)"
+      ac_coverage: "tree columns + search → ✅"
+
+    - story: "US-032 创建报价单"
+      model: "sale.order + sale.order.line"
+      view: "form (继承) + order_line tree"
+      method: "create (标准) + product_id_change (标准)"
+      ac_coverage: "partner 选择 + 产品行添加 + 总金额计算 + 数量校验 + 价目表自动填充 → ✅"
+
+    - story: "US-033 确认销售订单"
+      model: "sale.order"
+      view: "form header button"
+      method: "action_confirm (标准)"
+      ac_coverage: "draft → sale + 生成发货单 → ✅"
+
+    - story: "US-034 查看销售订单列表"
+      model: "sale.order"
+      view: "tree (继承) + search (继承)"
+      method: "search (标准)"
+      ac_coverage: "订单列表 + 状态筛选 → ✅"
+
+    - story: "US-035 查看订单详情与发货状态"
+      model: "sale.order"
+      view: "form (继承)"
+      method: "_compute_delivery_status (自定义)"
+      ac_coverage: "产品明细 + 发货单状态展示 → ✅"

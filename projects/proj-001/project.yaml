@@ -1,0 +1,49 @@
+# 项目元数据
+project:
+  id: "proj-001"
+  name: "制造业ERP"
+  description: "面向中小型制造企业的一体化企业资源计划系统，覆盖生产、采购、库存、销售核心模块"
+  tech_stack: "odoo17"
+
+  _meta:
+    template_version: "1.0"
+    created_at: "2026-03-12T18:05:00+08:00"
+    source_idea: "idea-001"
+
+  pipeline_state:
+    current_stage: "s5-implementation"  # Slice 4 S4+S5 完成，等待 Slice 5
+    stages:
+      s0: { status: "completed", gate_passed: true, completed_at: "2026-03-12T18:29:00+08:00" }
+      s1: { status: "completed", gate_passed: true, completed_at: "2026-03-12T19:37:00+08:00" }
+      s2: { status: "completed", gate_passed: true, completed_at: "2026-03-12T21:20:00+08:00" }
+      s3: { status: "completed", gate_passed: true, completed_at: "2026-03-12T21:36:00+08:00" }
+      s4:
+        status: "in_progress"
+        gate_passed: false
+        slices_completed:
+          - { id: "SLICE-01", module: "sale_mfg", completed_at: "2026-03-12T21:57:00+08:00" }
+          - { id: "SLICE-02", module: "stock_mfg", completed_at: "2026-03-12T22:05:00+08:00" }
+          - { id: "SLICE-03", module: "purchase_mfg", completed_at: "2026-03-12T22:51:00+08:00" }
+          - { id: "SLICE-04", module: "mrp_mfg", completed_at: "2026-03-12T23:10:00+08:00" }
+        slices_pending: ["SLICE-05", "SLICE-06", "SLICE-07"]
+      s5:
+        status: "in_progress"
+        gate_passed: false
+        note: "与 S4 同步推进，按 Slice 循环"
+      s6: { status: "pending", gate_passed: false }
+      s7: { status: "pending", gate_passed: false }
+
+  target_modules:
+    - 生产管理
+    - 采购管理
+    - 库存管理
+    - 销售管理
+
+  constraints:
+    budget: ""
+    timeline: ""
+    team_size: 0                # AI 辅助开发，无人工开发团队
+    development_mode: "ai-assisted"
+
+  existing_system: "Excel"      # 当前使用 Excel 管理业务 → S1 将触发 Gap 分析
+  tags: [erp, manufacturing, odoo]

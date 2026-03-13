@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ══════════════════════════════════════════════════════════════
+         purchase_mfg: 菜单和 Action 定义
+         ══════════════════════════════════════════════════════════════ -->
+
+    <!-- 供应商列表 Action -->
+    <record id="action_purchase_mfg_vendors" model="ir.actions.act_window">
+        <field name="name">供应商</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('supplier_rank', '&gt;', 0)]</field>
+        <field name="context">{'default_supplier_rank': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                创建您的第一个供应商
+            </p>
+            <p>创建和管理您的供应商信息。</p>
+        </field>
+    </record>
+
+    <!-- 供应商子菜单（挂在标准采购菜单下） -->
+    <menuitem id="menu_purchase_mfg_vendors"
+              name="供应商"
+              parent="purchase.menu_purchase_root"
+              action="action_purchase_mfg_vendors"
+              sequence="20"
+              groups="purchase_mfg.group_purchase_user"/>
+
+</odoo>

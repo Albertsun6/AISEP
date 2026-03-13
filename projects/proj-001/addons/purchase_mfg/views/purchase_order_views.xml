@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ══════════════════════════════════════════════════════════════
+         purchase_mfg: 采购订单视图扩展
+         继承标准 purchase 视图，添加 receipt_status 字段
+         ══════════════════════════════════════════════════════════════ -->
+
+    <!-- Form 视图继承 — 添加收货状态字段 -->
+    <record id="view_purchase_order_form_inherit_mfg" model="ir.ui.view">
+        <field name="name">purchase.order.form.inherit.mfg</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_form"/>
+        <field name="priority">20</field>
+        <field name="arch" type="xml">
+            <!-- 在 partner_id 之后添加收货状态 -->
+            <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="receipt_status"
+                       widget="badge"
+                       decoration-info="receipt_status == 'pending'"
+                       decoration-warning="receipt_status == 'partial'"
+                       decoration-success="receipt_status == 'full'"
+                       readonly="1"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Tree 视图继承 — 在列表中添加收货状态列 -->
+    <record id="view_purchase_order_tree_inherit_mfg" model="ir.ui.view">
+        <field name="name">purchase.order.tree.inherit.mfg</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_kpis_tree"/>
+        <field name="priority">20</field>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='state']" position="before">
+                <field name="receipt_status"
+                       widget="badge"
+                       decoration-info="receipt_status == 'pending'"
+                       decoration-warning="receipt_status == 'partial'"
+                       decoration-success="receipt_status == 'full'"
+                       optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

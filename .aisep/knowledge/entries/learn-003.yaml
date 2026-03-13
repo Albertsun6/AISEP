@@ -1,0 +1,28 @@
+id: "learn-003"
+title: "规则生命周期管理"
+date: "2026-03-12"
+source_conversation: "2ee2bc90-2a34-4c0e-a2cd-4c955eec8fa1"
+
+category: methodology
+tags: [生命周期, 规则管理, 进化, 渐进式]
+
+one_liner: "规则和软件一样有生老病死——draft → trial → active → deprecated → archived"
+
+analogy: |
+  就像餐厅手册里的菜品规定：
+  新规则先试一个月（trial），效果好就转正（active），
+  半年没人用就标记"待清理"（deprecated），最后归档保留记录。
+  重点是：归档不等于删除——保留历史原因和教训。
+
+key_insights:
+  - "只增不减的规则库最终会变成负担——过时规则产生噪声"
+  - "trial 阶段是关键：新规则需要 3 个 Gate 的观察期才能正式化"
+  - "Sunset 机制：6 个月未触发的规则自动标记为 review candidate"
+  - "进化机制应该和系统一起长大，不要过早过度设计"
+
+related_concepts:
+  - "YAGNI（You Aren't Gonna Need It）"
+  - "Technical Debt（技术债务）"
+  - "learn-002: 摩擦即特性"
+
+mastery: high

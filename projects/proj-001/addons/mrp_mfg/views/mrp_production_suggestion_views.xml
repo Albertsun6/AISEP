@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ══════════════════════════════════════════════════
+         生产建议向导 — Form View
+         ══════════════════════════════════════════════════ -->
+    <record id="view_mrp_production_suggestion_form" model="ir.ui.view">
+        <field name="name">mrp.production.suggestion.form</field>
+        <field name="model">mrp.production.suggestion</field>
+        <field name="arch" type="xml">
+            <form string="生产建议">
+                <group>
+                    <p class="text-muted">
+                        根据已确认的销售订单和当前库存，计算需要生产的产品和数量。
+                    </p>
+                </group>
+                <group>
+                    <button name="action_compute_suggestions"
+                            type="object"
+                            string="计算生产建议"
+                            class="btn-primary"
+                            icon="fa-calculator"/>
+                </group>
+                <field name="suggestion_line_ids" nolabel="1"
+                       invisible="not suggestion_line_ids">
+                    <tree editable="bottom">
+                        <field name="selected"/>
+                        <field name="product_id"/>
+                        <field name="demand_qty"/>
+                        <field name="available_qty"/>
+                        <field name="shortage_qty"
+                               decoration-danger="shortage_qty > 0"/>
+                        <field name="bom_id"/>
+                    </tree>
+                </field>
+                <footer>
+                    <button name="action_create_productions"
+                            type="object"
+                            string="创建生产工单"
+                            class="btn-primary"
+                            invisible="not suggestion_line_ids"
+                            icon="fa-industry"/>
+                    <button string="关闭" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════
+         Action — 打开向导
+         ══════════════════════════════════════════════════ -->
+    <record id="action_mrp_production_suggestion" model="ir.actions.act_window">
+        <field name="name">生产建议</field>
+        <field name="res_model">mrp.production.suggestion</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════
+         菜单 — 添加到制造模块
+         ══════════════════════════════════════════════════ -->
+    <menuitem id="menu_mrp_production_suggestion"
+              name="生产建议"
+              parent="mrp.menu_mrp_manufacturing"
+              action="action_mrp_production_suggestion"
+              sequence="30"/>
+
+</odoo>

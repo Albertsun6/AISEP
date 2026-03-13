@@ -1,0 +1,13 @@
+# S0 制品模板：项目初始化
+# 输出文件：artifacts/global/project.yaml
+project:
+  name: ""                   # 项目名称
+  description: ""            # 一句话描述
+  tech_stack: ""             # 可选，留空则 S3 前确定
+  target_modules: []         # 初步模块列表
+  constraints:
+    budget: ""               # 预算约束
+    timeline: ""             # 时间约束
+    team_size: null          # 团队规模
+  existing_system: ""        # 可选：现有系统描述
+  tags: []                   # 可选标签

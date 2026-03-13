@@ -1,0 +1,159 @@
+---
+description: "S4 Slice 详细设计"
+context:
+  always:
+    - "AISEP.md"
+    - "constitution.md"
+    - "glossary.yaml"
+  load:
+    - "artifacts/global/architecture.yaml"
+    - "artifacts/global/slice-plan.yaml"
+    - "slices/{current-slice}/design.yaml"
+    - ".aisep/templates/artifacts/s4-slice-design.tmpl.yaml"
+  load_summary:
+    - "artifacts/global/domain-model.yaml"
+    - "artifacts/global/functional.yaml"
+  exclude:
+    - "history/**"
+    - "slices/{other-slices}/**"
+    - "changes/**"
+---
+
+# S4: Slice 详细设计
+
+> [!IMPORTANT]
+> S4-S6 按 Slice 循环迭代。每个 Slice 走完 S4→S5→S6 后才进入下一个 Slice。
+
+## 前置条件
+
+- S3 Gate 已通过（首次进入 S4 时）
+- 或上一个 Slice 的 S6 Gate 已通过（Slice 2+ 时）
+- `architecture.yaml` 存在且包含当前 Slice 涉及的 Model 定义
+- 当前 Slice 依赖的 Slice 均已完成
+
+## 输入
+
+- `architecture.yaml`（完整）— 全局数据模型 + 安全模型
+- `slice-plan.yaml`（完整）— 当前 Slice 的范围定义
+- 当前 Slice 包含的 Story 列表（从 `functional.yaml` 筛选）
+- Framework Skill（Odoo17 等）
+
+---
+
+## Slice 迭代上下文
+
+### 首个 Slice vs 后续 Slice
+
+```
+Slice 1（首个）：
+  ✅ 可参考：architecture.yaml 的全局 Model 定义
+  ✅ 无前置 Slice 依赖
+  ⚠️ 需确保设计可独立运行（Walking Skeleton 起点）
+
+Slice N（N ≥ 2）：
+  ✅ 可参考：已完成 Slice 的 design.yaml（load_summary 模式）
+  ✅ 可引用：已完成 Slice 的 Model（跨 Slice 关系）
+  ⚠️ 需检查与已有 Model 的兼容性（字段不冲突）
+  ⚠️ 需更新已有模块的 __manifest__.py depends
+```
+
+---
+
+## 活动
+
+### 步骤 1: 确定设计范围
+
+**AI 执行指引**：
+1. 从 `slice-plan.yaml` 读取当前 Slice 的 `models` 和 `stories` 列表
+2. 从 `architecture.yaml` 获取这些 Model 的全局字段定义
+3. 从 `functional.yaml` 获取对应 Story 的验收标准
+
+### 步骤 2: Model 详细设计
+
+**AI 执行指引**：
+1. 在 `architecture.yaml` 定义的基础上，细化每个 Model：
+   - 字段的 `string`（显示名称，使用 glossary 术语）
+   - 计算字段的 `compute` 方法逻辑（伪代码级）
+   - `_sql_constraints` 和 `@api.constrains` 的具体规则
+   - `write` / `create` override 的业务逻辑（如有）
+2. 参照 Framework Skill 的 `best-practices.md` 和 `pitfalls.md`
+
+**交互节点**：
+- 🗣️ 逐 Model 展示设计，用户确认业务规则是否正确
+
+### 步骤 3: View 设计
+
+**AI 执行指引**：
+1. 每个 Model 设计所需的视图类型：
+   - `form` — 表单视图（字段分组、按钮、状态栏）
+   - `tree` — 列表视图（列选择、默认排序）
+   - `kanban` — 看板视图（如有状态流转）
+   - `search` — 搜索视图（过滤器、分组）
+2. 设计字段分组（Notebook tabs / Group labels）
+3. 参照 Framework Skill 的 View 设计规范
+
+### 步骤 4: Menu 与 Action 设计
+
+**AI 执行指引**：
+1. 设计菜单结构（顶级菜单 → 子菜单 → Action）
+2. 定义 Action 的默认视图顺序（tree,form 或 kanban,tree,form）
+3. XML ID 命名需符合 `naming.yaml`（`menu_*`, `action_*`）
+
+### 步骤 5: Wizard 设计（如有）
+
+**触发条件**：Story 的验收标准涉及"弹窗"、"向导"、"批量操作"等场景
+
+**AI 执行指引**：
+1. 设计 TransientModel（临时模型）的字段
+2. 设计 Wizard 的触发方式（按钮 → action）
+3. 设计 Wizard 的执行逻辑
+
+### 步骤 6: Security 设计
+
+**AI 执行指引**：
+1. 从 `architecture.yaml` 的安全模型中提取当前 Slice 涉及的规则
+2. 细化 `ir.model.access.csv` 的具体行
+3. 细化 Record Rules 的 domain 表达式
+
+### 步骤 7: 依赖关系检查
+
+**AI 执行指引**：
+1. 检查当前 Slice 的 Model 是否引用了其他 Slice 的 Model
+2. 引用的 Model 所在 Slice 是否已完成？
+3. 如引用标准模块 → 确认 `depends` 列表
+
+**异常处理**：
+- 发现循环依赖 → 报告给用户，建议调整 Slice 划分
+
+---
+
+## 输出
+
+- `artifacts/slices/{slice-name}/design.yaml`（按 `s4-slice-design.tmpl.yaml` 格式）
+
+## Gate 检查清单
+
+### Model 设计
+- [ ] 所有 Story 是否都有对应的 Model 设计？
+- [ ] 字段类型是否正确？（参照 Framework Skill）
+- [ ] 计算字段的 depends 是否完整？
+- [ ] 业务规则约束是否明确？
+
+### View 设计
+- [ ] 每个 Model 是否有必要的视图（至少 form + tree）？
+- [ ] 表单分组是否合理？
+- [ ] 必填字段是否在 form 中标注？
+
+### 安全
+- [ ] ACL 定义是否完整（每个 Model × 每个 Group）？
+- [ ] Record Rules 是否定义（如需要行级权限）？
+
+### 依赖
+- [ ] 依赖的 Slice 是否已完成？
+- [ ] `depends` 列表是否正确？
+
+## Gate 通过后
+
+1. **状态更新**：`pipeline_state` 中记录当前 Slice 的 S4 已完成
+2. **推进**：进入当前 Slice 的 S5（代码实现）
+3. **Gate 日志**：追加记录（含 slice_id）

@@ -1,0 +1,42 @@
+# ═══════════════════════════════════════
+# AISEP 项目 .gitignore
+# ═══════════════════════════════════════
+
+# ── 系统文件 ──
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Python ──
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+.eggs/
+dist/
+build/
+*.egg
+.venv/
+venv/
+.env
+
+# ── Node.js ──
+node_modules/
+npm-debug.log*
+yarn-error.log
+.pnpm-debug.log
+
+# ── Docker ──
+*.log
+
+# ── IDE ──
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+
+# ── Odoo 运行时 ──
+filestore/
+sessions/
+*.pyc

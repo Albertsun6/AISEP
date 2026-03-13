@@ -1,0 +1,512 @@
+# S4 制品：Slice 3 详细设计
+# 项目：制造业ERP (proj-001)
+# Slice：SLICE-03 — 采购全流程
+# 生成时间：2026-03-12T22:20:00+08:00
+
+slice_design:
+  slice_id: "SLICE-03"
+  slice_name: "采购全流程"
+  description: "供应商管理 + 询价 → 采购订单 → 收货验收全流程"
+  bounded_context: "采购管理"
+  module: "purchase_mfg"
+
+  stories:
+    - "US-014"  # 创建供应商
+    - "US-015"  # 查看供应商列表
+    - "US-017"  # 创建询价单
+    - "US-018"  # 确认采购订单
+    - "US-019"  # 查看采购订单列表
+    - "US-021"  # 执行收货验收
+
+  # ══════════════════════════════════════════════════════════════
+  # Model 详细设计
+  # ══════════════════════════════════════════════════════════════
+  models:
+    # ── res.partner (供应商) ──
+    # 注意：res.partner 已在 sale_mfg (Slice 1) 中使用。
+    # 本 Slice 处理供应商侧（supplier_rank），与 Slice 1 的客户侧互不冲突。
+    # 无需在 purchase_mfg 中重新定义 res.partner Model，仅通过 Action domain 区分。
+    - name: "res.partner"
+      class_name: "ResPartner"
+      inherit: "res.partner"
+      _inherit_type: "class"           # _inherit = 'res.partner'
+      related_stories: ["US-014", "US-015"]
+      slice_scope_note: |
+        供应商与客户共用 res.partner。区分方式：
+        - 供应商：supplier_rank > 0（创建时 default_supplier_rank=1）
+        - 客户：customer_rank > 0（Slice 1 已处理）
+        本 Slice 无需新增字段或覆写方法，标准模型已满足需求。
+
+      fields:
+        # 标准字段（无需新增代码，列出本 Slice 使用的）
+        - name: "name"
+          type: "Char"
+          string: "供应商名称"
+          required: true
+          index: true
+          source: inherited
+        - name: "phone"
+          type: "Char"
+          string: "电话"
+          source: inherited
+        - name: "email"
+          type: "Char"
+          string: "邮箱"
+          source: inherited
+        - name: "street"
+          type: "Char"
+          string: "地址"
+          source: inherited
+        - name: "supplier_rank"
+          type: "Integer"
+          string: "供应商等级"
+          source: inherited
+          note: "创建供应商时通过 context default 设为 1"
+        - name: "property_payment_term_id"
+          type: "Many2one"
+          comodel: "account.payment.term"
+          string: "付款条件"
+          source: inherited
+
+      methods: []
+      constraints:
+        sql_constraints: []
+        api_constrains: []
+
+    # ── purchase.order (采购订单/询价单) ──
+    - name: "purchase.order"
+      class_name: "PurchaseOrder"
+      inherit: "purchase.order"
+      _inherit_type: "class"
+      related_stories: ["US-017", "US-018", "US-019", "US-021"]
+
+      fields:
+        # === 标准字段（本 Slice 使用） ===
+        - name: "partner_id"
+          type: "Many2one"
+          comodel: "res.partner"
+          string: "供应商"
+          required: true
+          index: true
+          domain: "[('supplier_rank', '>', 0)]"
+          source: inherited
+        - name: "order_line"
+          type: "One2many"
+          comodel: "purchase.order.line"
+          inverse_name: "order_id"
+          string: "订单行"
+          source: inherited
+        - name: "picking_ids"
+          type: "One2many"
+          comodel: "stock.picking"
+          inverse_name: "purchase_id"
+          string: "收货单"
+          source: inherited
+        - name: "state"
+          type: "Selection"
+          selection: "[('draft','询价单'),('sent','已发送'),('purchase','采购订单'),('done','已锁定'),('cancel','已取消')]"
+          string: "状态"
+          default: "draft"
+          source: inherited
+        - name: "name"
+          type: "Char"
+          string: "订单编号"
+          readonly: true
+          source: inherited
+          note: "自动生成序列号（P00001 格式）"
+        - name: "date_order"
+          type: "Datetime"
+          string: "订单日期"
+          required: true
+          index: true
+          source: inherited
+        - name: "amount_total"
+          type: "Monetary"
+          string: "总金额"
+          compute: "_amount_all"
+          store: true
+          source: inherited
+
+        # === 自定义字段 ===
+        - name: "receipt_status"
+          type: "Selection"
+          selection: "[('pending','待收货'),('partial','部分收货'),('full','已全部收货')]"
+          string: "收货状态"
+          compute: "_compute_receipt_status"
+          store: true
+          depends: ["picking_ids.state"]
+          source: custom
+
+      methods:
+        - name: "button_confirm"
+          trigger: "button"
+          description: "确认询价单 → 转为采购订单"
+          business_rule: |
+            1. 调用 super().button_confirm() 执行标准确认逻辑
+            2. 标准逻辑自动：状态 draft → purchase，生成收货单（stock.picking）
+            3. 本 Slice 无额外自定义逻辑
+          related_story: "US-018"
+          override: false  # 使用标准行为
+
+        - name: "_compute_receipt_status"
+          trigger: "compute"
+          description: "根据关联收货单状态计算收货进度"
+          business_rule: |
+            for order in self:
+                pickings = order.picking_ids
+                if not pickings:
+                    order.receipt_status = 'pending'
+                elif all(p.state == 'done' for p in pickings):
+                    order.receipt_status = 'full'
+                elif any(p.state == 'done' for p in pickings):
+                    order.receipt_status = 'partial'
+                else:
+                    order.receipt_status = 'pending'
+          related_story: "US-019, US-021"
+          override: true   # 自定义计算字段
+
+      constraints:
+        sql_constraints: []
+        api_constrains: []
+        note: "标准 purchase.order 已有 amount 非负等约束"
+
+    # ── purchase.order.line (采购订单行) ──
+    - name: "purchase.order.line"
+      class_name: "PurchaseOrderLine"
+      inherit: "purchase.order.line"
+      _inherit_type: "class"
+      related_stories: ["US-017"]
+
+      fields:
+        - name: "order_id"
+          type: "Many2one"
+          comodel: "purchase.order"
+          string: "采购订单"
+          required: true
+          index: true
+          ondelete: "cascade"
+          source: inherited
+        - name: "product_id"
+          type: "Many2one"
+          comodel: "product.product"
+          string: "产品"
+          required: true
+          index: true
+          source: inherited
+        - name: "product_qty"
+          type: "Float"
+          string: "数量"
+          required: true
+          source: inherited
+        - name: "price_unit"
+          type: "Float"
+          string: "单价"
+          required: true
+          source: inherited
+        - name: "date_planned"
+          type: "Datetime"
+          string: "预计交期"
+          required: true
+          source: inherited
+        - name: "price_subtotal"
+          type: "Monetary"
+          string: "小计"
+          compute: "_compute_amount"
+          store: true
+          source: inherited
+
+      methods:
+        - name: "onchange_product_id"
+          trigger: "onchange"
+          description: "选择产品时自动填充描述和单价"
+          business_rule: |
+            标准 onchange 逻辑：
+            1. 根据产品获取名称和默认供应商价格
+            2. 自动填充产品描述
+            本 Slice 使用标准行为，无 override
+          related_story: "US-017"
+          override: false
+
+      constraints:
+        sql_constraints:
+          - name: "qty_positive"
+            expression: "CHECK(product_qty > 0)"
+            message: "采购数量必须大于零"
+          - name: "price_non_negative"
+            expression: "CHECK(price_unit >= 0)"
+            message: "单价不可为负"
+        api_constrains:
+          - name: "_check_product_qty"
+            fields: ["product_qty"]
+            rule: "数量 ≤ 0 时阻止保存"
+            related_story: "US-017 (AC: 数量 ≤ 0 → 系统阻止保存)"
+
+  # ══════════════════════════════════════════════════════════════
+  # View 设计
+  # ══════════════════════════════════════════════════════════════
+  views:
+    # ── 供应商 Views ──
+    - id: "view_partner_vendor_form"
+      type: "form"
+      model: "res.partner"
+      inherit_id: null                   # 使用标准 form 视图
+      note: "标准 res.partner form 已满足需求，无需自定义"
+      key_elements:
+        - "name (必填)"
+        - "phone"
+        - "email"
+        - "street"
+        - "property_payment_term_id"
+
+    - id: "view_partner_vendor_tree"
+      type: "tree"
+      model: "res.partner"
+      inherit_id: null
+      note: "标准 tree 视图已满足，通过 Action domain 过滤只显示供应商"
+      key_elements:
+        - "name"
+        - "phone"
+        - "email"
+
+    - id: "view_partner_vendor_search"
+      type: "search"
+      model: "res.partner"
+      inherit_id: null
+      note: "标准 search 视图已满足搜索需求"
+
+    # ── 采购订单 Views ──
+    - id: "view_purchase_order_form_inherit_mfg"
+      type: "form"
+      model: "purchase.order"
+      inherit_id: "purchase.purchase_order_form"
+      description: "继承标准采购订单表单，添加收货状态字段"
+      layout:
+        header:
+          - statusbar: "state (draft → sent → purchase → done)"
+          - button: "button_confirm (确认 → 仅 draft 状态可见)"
+        sheet:
+          group_left:
+            - "partner_id (供应商)"
+            - "date_order (订单日期)"
+          group_right:
+            - "receipt_status (收货状态，自定义)"
+          notebook:
+            - page: "订单明细"
+              content: "order_line (tree editable=bottom)"
+              columns: ["product_id", "product_qty", "price_unit", "date_planned", "price_subtotal"]
+          totals:
+            - "amount_total"
+
+    - id: "view_purchase_order_tree_inherit_mfg"
+      type: "tree"
+      model: "purchase.order"
+      inherit_id: "purchase.purchase_order_kpis_tree"
+      note: "继承标准列表，添加 receipt_status 列"
+      key_elements:
+        - "name (订单编号)"
+        - "partner_id (供应商)"
+        - "date_order (日期)"
+        - "amount_total (总金额)"
+        - "state (状态)"
+        - "receipt_status (收货状态，自定义)"
+
+    - id: "view_purchase_order_search_inherit_mfg"
+      type: "search"
+      model: "purchase.order"
+      inherit_id: "purchase.view_purchase_order_filter"
+      note: "标准搜索 + 按状态筛选"
+      key_elements:
+        - "name（搜索）"
+        - "partner_id（搜索）"
+        - filter: "state = draft → 询价单"
+        - filter: "state = purchase → 采购订单"
+        - group_by: "partner_id"
+        - group_by: "state"
+
+  # ══════════════════════════════════════════════════════════════
+  # Menu 与 Action 设计
+  # ══════════════════════════════════════════════════════════════
+  menus:
+    # 顶级菜单：使用 Odoo 标准的 "采购" 菜单
+    - id: "menu_purchase_root"
+      name: "采购"
+      source: "purchase.menu_purchase_root"
+      note: "使用标准采购模块的顶级菜单"
+
+    # 子菜单 1：供应商
+    - id: "menu_purchase_mfg_vendors"
+      name: "供应商"
+      parent: "purchase.menu_purchase_root"
+      action: "action_purchase_mfg_vendors"
+      sequence: 20
+      groups: ["purchase_mfg.group_purchase_user"]
+
+    # 子菜单 2：询价单（标准已有）
+    - id: "menu_purchase_rfq"
+      name: "询价单"
+      source: "purchase.menu_purchase_rfq"
+      note: "使用标准询价单菜单"
+
+    # 子菜单 3：采购订单（标准已有）
+    - id: "menu_purchase_orders"
+      name: "采购订单"
+      source: "purchase.menu_purchase_form_action"
+      note: "使用标准采购订单菜单"
+
+  actions:
+    - id: "action_purchase_mfg_vendors"
+      name: "供应商"
+      type: "ir.actions.act_window"
+      res_model: "res.partner"
+      view_mode: "tree,form"
+      domain: "[('supplier_rank', '>', 0)]"
+      context: "{'default_supplier_rank': 1}"
+      help: "创建和管理您的供应商信息。"
+
+  # ══════════════════════════════════════════════════════════════
+  # Wizard 设计
+  # ══════════════════════════════════════════════════════════════
+  wizards: []   # Slice 3 无向导需求
+
+  # ══════════════════════════════════════════════════════════════
+  # Security 细化
+  # ══════════════════════════════════════════════════════════════
+  security:
+    groups:
+      - id: "group_purchase_user"
+        name: "采购用户"
+        category: "purchase_mfg"
+        implied_ids: ["base.group_user"]
+
+    acl:
+      # id, name, model_id:id, group_id:id, read, write, create, unlink
+      - id: "access_partner_purchase_user"
+        model: "res.partner"
+        group: "purchase_mfg.group_purchase_user"
+        perm: { read: 1, write: 1, create: 1, unlink: 0 }
+
+      - id: "access_purchase_order_purchase_user"
+        model: "purchase.order"
+        group: "purchase_mfg.group_purchase_user"
+        perm: { read: 1, write: 1, create: 1, unlink: 0 }
+
+      - id: "access_purchase_order_line_purchase_user"
+        model: "purchase.order.line"
+        group: "purchase_mfg.group_purchase_user"
+        perm: { read: 1, write: 1, create: 1, unlink: 1 }
+
+    record_rules:
+      - id: "rule_purchase_order_company"
+        name: "采购订单：当前公司"
+        model: "purchase.order"
+        domain: "[('company_id', 'in', company_ids)]"
+        groups: ["purchase_mfg.group_purchase_user"]
+
+  # ══════════════════════════════════════════════════════════════
+  # Demo 数据
+  # ══════════════════════════════════════════════════════════════
+  data:
+    - file: "demo/purchase_mfg_demo.xml"
+      type: demo
+      description: |
+        演示数据：
+        - 3 个供应商（华南电子、永兴材料、正泰科技）
+        - 3 个产品（原料A、原料B、原料C）— 使用标准 product.product
+        - 2 个采购订单（1 个草稿询价单、1 个已确认且部分收货的采购订单）
+
+  # ══════════════════════════════════════════════════════════════
+  # 依赖关系
+  # ══════════════════════════════════════════════════════════════
+  dependencies:
+    upstream_slices: ["SLICE-02"]
+    upstream_reason: "收货验收需要库存模块（stock_mfg 已安装）"
+    external_modules:
+      - "purchase"                      # Odoo 标准采购模块
+      - "stock"                         # 收货入库
+      - "product"                       # 产品主数据
+    notes: |
+      Slice 3 依赖 Slice 2（库存模块），收货验收通过 stock.picking 实现。
+      res.partner 模型与 Slice 1 (sale_mfg) 共享，供应商和客户通过 rank 区分。
+
+  # ══════════════════════════════════════════════════════════════
+  # Slice 3 文件清单（S5 代码生成用）
+  # ══════════════════════════════════════════════════════════════
+  file_manifest:
+    module_root: "addons/purchase_mfg/"
+    files:
+      - path: "__init__.py"
+        action: create
+        content_hint: "from . import models"
+      - path: "__manifest__.py"
+        action: create
+        content_hint: "name, version, depends=[purchase, stock, product], data list"
+      - path: "models/__init__.py"
+        action: create
+        content_hint: "from . import purchase_order, purchase_order_line"
+      - path: "models/purchase_order.py"
+        action: create
+        content_hint: "PurchaseOrder(_inherit='purchase.order') + receipt_status compute"
+      - path: "models/purchase_order_line.py"
+        action: create
+        content_hint: "PurchaseOrderLine(_inherit='purchase.order.line') + qty/price constraints"
+      - path: "views/purchase_order_views.xml"
+        action: create
+        content_hint: "form inherit + tree inherit (添加 receipt_status)"
+      - path: "views/purchase_mfg_menus.xml"
+        action: create
+        content_hint: "供应商菜单 + action (domain supplier_rank)"
+      - path: "security/ir.model.access.csv"
+        action: create
+        content_hint: "3 ACL rules (partner, purchase.order, purchase.order.line)"
+      - path: "security/purchase_mfg_security.xml"
+        action: create
+        content_hint: "group_purchase_user + company record rule"
+      - path: "demo/purchase_mfg_demo.xml"
+        action: create
+        content_hint: "3 vendors + 2 purchase orders"
+    total_files: 10
+    estimated_lines: "300-450"
+
+  # ══════════════════════════════════════════════════════════════
+  # Story ↔ 设计追溯矩阵
+  # ══════════════════════════════════════════════════════════════
+  traceability:
+    - story: "US-014 创建供应商"
+      model: "res.partner"
+      view: "form (标准)"
+      method: "create (标准)"
+      ac_coverage: "name required + supplier_rank default → ✅"
+
+    - story: "US-015 查看供应商列表"
+      model: "res.partner"
+      view: "tree (标准) + search (标准)"
+      method: "search (标准)"
+      ac_coverage: "tree columns + search + domain supplier_rank → ✅"
+
+    - story: "US-017 创建询价单"
+      model: "purchase.order + purchase.order.line"
+      view: "form (继承) + order_line tree"
+      method: "create (标准) + onchange_product_id (标准)"
+      ac_coverage: "供应商选择 + 产品行添加 + 总金额计算 + 数量/单价校验 → ✅"
+
+    - story: "US-018 确认采购订单"
+      model: "purchase.order"
+      view: "form header button"
+      method: "button_confirm (标准)"
+      ac_coverage: "draft → purchase + 生成收货单 → ✅"
+
+    - story: "US-019 查看采购订单列表"
+      model: "purchase.order"
+      view: "tree (继承) + search (继承)"
+      method: "search (标准)"
+      ac_coverage: "订单列表 + 收货状态 + 按状态筛选 → ✅"
+
+    - story: "US-021 执行收货验收"
+      model: "stock.picking (标准操作)"
+      view: "stock.picking form (标准)"
+      method: "button_validate (标准)"
+      ac_coverage: "填写实收数量 + 验证 → 库存增加 + receipt_status 自动更新 → ✅"
+      note: |
+        收货验收使用标准 stock.picking 的 button_validate 流程。
+        实收数量不一致时，标准模块支持部分收货（picking 保持 assigned 状态）。
+        receipt_status 通过 purchase.order 的自定义计算字段自动反映。

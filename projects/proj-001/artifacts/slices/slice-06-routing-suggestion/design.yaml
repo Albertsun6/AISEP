@@ -1,0 +1,157 @@
+# S4 制品：Slice 6 详细设计
+# 项目：制造业ERP (proj-001)
+# Slice：SLICE-06 — 工艺路线 + 生产建议
+# 生成时间：2026-03-13T00:35:00+08:00
+
+slice_design:
+  slice_id: "SLICE-06"
+  slice_name: "工艺路线 + 生产建议"
+  description: "工作中心和工序管理 + 基于销售需求自动建议生产计划"
+  bounded_context: "生产管理"
+  module: "mrp_mfg"
+
+  stories:
+    - "US-012"  # 创建和编辑工艺路线
+    - "US-013"  # 查看工艺路线
+    - "US-007"  # 基于销售需求建议生产计划
+
+  # ══════════════════════════════════════════════════════════════
+  # 设计策略
+  # ══════════════════════════════════════════════════════════════
+  # US-012/013（工艺路线）：Odoo 17 标准 mrp 模块已内置：
+  #   - mrp.workcenter（工作中心）
+  #   - mrp.routing.workcenter（工序/操作）— 通过 BOM 的 Operations tab 管理
+  #   本 Slice 策略：仅通过 View 继承确保中文标签和菜单可见，无需自定义 Model。
+  #
+  # US-007（MRP 建议）：添加 TransientModel 向导：
+  #   - 扫描已确认销售订单 (sale.order, state='sale')
+  #   - 对比产品当前库存 (product.product.qty_available)
+  #   - 计算缺口 = 需求 - 库存
+  #   - 一键批量创建生产工单
+
+  models:
+    # ── mrp.production.suggestion (向导 — TransientModel) ──
+    - name: "mrp.production.suggestion"
+      class_name: "MrpProductionSuggestion"
+      type: "TransientModel"
+      related_stories: ["US-007"]
+      description: "基于销售需求生成生产建议的向导"
+
+      fields:
+        - name: "suggestion_line_ids"
+          type: "One2many"
+          comodel: "mrp.production.suggestion.line"
+          inverse_name: "wizard_id"
+          string: "建议明细"
+
+      methods:
+        - name: "action_compute_suggestions"
+          trigger: "button"
+          description: "计算生产建议"
+          business_rule: |
+            1. 查询 sale.order(state='sale') 的所有产品及数量
+            2. 按产品聚合需求量
+            3. 获取每个产品的 qty_available（当前库存）
+            4. 缺口 = 需求 - 库存（仅保留缺口 > 0 的产品）
+            5. 查找每个产品关联的 BOM
+            6. 生成 suggestion_line_ids
+
+        - name: "action_create_productions"
+          trigger: "button"
+          description: "一键创建生产工单"
+          business_rule: |
+            遍历 suggestion_line_ids：
+              - 为每个缺口创建 mrp.production（state='draft'）
+              - 关联产品、BOM、数量
+
+    # ── mrp.production.suggestion.line (向导行) ──
+    - name: "mrp.production.suggestion.line"
+      class_name: "MrpProductionSuggestionLine"
+      type: "TransientModel"
+      related_stories: ["US-007"]
+
+      fields:
+        - name: "wizard_id"
+          type: "Many2one"
+          comodel: "mrp.production.suggestion"
+          ondelete: "cascade"
+        - name: "product_id"
+          type: "Many2one"
+          comodel: "product.product"
+          string: "产品"
+          readonly: true
+        - name: "demand_qty"
+          type: "Float"
+          string: "需求量"
+          readonly: true
+        - name: "available_qty"
+          type: "Float"
+          string: "可用库存"
+          readonly: true
+        - name: "shortage_qty"
+          type: "Float"
+          string: "缺口量"
+          readonly: true
+        - name: "bom_id"
+          type: "Many2one"
+          comodel: "mrp.bom"
+          string: "物料清单"
+          readonly: true
+        - name: "selected"
+          type: "Boolean"
+          string: "选择"
+          default: true
+
+  views:
+    # 向导 Form
+    - id: "view_mrp_production_suggestion_form"
+      type: "form"
+      model: "mrp.production.suggestion"
+      description: "生产建议向导表单"
+
+    # 向导 Action
+    - id: "action_mrp_production_suggestion"
+      type: "action"
+      model: "mrp.production.suggestion"
+
+  menus:
+    - id: "menu_mrp_production_suggestion"
+      name: "生产建议"
+      parent: "mrp.menu_mrp_manufacturing"
+      action: "action_mrp_production_suggestion"
+
+  security:
+    acl:
+      - id: "access_mrp_production_suggestion_user"
+        model: "mrp.production.suggestion"
+        group: "mrp_mfg.group_mfg_user"
+        perm: { read: 1, write: 1, create: 1, unlink: 1 }
+      - id: "access_mrp_production_suggestion_line_user"
+        model: "mrp.production.suggestion.line"
+        group: "mrp_mfg.group_mfg_user"
+        perm: { read: 1, write: 1, create: 1, unlink: 1 }
+
+  file_manifest:
+    module_root: "addons/mrp_mfg/"
+    files:
+      - path: "wizards/__init__.py"
+        action: create
+      - path: "wizards/mrp_production_suggestion.py"
+        action: create
+      - path: "views/mrp_production_suggestion_views.xml"
+        action: create
+      - path: "__init__.py"
+        action: modify
+        content_hint: "追加 from . import wizards"
+      - path: "__manifest__.py"
+        action: modify
+        content_hint: "追加 depends=['sale'], data 追加 views + security"
+      - path: "security/ir.model.access.csv"
+        action: modify
+        content_hint: "追加 2 行 ACL"
+    total_files_new: 3
+    total_files_modified: 3
+
+  dependencies:
+    upstream_slices: ["SLICE-04", "SLICE-01"]
+    external_modules: ["mrp", "stock", "product", "sale"]

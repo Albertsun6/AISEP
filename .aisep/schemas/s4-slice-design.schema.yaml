@@ -1,0 +1,215 @@
+# S4 制品 Schema: Slice 详细设计
+# 验证目标: artifacts/slices/{slice-name}/design.yaml
+
+_meta:
+  schema_id: s4-slice-design
+  version: "1.0"
+  stage: s4
+  description: "Slice 详细设计 — Model 方法级、View 布局、Menu 结构、Wizard 和 Security。"
+
+schema:
+  root: slice_design
+  fields:
+    slice_id:
+      type: string
+      required: true
+      validation: "须匹配 slice-plan.yaml 中的 Slice ID"
+
+    slice_name:
+      type: string
+      required: true
+
+    stories:
+      type: list
+      required: true
+      min_items: 1
+      items:
+        type: string
+      validation: "引用 functional.yaml 的 Story ID"
+
+    bounded_context:
+      type: string
+      required: true
+
+    models:
+      type: list
+      required: true
+      min_items: 1
+      items:
+        type: map
+        fields:
+          name:
+            type: string
+            required: true
+            validation: "技术名，须匹配 architecture.yaml 中的定义"
+          inherit:
+            type: list
+            required: false
+            items:
+              type: string
+          fields:
+            type: list
+            required: true
+            min_items: 1
+            items:
+              type: map
+              fields:
+                name:
+                  type: string
+                  required: true
+                type:
+                  type: string
+                  required: true
+                string:
+                  type: string
+                  required: true
+                  validation: "UI 显示名称（使用 glossary 术语）"
+                required:
+                  type: boolean
+                  required: false
+                help:
+                  type: string
+                  required: false
+                description:
+                  type: string
+                  required: false
+          methods:
+            type: list
+            required: false
+            items:
+              type: map
+              fields:
+                name:
+                  type: string
+                  required: true
+                trigger:
+                  type: enum
+                  required: true
+                  enum_values: [button, compute, constrains, onchange, override, cron, api]
+                description:
+                  type: string
+                  required: true
+                business_rule:
+                  type: string
+                  required: false
+                  validation: "关联的业务规则描述"
+          sql_constraints:
+            type: list
+            required: false
+
+    views:
+      type: list
+      required: true
+      min_items: 1
+      items:
+        type: map
+        fields:
+          id:
+            type: string
+            required: true
+            validation: "XML ID，须符合 naming.yaml 的 view_{model}_{type} 格式"
+          type:
+            type: enum
+            required: true
+            enum_values: [form, tree, kanban, search, graph, pivot, calendar]
+          model:
+            type: string
+            required: true
+          key_elements:
+            type: list
+            required: true
+            min_items: 1
+            items:
+              type: string
+            validation: "视图中展示的关键字段和按钮"
+
+    menus:
+      type: list
+      required: true
+      min_items: 1
+      items:
+        type: map
+        fields:
+          name:
+            type: string
+            required: true
+          parent:
+            type: string
+            required: false
+            validation: "父菜单引用，顶级菜单无 parent"
+          action:
+            type: string
+            required: true
+          groups:
+            type: list
+            required: false
+            items:
+              type: string
+
+    wizards:
+      type: list
+      required: false
+      items:
+        type: map
+        fields:
+          name:
+            type: string
+            required: true
+          trigger:
+            type: string
+            required: true
+            validation: "触发方式（按钮名称 / action 引用）"
+          fields:
+            type: list
+            required: true
+          action:
+            type: string
+            required: true
+            validation: "执行逻辑描述"
+
+    data:
+      type: list
+      required: false
+      items:
+        type: map
+        fields:
+          file:
+            type: string
+            required: true
+          type:
+            type: enum
+            required: true
+            enum_values: [data, demo]
+
+    dependencies:
+      type: map
+      required: true
+      fields:
+        upstream_slices:
+          type: list
+          required: true
+          items:
+            type: string
+          validation: "依赖的已完成 Slice ID，空列表表示无依赖"
+        external_modules:
+          type: list
+          required: true
+          items:
+            type: string
+          validation: "依赖的外部框架模块"
+
+gate_validations:
+  - rule: "slice_id 须匹配 slice-plan.yaml"
+    severity: error
+  - rule: "stories 中的 ID 须存在于 functional.yaml"
+    severity: error
+  - rule: "models 中的每个 model name 须存在于 architecture.yaml"
+    severity: error
+  - rule: "每个 Model 至少有 form + tree 两种视图"
+    severity: warning
+  - rule: "至少有 1 个 menu"
+    severity: error
+  - rule: "upstream_slices 引用的 Slice 须已完成 S6"
+    severity: error
+  - rule: "外部模块须在 architecture.yaml 的 dependencies 中声明"
+    severity: warning

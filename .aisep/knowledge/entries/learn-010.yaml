@@ -1,0 +1,13 @@
+# learn-010: 上下文控制的四个成熟度等级
+# 来源：AISEP 架构探讨
+# 日期：2026-03-13
+
+topic: "上下文控制成熟度模型（Context Control Maturity）"
+one_liner: "从无控制到 AI 自主判断 + 事后审计，上下文管理有四个渐进等级"
+analogy: "像自动驾驶等级 — 从 L0 人工操控到 L3 有条件自动（全自动仍需安全员的事后审计）"
+key_insights:
+  - "Level 0 全加载 → Level 1 排除式（context fence） → Level 2 推荐式（AI 推荐 + 人确认） → Level 3 自主式（AI 自主 + 事后审计）"
+  - "真正的 Level 3 需要量化'有用性'的评价函数，极难做到；但'伪 Level 3'（记录 + 统计 + 人确认）完全可行"
+  - "关键洞察：LLM 已经在做自主加载决策（view_file 调用），缺的不是决策能力而是审计机制"
+  - "AISEP 采用渐进策略：前 2 次 Level 2 积累数据，3+ 次自动切换伪 Level 3"
+tags: [context-engineering, maturity-model, ai-autonomy]

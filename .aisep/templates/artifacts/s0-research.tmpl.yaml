@@ -1,0 +1,10 @@
+# S0 可选制品模板：技术调研
+# 输出文件：artifacts/global/research.yaml
+research:
+  entries:
+    - topic: ""              # 调研主题
+      context: ""            # 为什么要调研
+      conclusion: ""         # 结论
+      decision: ""           # 决策
+      confidence: 0.0        # 置信度 0.0-1.0
+      sources: []            # 来源

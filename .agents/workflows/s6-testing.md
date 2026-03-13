@@ -1,0 +1,188 @@
+---
+description: "S6 测试验证"
+context:
+  always:
+    - "AISEP.md"
+    - "constitution.md"
+    - "glossary.yaml"
+  load:
+    - "slices/{current-slice}/design.yaml"
+    - "slices/{current-slice}/code/"
+    - ".aisep/conventions/coding-standards.yaml"
+  load_summary:
+    - "artifacts/global/functional.yaml"
+  exclude:
+    - "history/**"
+    - "slices/{other-slices}/**"
+    - "artifacts/global/architecture.yaml"
+    - "changes/**"
+---
+
+# S6: 测试验证
+
+> [!IMPORTANT]
+> S6 的 Gate 标准是**可演示** — 模块安装后，用户能实际操作当前 Slice 的功能。
+
+## 前置条件
+
+- 当前 Slice 的 S5 Gate 已通过
+- `code/` 目录存在且结构自检通过（S5 可安装性验证）
+- `design.yaml` 存在（作为预期行为的 reference）
+
+## 输入
+
+- `slices/{current-slice}/design.yaml` — 预期行为
+- `slices/{current-slice}/code/` — 实现代码
+- `functional.yaml` 摘要 — Story + 验收标准（用于追溯）
+- Framework Skill（Odoo17 的测试框架知识）
+
+## 加载方法论
+
+- **必须**：Test Pyramid（`.agents/skills/methodologies/testing/test-pyramid/SKILL.md`）
+- **可选**：BDD
+
+---
+
+## 活动
+
+### 步骤 1: 测试策略确定
+
+**AI 执行指引**：
+按 Test Pyramid 分层，确定本 Slice 的测试分布：
+
+```
+          /  E2E  \          ← S6 不做（留给用户验收）
+         / 集成测试 \         ← 有限的关键路径测试
+        /  单元测试   \       ← 主体：每个 Model 的 CRUD + 业务规则
+```
+
+- **单元测试**：每个 Model、每个业务规则
+- **集成测试**：跨 Model 的关键业务流程（如"创建 BOM → 生成工单"）
+- **E2E**：不自动生成，由用户在安装后手动验收
+
+### 步骤 2: 编写单元测试
+
+**AI 执行指引**：
+1. 继承 Framework Skill 的测试基类（Odoo: `TransactionCase` / `SavepointCase`）
+2. 每个 Model 编写：
+   - **CRUD 基础测试**：创建 → 读取 → 更新 → 删除
+   - **业务规则正向测试**：验证约束通过的情况
+   - **业务规则反向测试**：验证约束违反时抛出正确异常
+   - **计算字段测试**：修改依赖字段 → 验证计算结果
+   - **边界值测试**：空值、极大值、特殊字符
+
+```python
+# 测试文件命名: tests/test_{slice_name}.py
+class Test{SliceName}(TransactionCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        # 创建测试数据
+
+    def test_create_{model}(self):
+        """创建 {model} 基本 CRUD"""
+        ...
+
+    def test_{model}_{rule}_positive(self):
+        """正向：{rule} 满足时正常通过"""
+        ...
+
+    def test_{model}_{rule}_negative(self):
+        """反向：{rule} 违反时抛出 ValidationError"""
+        ...
+```
+
+### 步骤 3: 编写安全测试
+
+**AI 执行指引**：
+1. 创建不同权限的测试用户
+2. 验证 ACL 隔离：低权限用户不能执行高权限操作
+3. 验证 Record Rules：用户只能看到自己权限范围内的记录
+
+```python
+def test_access_denied_for_viewer(self):
+    """普通查看者不能删除记录"""
+    with self.assertRaises(AccessError):
+        record.with_user(self.viewer_user).unlink()
+```
+
+### 步骤 4: 编写集成测试（关键路径）
+
+**AI 执行指引**：
+1. 仅覆盖 Story 中的**主要业务流程**（Happy Path + 关键异常路径）
+2. 跨 Model 的操作链测试（如"创建 BOM → 从 BOM 生成工单 → 工单状态流转"）
+
+### 步骤 5: Story 追溯映射
+
+**AI 执行指引**：
+1. 将每个测试映射回 S2 的 Story（用注释或文档标注）
+2. 生成追溯表格：
+
+```
+Story   → 测试
+US-001  → test_create_bom, test_bom_qty_positive
+US-002  → test_read_bom_list, test_bom_search_filter
+US-003  → test_update_bom_line
+⚠️ US-004 → (未覆盖 — 需标注原因)
+```
+
+### 步骤 6: 回归验证（Slice 2+ 时）
+
+**触发条件**：当前不是第一个 Slice
+
+**AI 执行指引**：
+1. 检查之前 Slice 的测试是否仍然通过
+2. 如果当前 Slice 修改了已有 Model → 运行该 Model 关联的旧测试
+3. 报告回归情况
+
+### 步骤 7: 安装验证指引
+
+**AI 执行指引**：
+1. 构建安装验证命令（Odoo: `odoo-bin -u {module_name} -d {db_name} --test-enable`）
+2. 提示用户执行或 AI 自动执行（如有环境）
+3. 检查安装日志中是否有 ERROR / WARNING
+
+**交互节点**：
+- 🗣️ 提供安装命令和验证步骤 → 用户确认安装成功
+- 🗣️ 用户实际操作验证：创建记录 → 编辑 → 查看列表 → 验证权限
+
+---
+
+## 输出
+
+- `artifacts/slices/{slice-name}/tests/` — 测试代码
+  - `test_{slice_name}.py` — 单元 + 集成测试
+  - `test_security.py` — 安全测试（如有独立文件）
+- Story 追溯表（嵌入 design.yaml 或独立文件）
+
+## Gate 检查清单
+
+### 测试覆盖
+- [ ] 每个 Model 是否有 CRUD 测试？
+- [ ] 每个业务规则是否有正向 + 反向测试？
+- [ ] 计算字段是否有依赖变更测试？
+- [ ] 安全规则是否有权限隔离测试？
+
+### 测试质量
+- [ ] 测试是否全部通过？
+- [ ] 测试覆盖率是否达标？（建议 > 80%）
+- [ ] 测试命名是否遵循 `test_{what}_{scenario}` 格式？
+
+### 追溯完整
+- [ ] 所有 Story 是否都有对应测试？未覆盖的是否有标注？
+
+### 回归（Slice 2+ 时）
+- [ ] 之前 Slice 的测试是否仍然通过？
+
+### 可演示
+- [ ] 模块是否可安装？（无 ERROR）
+- [ ] 用户是否可以实际操作本 Slice 的功能？
+
+## Gate 通过后
+
+1. **状态更新**：记录当前 Slice 的 S6 已完成
+2. **推进逻辑**：
+   - 如果还有下一个 Slice → 进入下一个 Slice 的 S4
+   - 如果所有 Slice 已完成 → 进入 S7（部署配置）
+3. **Gate 日志**：追加记录（含 slice_id + 测试通过数 + 覆盖率）
+4. **Compaction**：如果不是最后一个 Slice，当前 Slice 的 `design.yaml` 和 `code/` 可进入 L2 按需层（不再常驻 L1）

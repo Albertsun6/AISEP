@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ══════════════════════════════════════════════════════════════
+         stock_mfg: 自定义菜单和 Action
+         ══════════════════════════════════════════════════════════════ -->
+
+    <!-- 出入库记录 Action — 只显示已完成的操作 (US-026) -->
+    <record id="action_stock_mfg_picking_history" model="ir.actions.act_window">
+        <field name="name">出入库记录</field>
+        <field name="res_model">stock.picking</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('state', '=', 'done')]</field>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                暂无出入库记录
+            </p>
+            <p>完成出入库操作后，记录将显示在这里。</p>
+        </field>
+    </record>
+
+    <!-- 出入库记录菜单 — 挂在标准库存菜单下 -->
+    <menuitem id="menu_stock_mfg_picking_history"
+              name="出入库记录"
+              parent="stock.menu_stock_root"
+              action="action_stock_mfg_picking_history"
+              sequence="25"
+              groups="stock_mfg.group_mfg_user"/>
+
+</odoo>

@@ -1,0 +1,26 @@
+id: "learn-001"
+title: "递归问题与元层次思维"
+date: "2026-03-12"
+source_conversation: "2ee2bc90-2a34-4c0e-a2cd-4c955eec8fa1"
+
+category: system_design
+tags: [递归, 自指, 元层次, 进化系统, 哥德尔]
+
+one_liner: "用来改进规则的规则，本身也需要改进——但递归到人就停了"
+
+analogy: |
+  宪法修正案机制：宪法约束法律，但宪法本身也需要修正通道。
+  关键是修宪的门槛高于修法——越重要的层级，变更的摩擦越大。
+
+key_insights:
+  - "任何自我改进系统都面临自指问题：规则层 → 进化层 → 元进化层"
+  - "实践中递归只需 2 层就够了：规则层（由进化机制改进）+ 进化层（由人手动调整）"
+  - "人是递归的终止条件——不需要设计 AI 改进 AI 改进 AI 的无限链"
+  - "这和哥德尔不完备定理有深层联系：足够强的形式系统无法证明自身一致性"
+
+related_concepts:
+  - "哥德尔不完备定理（Gödel's Incompleteness Theorem）"
+  - "自指（Self-reference）"
+  - "停机问题（Halting Problem）"
+
+mastery: medium

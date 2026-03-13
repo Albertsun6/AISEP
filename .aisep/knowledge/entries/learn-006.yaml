@@ -1,0 +1,23 @@
+id: "learn-006"
+title: "TransientModel 向导模式"
+date: "2026-03-13"
+source_conversation: "5b33a8b3-2ee5-442d-aef7-089355de1724"
+source_project: "proj-001"
+source_slice: "SLICE-06"
+
+category: framework_pattern
+tags: [odoo, design-pattern, database, wizard]
+
+one_liner: "Odoo 用 TransientModel（临时模型）实现一次性操作向导，数据自动过期清理"
+
+analogy: |
+  像便利贴 — 写完就丢，不占永久空间。
+  向导运行时临时存在，用完系统自动清除。
+
+key_insights:
+  - "TransientModel 不在数据库中永久存储，系统定期清理（默认 1 小时）"
+  - "适合向导（wizard）场景：计算→展示→确认→执行"
+  - "用 One2many 关联 TransientModel 行，实现明细表"
+  - "返回 action dict 可控制向导关闭后的跳转"
+
+mastery: medium

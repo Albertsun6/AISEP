@@ -1,0 +1,874 @@
+# S2 制品：功能需求规格
+# 项目：制造业ERP (proj-001)
+# 生成时间：2026-03-12T20:30:00+08:00
+# Story 总数：40
+# Must: 24 (60%) | Should: 10 (25%) | Could: 6 (15%)
+
+functional:
+  modules:
+    # ══════════════════════════════════════════════════════════════
+    # 模块 1：生产管理（核心域）
+    # 聚合：物料清单(mrp.bom)、生产工单(mrp.production)、工艺路线(mrp.routing)
+    # ══════════════════════════════════════════════════════════════
+    - module_id: "MFG"
+      module_name: "生产管理"
+      bounded_context: "生产管理"
+      stories:
+        # ── BOM 管理 (CAP-011) ──
+        - id: "US-001"
+          title: "创建物料清单"
+          as_a: "生产主管"
+          i_want: "创建物料清单，定义产品由哪些子件组成及用量"
+          so_that: "系统记录产品结构，支撑 MRP 计算和生产领料"
+          priority: "Must"
+          capability_ref: "CAP-011"
+          acceptance_criteria:
+            - given: "我在 BOM 创建页面"
+              when: "我选择父件产品、添加至少 1 个子件并填写数量，点击保存"
+              then: "BOM 创建成功，状态为草稿"
+            - given: "我添加子件时"
+              when: "子件产品与父件产品相同"
+              then: "系统阻止保存并提示'子件不可与父件相同'"
+            - given: "我添加子件时"
+              when: "子件数量 ≤ 0"
+              then: "系统阻止保存并提示'数量必须大于 0'"
+          invest_check:
+            independent: true
+            negotiable: true
+            valuable: true
+            estimable: true
+            small: true
+            testable: true
+
+        - id: "US-002"
+          title: "查看 BOM 列表与详情"
+          as_a: "生产主管"
+          i_want: "查看所有 BOM 列表，并可点击查看层级展开详情"
+          so_that: "了解产品结构和物料需求，为生产计划提供依据"
+          priority: "Must"
+          capability_ref: "CAP-011"
+          acceptance_criteria:
+            - given: "系统中存在 BOM 数据"
+              when: "我进入 BOM 列表页面"
+              then: "显示所有 BOM，含产品名称、子件数量、状态"
+            - given: "我在 BOM 列表中"
+              when: "我点击某个 BOM"
+              then: "显示 BOM 详情，含所有子件、用量、可展开多层 BOM"
+          invest_check:
+            independent: true
+            negotiable: true
+            valuable: true
+            estimable: true
+            small: true
+            testable: true
+
+        - id: "US-003"
+          title: "编辑物料清单"
+          as_a: "生产主管"
+          i_want: "修改 BOM 的子件、数量和单位"
+          so_that: "及时响应产品设计变更或纠正错误"
+          priority: "Must"
+          capability_ref: "CAP-011"
+          acceptance_criteria:
+            - given: "我在 BOM 编辑页面"
+              when: "我修改子件数量或增删子件，点击保存"
+              then: "BOM 更新成功，变更立即生效"
+            - given: "BOM 已被生产工单引用"
+              when: "我尝试修改该 BOM"
+              then: "系统允许修改但提示'已有 N 个工单使用此 BOM'"
+          invest_check:
+            independent: true
+            negotiable: true
+            valuable: true
+            estimable: true
+            small: true
+            testable: true
+
+        - id: "US-004"
+          title: "归档物料清单"
+          as_a: "生产主管"
+          i_want: "归档不再使用的 BOM"
+          so_that: "保持活跃 BOM 列表整洁，同时保留历史记录"
+          priority: "Should"
+          capability_ref: "CAP-011"
+          acceptance_criteria:
+            - given: "某 BOM 不再需要"
+              when: "我点击归档"
+              then: "BOM 状态变为已归档，不出现在默认列表中，但可通过筛选查看"
+          invest_check:
+            independent: true
+            negotiable: true
+            valuable: true
+            estimable: true
+            small: true
+            testable: true
+
+        # ── 生产计划与排程 (CAP-012) ──
+        - id: "US-005"
+          title: "手动创建生产工单"
+          as_a: "生产主管"
+          i_want: "手动创建生产工单，指定产品、BOM、数量和计划日期"
+          so_that: "安排具体的生产任务"
+          priority: "Must"
+          capability_ref: "CAP-012"
+          acceptance_criteria:
+            - given: "我在生产工单创建页面"
+              when: "我选择产品、关联 BOM、填写数量和计划日期，点击保存"
+              then: "工单创建成功，状态为草稿，系统自动根据 BOM 计算原料需求"
+            - given: "我创建工单时"
+              when: "生产数量 ≤ 0"
+              then: "系统阻止保存并提示'生产数量必须大于 0'"
+          invest_check:
+            independent: true
+            negotiable: true
+            valuable: true
+            estimable: true
+            small: true
+            testable: true
+
+        - id: "US-006"
+          title: "查看生产计划列表"
+          as_a: "生产主管"
+          i_want: "查看所有生产工单的列表及状态"
+          so_that: "掌握整体生产进度和资源安排"
+          priority: "Must"
+          capability_ref: "CAP-012"
+          acceptance_criteria:
+            - given: "系统中存在生产工单"
+              when: "我进入生产计划页面"
+              then: "显示工单列表，含产品名、数量、计划日期、当前状态，支持按状态筛选"
+          invest_check:
+            independent: true
+            negotiable: true
+            valuable: true
+            estimable: true
+            small: true
+            testable: true
+
+        - id: "US-007"
+          title: "基于销售需求建议生产计划"
+          as_a: "生产主管"
+          i_want: "系统根据已确认的销售订单和当前库存，自动建议需要生产的产品和数量"
+          so_that: "减少手动计算，避免漏单或过量生产"
+          priority: "Should"
+          capability_ref: "CAP-012"
+          acceptance_criteria:
+            - given: "存在已确认的销售订单且库存不足"
+              when: "我运行生产建议计算"
+              then: "系统列出建议生产的产品、数量，我可一键创建对应工单"
+            - given: "库存充足可满足所有销售订单"
+              when: "我运行生产建议计算"
+              then: "系统提示'当前无需生产'"
+          invest_check:
+            independent: false  # 依赖销售订单和库存数据
+            negotiable: true
+            valuable: true
+            estimable: true
+            small: true
+            testable: true
+          invest_notes: "I: 依赖销售和库存模块数据，但业务逻辑独立"
+
+        # ── 生产执行与报工 (CAP-013) ──
+        - id: "US-008"
+          title: "确认生产工单"
+          as_a: "车间主管"
+          i_want: "确认草稿状态的工单，使其进入可执行状态"
+          so_that: "仓库可以开始备料，车间可以安排生产"
+          priority: "Must"
+          capability_ref: "CAP-013"
+          acceptance_criteria:
+            - given: "工单处于草稿状态"
+              when: "我点击确认"
+              then: "工单状态变为已确认，原料需求单自动生成"
+            - given: "工单关联的 BOM 不存在或已归档"
+              when: "我尝试确认"
+              then: "系统阻止确认并提示'请关联有效的 BOM'"
+          invest_check:
+            independent: true
+            negotiable: true
+            valuable: true
+            estimable: true
+            small: true
+            testable: true
+
+        - id: "US-009"
+          title: "生产领料"
+          as_a: "车间操作员"
+          i_want: "按工单领取所需原料，记录实际领用数量"
+          so_that: "原料从仓库转移到车间，库存同步更新"
+          priority: "Must"
+          capability_ref: "CAP-013"
+          acceptance_criteria:
+            - given: "工单已确认且原料可用"
+              when: "我按原料清单领取物料并记录实际数量"
+              then: "系统记录领料，库存减少对应数量，工单状态变为进行中"
+            - given: "某原料库存不足"
+              when: "我尝试领料"
+              then: "系统提示'原料 X 库存不足，可用量 Y'"
+          invest_check:
+            independent: false  # 依赖库存数据
+            negotiable: true
+            valuable: true
+            estimable: true
+            small: true
+            testable: true
+          invest_notes: "I: 依赖库存模块的可用量检查"
+
+        - id: "US-010"
+          title: "报工完成生产"
+          as_a: "车间操作员"
+          i_want: "报告生产完成数量，登记成品产出"
+          so_that: "成品入库，工单完工，库存更新"
+          priority: "Must"
+          capability_ref: "CAP-013"
+          acceptance_criteria:
+            - given: "工单处于进行中状态"
+              when: "我填写完成数量并点击完工"
+              then: "工单状态变为完工，成品自动入库，原料消耗记录锁定"
+            - given: "实际完成数量与计划不同"
+              when: "我填写实际数量"
+              then: "系统记录差异但允许完工"
+            - given: "工单已完工"
+              when: "我尝试修改数量"
+              then: "系统阻止修改并提示'已完工的工单不可反向修改'"
+          invest_check:
+            independent: true
+            negotiable: true
+            valuable: true
+            estimable: true
+            small: true
+            testable: true
+
+        - id: "US-011"
+          title: "查看工单执行详情"
+          as_a: "生产主管"
+          i_want: "查看单个工单的领料明细、产出明细和消耗差异"
+          so_that: "监控生产执行情况，发现异常"
+          priority: "Must"
+          capability_ref: "CAP-013"
+          acceptance_criteria:
+            - given: "某工单正在执行或已完工"
+              when: "我打开工单详情"
+              then: "显示计划用料 vs 实际用料对比、产出数量、时间记录"
+          invest_check:
+            independent: true
+            negotiable: true
+            valuable: true
+            estimable: true
+            small: true
+            testable: true
+
+        # ── 工艺路线管理 (CAP-014) ──
+        - id: "US-012"
+          title: "创建和编辑工艺路线"
+          as_a: "工艺工程师"
+          i_want: "定义产品的工艺路线，包含工序序列和标准工时"
+          so_that: "标准化生产流程，支撑产能计算"
+          priority: "Should"
+          capability_ref: "CAP-014"
+          acceptance_criteria:
+            - given: "我在工艺路线创建页面"
+              when: "我添加至少 1 道工序，指定工作中心和标准工时，点击保存"
+              then: "工艺路线创建成功"
+            - given: "工序序列中"
+              when: "存在循环依赖"
+              then: "系统阻止保存并提示'工序顺序不可有循环'"
+          invest_check:
+            independent: true
+            negotiable: true
+            valuable: true
+            estimable: true
+            small: true
+            testable: true
+
+        - id: "US-013"
+          title: "查看工艺路线"
+          as_a: "生产主管"
+          i_want: "查看产品的工艺路线详情，包含工序列表和工作中心"
+          so_that: "了解生产流程安排"
+          priority: "Should"
+          capability_ref: "CAP-014"
+          acceptance_criteria:
+            - given: "产品已配置工艺路线"
+              when: "我查看工艺路线"
+              then: "按序显示所有工序、关联工作中心、标准工时"
+          invest_check:
+            independent: true
+            negotiable: true
+            valuable: true
+            estimable: true
+            small: true
+            testable: true
+
+    # ══════════════════════════════════════════════════════════════
+    # 模块 2：采购管理（支撑域）
+    # 聚合：采购订单(purchase.order)、供应商(res.partner)
+    # ══════════════════════════════════════════════════════════════
+    - module_id: "PUR"
+      module_name: "采购管理"
+      bounded_context: "采购管理"
+      stories:
+        # ── 供应商管理 (CAP-021) ──
+        - id: "US-014"
+          title: "创建供应商"
+          as_a: "采购员"
+          i_want: "录入供应商名称、联系方式、付款条件"
+          so_that: "建立供应商档案，便于后续采购下单"
+          priority: "Must"
+          capability_ref: "CAP-021"
+          acceptance_criteria:
+            - given: "我在供应商创建页面"
+              when: "我填写供应商名称（必填）和其他信息，点击保存"
+              then: "供应商创建成功"
+            - given: "我创建供应商时"
+              when: "名称为空"
+              then: "系统阻止保存并提示'供应商名称不可为空'"
+          invest_check:
+            independent: true
+            negotiable: true
+            valuable: true
+            estimable: true
+            small: true
+            testable: true
+
+        - id: "US-015"
+          title: "查看供应商列表"
+          as_a: "采购员"
+          i_want: "查看所有供应商及联系方式"
+          so_that: "快速找到合适的供应商进行采购"
+          priority: "Must"
+          capability_ref: "CAP-021"
+          acceptance_criteria:
+            - given: "系统中存在供应商数据"
+              when: "我进入供应商列表"
+              then: "显示所有供应商，含名称、电话、邮箱，支持搜索"
+          invest_check:
+            independent: true
+            negotiable: true
+            valuable: true
+            estimable: true
+            small: true
+            testable: true
+
+        - id: "US-016"
+          title: "编辑供应商信息"
+          as_a: "采购员"
+          i_want: "更新供应商的联系方式、地址或付款条件"
+          so_that: "保持供应商信息准确"
+          priority: "Should"
+          capability_ref: "CAP-021"
+          acceptance_criteria:
+            - given: "我在供应商编辑页面"
+              when: "我修改信息并保存"
+              then: "供应商信息更新成功"
+          invest_check:
+            independent: true
+            negotiable: true
+            valuable: true
+            estimable: true
+            small: true
+            testable: true
+
+        # ── 采购下单与跟踪 (CAP-022) ──
+        - id: "US-017"
+          title: "创建询价单"
+          as_a: "采购员"
+          i_want: "创建询价单，选择供应商和需采购的产品及数量"
+          so_that: "向供应商发出采购意向，获取报价"
+          priority: "Must"
+          capability_ref: "CAP-022"
+          acceptance_criteria:
+            - given: "我在询价单创建页面"
+              when: "我选择供应商、添加产品行（产品、数量、期望单价），点击保存"
+              then: "询价单创建成功，状态为草稿"
+            - given: "我添加产品行时"
+              when: "数量 ≤ 0 或单价 < 0"
+              then: "系统阻止保存并提示验证错误"
+          invest_check:
+            independent: true
+            negotiable: true
+            valuable: true
+            estimable: true
+            small: true
+            testable: true
+
+        - id: "US-018"
+          title: "确认采购订单"
+          as_a: "采购经理"
+          i_want: "将询价单确认为正式采购订单"
+          so_that: "正式向供应商下达采购，启动后续收货流程"
+          priority: "Must"
+          capability_ref: "CAP-022"
+          acceptance_criteria:
+            - given: "询价单处于草稿状态"
+              when: "我点击确认"
+              then: "状态变为采购订单，自动生成待收货单"
+          invest_check:
+            independent: true
+            negotiable: true
+            valuable: true
+            estimable: true
+            small: true
+            testable: true
+
+        - id: "US-019"
+          title: "查看采购订单列表与进度"
+          as_a: "采购员"
+          i_want: "查看所有采购订单的状态和收货进度"
+          so_that: "跟踪采购执行情况，及时催货"
+          priority: "Must"
+          capability_ref: "CAP-022"
+          acceptance_criteria:
+            - given: "系统中存在采购订单"
+              when: "我进入采购订单列表"
+              then: "显示订单列表，含供应商、总金额、状态、收货进度，支持按状态筛选"
+          invest_check:
+            independent: true
+            negotiable: true
+            valuable: true
+            estimable: true
+            small: true
+            testable: true
+
+        - id: "US-020"
+          title: "修改或取消采购订单"
+          as_a: "采购经理"
+          i_want: "在供应商发货前修改订单数量或取消订单"
+          so_that: "应对需求变化，避免多余采购"
+          priority: "Should"
+          capability_ref: "CAP-022"
+          acceptance_criteria:
+            - given: "采购订单尚未收货"
+              when: "我修改数量或点击取消"
+              then: "订单更新/取消成功，关联的待收货单同步更新"
+            - given: "采购订单已部分收货"
+              when: "我尝试取消"
+              then: "系统阻止取消并提示'已有收货记录，不可取消'"
+          invest_check:
+            independent: true
+            negotiable: true
+            valuable: true
+            estimable: true
+            small: true
+            testable: true
+
+        # ── 收货验收 (CAP-023) ──
+        - id: "US-021"
+          title: "执行收货验收"
+          as_a: "仓管员"
+          i_want: "按采购订单验收到货物料，记录实收数量"
+          so_that: "确认到货数量，触发入库和应付登记"
+          priority: "Must"
+          capability_ref: "CAP-023"
+          acceptance_criteria:
+            - given: "采购订单已确认且有待收货单"
+              when: "我填写每行的实收数量并点击验证"
+              then: "收货完成，库存增加，采购订单更新收货状态"
+            - given: "实收数量与订单数量不一致"
+              when: "我确认收货"
+              then: "系统记录差异，允许部分收货（待收货单保持打开）"
+          invest_check:
+            independent: true
+            negotiable: true
+            valuable: true
+            estimable: true
+            small: true
+            testable: true
+
+        - id: "US-022"
+          title: "查看收货记录"
+          as_a: "采购员"
+          i_want: "查看历史收货记录，包含日期、数量、差异"
+          so_that: "核对供应商交付情况，支撑供应商评估"
+          priority: "Should"
+          capability_ref: "CAP-023"
+          acceptance_criteria:
+            - given: "存在历史收货记录"
+              when: "我进入收货记录页面"
+              then: "显示收货列表，含日期、供应商、产品、计划数量 vs 实收数量"
+          invest_check:
+            independent: true
+            negotiable: true
+            valuable: true
+            estimable: true
+            small: true
+            testable: true
+
+    # ══════════════════════════════════════════════════════════════
+    # 模块 3：库存管理（支撑域）
+    # 聚合：库存移动(stock.picking)、库存量(stock.quant)
+    # ══════════════════════════════════════════════════════════════
+    - module_id: "INV"
+      module_name: "库存管理"
+      bounded_context: "库存管理"
+      stories:
+        # ── 出入库管理 (CAP-031) ──
+        - id: "US-023"
+          title: "执行入库操作"
+          as_a: "仓管员"
+          i_want: "对到货物料执行入库，选择目标库位并确认数量"
+          so_that: "物料登记入系统，库存量准确反映实物"
+          priority: "Must"
+          capability_ref: "CAP-031"
+          acceptance_criteria:
+            - given: "存在待入库的收货单"
+              when: "我选择目标库位、确认数量并点击验证"
+              then: "入库完成，对应库位库存增加"
+            - given: "未选择目标库位"
+              when: "我尝试确认入库"
+              then: "系统阻止并提示'请选择目标库位'"
+          invest_check:
+            independent: true
+            negotiable: true
+            valuable: true
+            estimable: true
+            small: true
+            testable: true
+
+        - id: "US-024"
+          title: "执行出库操作"
+          as_a: "仓管员"
+          i_want: "对销售发货或生产领料执行出库"
+          so_that: "物料离开仓库，库存量准确更新"
+          priority: "Must"
+          capability_ref: "CAP-031"
+          acceptance_criteria:
+            - given: "存在待出库单（发货单或领料单）"
+              when: "我确认出库数量并点击验证"
+              then: "出库完成，源库位库存减少"
+            - given: "出库数量超过可用库存"
+              when: "我尝试确认出库"
+              then: "系统阻止并提示'库存不足，可用量为 N'"
+          invest_check:
+            independent: true
+            negotiable: true
+            valuable: true
+            estimable: true
+            small: true
+            testable: true
+
+        - id: "US-025"
+          title: "创建库存调拨"
+          as_a: "仓管员"
+          i_want: "将物料从一个仓库/库位调拨到另一个"
+          so_that: "优化库存分布，满足不同区域需求"
+          priority: "Should"
+          capability_ref: "CAP-031"
+          acceptance_criteria:
+            - given: "我在调拨创建页面"
+              when: "我选择源库位、目标库位、产品和数量，点击确认"
+              then: "调拨完成，源库位减少、目标库位增加"
+            - given: "源库位和目标库位相同"
+              when: "我尝试创建调拨"
+              then: "系统阻止并提示'源库位和目标库位不可相同'"
+          invest_check:
+            independent: true
+            negotiable: true
+            valuable: true
+            estimable: true
+            small: true
+            testable: true
+
+        - id: "US-026"
+          title: "查看出入库记录"
+          as_a: "仓管员"
+          i_want: "查看所有出入库历史记录"
+          so_that: "追溯物料流转，排查差异"
+          priority: "Must"
+          capability_ref: "CAP-031"
+          acceptance_criteria:
+            - given: "存在出入库记录"
+              when: "我进入出入库记录页面"
+              then: "显示记录列表，含日期、类型（入/出/调拨）、产品、数量、库位，支持筛选"
+          invest_check:
+            independent: true
+            negotiable: true
+            valuable: true
+            estimable: true
+            small: true
+            testable: true
+
+        # ── 仓库与库位管理 (CAP-032) ──
+        - id: "US-027"
+          title: "配置仓库"
+          as_a: "仓管主管"
+          i_want: "创建和配置仓库，设置名称和默认库位"
+          so_that: "建立库存管理的空间基础"
+          priority: "Must"
+          capability_ref: "CAP-032"
+          acceptance_criteria:
+            - given: "我在仓库配置页面"
+              when: "我填写仓库名称和简码，点击保存"
+              then: "仓库创建成功，系统自动创建默认入库/出库/内部库位"
+          invest_check:
+            independent: true
+            negotiable: true
+            valuable: true
+            estimable: true
+            small: true
+            testable: true
+
+        - id: "US-028"
+          title: "管理库位"
+          as_a: "仓管主管"
+          i_want: "创建和管理仓库内的库位层级结构"
+          so_that: "精确定位物料存放位置"
+          priority: "Should"
+          capability_ref: "CAP-032"
+          acceptance_criteria:
+            - given: "仓库已创建"
+              when: "我在该仓库下创建子库位（如 A 区-01 排）"
+              then: "库位创建成功，可在出入库时选择"
+          invest_check:
+            independent: true
+            negotiable: true
+            valuable: true
+            estimable: true
+            small: true
+            testable: true
+
+        # ── 盘点与库存调整 (CAP-033) ──
+        - id: "US-029"
+          title: "发起盘点"
+          as_a: "仓管员"
+          i_want: "对指定库位的产品发起盘点，录入实盘数量"
+          so_that: "发现系统数据与实物的差异"
+          priority: "Should"
+          capability_ref: "CAP-033"
+          acceptance_criteria:
+            - given: "我在盘点页面"
+              when: "我选择库位，系统显示当前系统库存，我录入实盘数量"
+              then: "盘点记录生成，差异自动计算"
+          invest_check:
+            independent: true
+            negotiable: true
+            valuable: true
+            estimable: true
+            small: true
+            testable: true
+
+        - id: "US-030"
+          title: "确认盘点差异"
+          as_a: "仓管主管"
+          i_want: "审核盘点差异并确认库存调整"
+          so_that: "系统库存与实际一致"
+          priority: "Should"
+          capability_ref: "CAP-033"
+          acceptance_criteria:
+            - given: "盘点完成，存在差异记录"
+              when: "我审核并确认差异"
+              then: "系统库存调整为实盘数量，差异记录归档"
+          invest_check:
+            independent: true
+            negotiable: true
+            valuable: true
+            estimable: true
+            small: true
+            testable: true
+
+        - id: "US-031"
+          title: "查看实时库存量"
+          as_a: "仓管员"
+          i_want: "查看各产品在各库位的实时库存量"
+          so_that: "快速了解库存状况，支撑业务决策"
+          priority: "Must"
+          capability_ref: "CAP-033"
+          acceptance_criteria:
+            - given: "系统中存在库存数据"
+              when: "我进入库存量查看页面"
+              then: "显示产品维度的库存汇总，可按仓库/库位下钻"
+          invest_check:
+            independent: true
+            negotiable: true
+            valuable: true
+            estimable: true
+            small: true
+            testable: true
+
+    # ══════════════════════════════════════════════════════════════
+    # 模块 4：销售管理（通用域）
+    # 聚合：销售订单(sale.order)、价目表(product.pricelist)
+    # ══════════════════════════════════════════════════════════════
+    - module_id: "SAL"
+      module_name: "销售管理"
+      bounded_context: "销售管理"
+      stories:
+        # ── 报价与订单管理 (CAP-041) ──
+        - id: "US-032"
+          title: "创建报价单"
+          as_a: "销售员"
+          i_want: "为客户创建报价单，选择产品、填写数量和单价"
+          so_that: "向客户提供正式报价"
+          priority: "Must"
+          capability_ref: "CAP-041"
+          acceptance_criteria:
+            - given: "我在报价单创建页面"
+              when: "我选择客户、添加产品行（产品、数量、单价），点击保存"
+              then: "报价单创建成功，状态为草稿，总金额自动计算"
+            - given: "我添加产品行时"
+              when: "数量 ≤ 0"
+              then: "系统阻止保存并提示'数量必须大于 0'"
+            - given: "产品已配置价目表"
+              when: "我选择产品"
+              then: "单价自动填充（可手动覆盖）"
+          invest_check:
+            independent: true
+            negotiable: true
+            valuable: true
+            estimable: true
+            small: true
+            testable: true
+
+        - id: "US-033"
+          title: "确认销售订单"
+          as_a: "销售员"
+          i_want: "将报价单确认为正式销售订单"
+          so_that: "触发发货流程和生产需求计算"
+          priority: "Must"
+          capability_ref: "CAP-041"
+          acceptance_criteria:
+            - given: "报价单处于草稿状态"
+              when: "我点击确认"
+              then: "状态变为销售订单，系统自动生成发货单（出库指令）"
+          invest_check:
+            independent: true
+            negotiable: true
+            valuable: true
+            estimable: true
+            small: true
+            testable: true
+
+        - id: "US-034"
+          title: "查看销售订单列表"
+          as_a: "销售员"
+          i_want: "查看所有销售订单及其状态、发货进度"
+          so_that: "跟踪订单处理进度，及时响应客户询问"
+          priority: "Must"
+          capability_ref: "CAP-041"
+          acceptance_criteria:
+            - given: "系统中存在销售订单"
+              when: "我进入销售订单列表"
+              then: "显示订单列表，含客户、总金额、状态、发货进度，支持按状态筛选"
+          invest_check:
+            independent: true
+            negotiable: true
+            valuable: true
+            estimable: true
+            small: true
+            testable: true
+
+        - id: "US-035"
+          title: "查看销售订单详情与发货状态"
+          as_a: "销售员"
+          i_want: "查看单个订单的详情，包含产品明细和关联的发货单状态"
+          so_that: "确认客户订单的履约情况"
+          priority: "Must"
+          capability_ref: "CAP-041"
+          acceptance_criteria:
+            - given: "某销售订单已确认"
+              when: "我打开订单详情"
+              then: "显示产品明细、金额、关联的发货单及其状态"
+          invest_check:
+            independent: true
+            negotiable: true
+            valuable: true
+            estimable: true
+            small: true
+            testable: true
+
+        # ── 客户管理 (CAP-042) ──
+        - id: "US-036"
+          title: "创建客户"
+          as_a: "销售员"
+          i_want: "录入客户名称、联系方式、地址"
+          so_that: "建立客户档案，便于销售下单"
+          priority: "Must"
+          capability_ref: "CAP-042"
+          acceptance_criteria:
+            - given: "我在客户创建页面"
+              when: "我填写客户名称（必填）和其他信息，点击保存"
+              then: "客户创建成功"
+          invest_check:
+            independent: true
+            negotiable: true
+            valuable: true
+            estimable: true
+            small: true
+            testable: true
+
+        - id: "US-037"
+          title: "查看客户列表"
+          as_a: "销售员"
+          i_want: "查看所有客户及联系方式"
+          so_that: "快速找到目标客户"
+          priority: "Must"
+          capability_ref: "CAP-042"
+          acceptance_criteria:
+            - given: "系统中存在客户数据"
+              when: "我进入客户列表"
+              then: "显示所有客户，含名称、电话、邮箱，支持搜索"
+          invest_check:
+            independent: true
+            negotiable: true
+            valuable: true
+            estimable: true
+            small: true
+            testable: true
+
+        - id: "US-038"
+          title: "编辑客户信息"
+          as_a: "销售员"
+          i_want: "更新客户的联系方式、地址或付款条件"
+          so_that: "保持客户信息准确"
+          priority: "Should"
+          capability_ref: "CAP-042"
+          acceptance_criteria:
+            - given: "我在客户编辑页面"
+              when: "我修改信息并保存"
+              then: "客户信息更新成功"
+          invest_check:
+            independent: true
+            negotiable: true
+            valuable: true
+            estimable: true
+            small: true
+            testable: true
+
+        # ── 定价策略 (CAP-043) ──
+        - id: "US-039"
+          title: "创建价目表"
+          as_a: "销售经理"
+          i_want: "创建不同客户群的价目表"
+          so_that: "实现灵活的差异化定价"
+          priority: "Could"
+          capability_ref: "CAP-043"
+          acceptance_criteria:
+            - given: "我在价目表创建页面"
+              when: "我填写名称、添加价格规则（产品、最小数量、价格），点击保存"
+              then: "价目表创建成功"
+          invest_check:
+            independent: true
+            negotiable: true
+            valuable: true
+            estimable: true
+            small: true
+            testable: true
+
+        - id: "US-040"
+          title: "配置价格规则"
+          as_a: "销售经理"
+          i_want: "设置基于数量或客户的价格折扣规则"
+          so_that: "报价时自动匹配最优价格"
+          priority: "Could"
+          capability_ref: "CAP-043"
+          acceptance_criteria:
+            - given: "价目表已创建"
+              when: "我添加规则（如数量 ≥ 100 时打 8 折）"
+              then: "规则保存成功，创建报价单时自动应用"
+          invest_check:
+            independent: true
+            negotiable: true
+            valuable: true
+            estimable: true
+            small: true
+            testable: true

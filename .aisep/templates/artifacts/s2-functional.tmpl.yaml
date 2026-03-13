@@ -1,0 +1,25 @@
+# S2 制品模板：功能需求规格
+# 输出文件：artifacts/global/functional.yaml
+functional:
+  modules:
+    - module_id: ""
+      module_name: ""
+      bounded_context: ""    # 关联 S1 的 Bounded Context
+      stories:
+        - id: ""             # 如 US-001
+          title: ""
+          as_a: ""           # 角色
+          i_want: ""         # 行为
+          so_that: ""        # 价值
+          priority: ""       # Must | Should | Could | Won't (MoSCoW)
+          acceptance_criteria:
+            - given: ""
+              when: ""
+              then: ""
+          invest_check:
+            independent: true
+            negotiable: true
+            valuable: true
+            estimable: true
+            small: true
+            testable: true

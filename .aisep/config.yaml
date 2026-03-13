@@ -1,0 +1,96 @@
+# .aisep/config.yaml
+aisep:
+  version: "1.0"
+
+  defaults:
+    tech_stack: ""              # 留空 = S3 前由 AI 推荐
+    artifact_format: yaml
+
+  # Pipeline 阶段定义
+  pipeline:
+    stages:
+      - id: s0
+        name: "项目初始化"
+        workflow: ".agents/workflows/s0-init.md"
+        gate: manual
+      - id: s1
+        name: "业务领域分析"
+        workflow: ".agents/workflows/s1-domain.md"
+        gate: manual
+        methodologies:
+          required: [ddd, business-blueprint]
+          optional: [event-storming]
+      - id: s2
+        name: "需求规格 + Slice 规划"
+        workflow: ".agents/workflows/s2-requirements.md"
+        gate: manual
+        methodologies:
+          required: [user-story-mapping, invest]
+          optional: [moscow, given-when-then]
+        gate_validators: [crud-matrix, process-coverage]
+      - id: s3
+        name: "架构设计"
+        workflow: ".agents/workflows/s3-architecture.md"
+        gate: manual
+        methodologies:
+          required: [c4-model]
+          optional: [adr]
+      - id: s4
+        name: "Slice 详细设计"
+        workflow: ".agents/workflows/s4-design.md"
+        gate: manual
+        methodologies:
+          required: [solid]
+          optional: [design-patterns]
+        conventions: [naming, coding-standards]
+      - id: s5
+        name: "代码实现"
+        workflow: ".agents/workflows/s5-implementation.md"
+        gate: manual
+        methodologies:
+          required: [clean-code]
+          optional: [tdd]
+        conventions: [naming, coding-standards, security]
+      - id: s6
+        name: "测试验证"
+        workflow: ".agents/workflows/s6-testing.md"
+        gate: manual
+        methodologies:
+          required: [test-pyramid]
+          optional: [bdd]
+      - id: s7
+        name: "部署配置"
+        workflow: ".agents/workflows/s7-deployment.md"
+        gate: manual
+        methodologies:
+          required: [twelve-factor]
+      - id: s8
+        name: "复盘进化"
+        workflow: ".agents/workflows/s8-retrospective.md"
+        gate: manual
+        description: "项目完成后的经验提取、知识沉淀和系统进化"
+
+  # 流程控制
+  control:
+    require_approval_on_gate: true
+    allow_stage_skip: false
+    allow_stage_rollback: true
+
+  # 上下文预算（参见 context-loading-protocol.md）
+  context:
+    budget:
+      l0_max_tokens: 2000
+      l1_max_tokens: 5000
+      l2_per_request_tokens: 3000
+      total_soft_limit: 10000
+      total_hard_limit: 15000
+    compaction:
+      auto_generate: true
+      summary_max_lines: 30
+    gate_log:
+      recent_entries: 5
+      older_entries: summary_only
+      max_loaded_entries: 10
+    lazy_loading:
+      skills_metadata_only: true
+      artifacts_summary_first: true

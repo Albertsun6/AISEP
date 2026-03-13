@@ -1,0 +1,20 @@
+# S1 制品模板：领域模型
+# 输出文件：artifacts/global/domain-model.yaml
+domain_model:
+  bounded_contexts:
+    - name: ""               # 限界上下文名称
+      type: "core"           # core | supporting | generic
+      description: ""
+      aggregates:
+        - name: ""           # 聚合根名称
+          root_entity: ""
+          invariants: []     # 业务不变量
+          entities: []
+          value_objects: []
+  context_map:
+    relationships:
+      - upstream: ""
+        downstream: ""
+        pattern: ""          # ACL | OHS | SharedKernel | Conformist
+        description: ""
+  ubiquitous_language: []    # → 自动同步到 glossary.yaml

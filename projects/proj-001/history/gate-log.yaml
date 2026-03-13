@@ -1,0 +1,263 @@
+# Gate 日志 — proj-001
+gate_log:
+  - stage: "s0-init"
+    action: "passed"
+    timestamp: "2026-03-12T18:29:00+08:00"
+    artifacts_produced:
+      - "project.yaml"
+    gate_checks:
+      passed: 6
+      warnings: 1
+      failed: 0
+    notes: "budget/timeline 未设定（warning），其余全部通过"
+
+  - stage: "s1-domain"
+    action: "passed"
+    timestamp: "2026-03-12T19:37:00+08:00"
+    artifacts_produced:
+      - "domain-model.yaml"
+      - "capability-map.yaml"
+      - "glossary.yaml (24 terms)"
+    gate_checks:
+      passed: 9
+      warnings: 0
+      failed: 0
+    notes: "9/9 全部通过。4 上下文、10 聚合根、5 Context Map 关系、Gap 分析完整"
+
+  - stage: "s2-requirements"
+    action: "passed"
+    timestamp: "2026-03-12T21:20:00+08:00"
+    artifacts_produced:
+      - "functional.yaml (40 stories)"
+      - "slice-plan.yaml (7 slices)"
+      - "functional.summary.yaml (compaction)"
+    gate_checks:
+      story_quality:
+        invest_pass: "40/40 (2 with Independent=false, justified)"
+        ac_coverage: "40/40 stories have ≥1 AC"
+        moscow_distribution: "Must 60% / Should 25% / Could 15%"
+        exception_coverage: "7 key exception flows covered"
+      slice_quality:
+        granularity: "all slices within 1-4 models, 300-700 lines"
+        slice_1_independent: true
+        circular_dependencies: false
+        topological_order: "5 phases determined"
+      completeness:
+        crud_matrix: "12 models, 0 missing (8 Delete=Won't justified)"
+        all_models_have_read: true
+        glossary_sync: "no new terms needed (24 terms from S1 sufficient)"
+      passed: 12
+      warnings: 0
+      failed: 0
+    notes: "12/12 全部通过。40 stories, 7 slices, MVP=Slice 1-5 (28 stories)"
+
+  - stage: "s3-architecture"
+    action: "passed"
+    timestamp: "2026-03-12T21:36:00+08:00"
+    artifacts_produced:
+      - "architecture.yaml (4 modules, 12 models, security + deployment)"
+      - "architecture.summary.yaml (compaction)"
+      - "adr/001-tech-stack.md"
+      - "adr/002-module-strategy.md"
+    gate_checks:
+      tech_stack:
+        confirmed: true
+        framework_skill_loaded: true
+      data_model:
+        models_with_fields: "12/12"
+        bounded_context_alignment: "4:4"
+        naming_compliance: true
+        many2one_indexed: true
+        compute_deps_acyclic: true
+      security:
+        acl_coverage: "16 models covered"
+        groups: 4
+        record_rules: 4
+      deployment:
+        target: "docker"
+        env_vars_defined: 3
+      passed: 14
+      warnings: 0
+      failed: 0
+    notes: "14/14 全部通过。4 自定义模块（全量类继承），12 Models 字段级设计，Docker 部署。进入 S4 Slice 循环。"
+
+  - stage: "s4-design"
+    slice_id: "SLICE-01"
+    slice_name: "销售基础流程"
+    action: "passed"
+    timestamp: "2026-03-12T21:56:00+08:00"
+    artifacts_produced:
+      - "slices/slice-01-sale-basic/design.yaml"
+    gate_checks:
+      stories_covered: "6/6"
+      models_designed: 3
+      views_designed: 6
+      acl_complete: true
+      record_rules: 1
+      upstream_deps: "none (Walking Skeleton)"
+      passed: 8
+      warnings: 0
+      failed: 0
+    notes: "8/8 通过。标准复用 ~90%，自定义仅 1 compute 字段 + 1 constraint。"
+
+  - stage: "s5-implementation"
+    slice_id: "SLICE-01"
+    slice_name: "销售基础流程"
+    action: "passed"
+    timestamp: "2026-03-12T22:05:00+08:00"
+    artifacts_produced:
+      - "addons/sale_mfg/ (10 files, ~130 lines custom)"
+    gate_checks:
+      files_generated: 10
+      pitfall_check: "11/11 passed"
+      naming_compliance: true
+      manifest_order: "security → views (P1-01 ✅)"
+      compute_deps: "complete (P1-02 ✅)"
+      passed: 11
+      warnings: 0
+      failed: 0
+    notes: "11/11 通过。Walking Skeleton 完成。sale_mfg 模块可安装。"
+
+  - stage: "s4-design + s5-implementation"
+    slice_id: "SLICE-02"
+    slice_name: "库存基础 + 出入库"
+    action: "passed"
+    timestamp: "2026-03-12T22:10:00+08:00"
+    artifacts_produced:
+      - "slices/slice-02-stock-basic/design.yaml"
+      - "addons/stock_mfg/ (8 files)"
+    gate_checks:
+      stories_covered: "6/6"
+      models_used: "4 (全部标准复用)"
+      custom_code: "0 lines (zero custom model code)"
+      pitfall_check: "passed"
+      passed: 8
+      warnings: 0
+      failed: 0
+    notes: "全量标准复用。stock_mfg 仅提供 ACL + Record Rules + 菜单。"
+
+  - stage: "s4-design + s5-implementation"
+    slice_id: "SLICE-03"
+    slice_name: "采购全流程"
+    action: "passed"
+    timestamp: "2026-03-12T22:50:00+08:00"
+    artifacts_produced:
+      - "slices/slice-03-purchase-basic/design.yaml"
+      - "addons/purchase_mfg/ (10 files)"
+    gate_checks:
+      stories_covered: "6/6"
+      models_designed: 3
+      custom_fields: 1  # receipt_status
+      custom_constraints: 2  # qty_positive, price_non_negative
+      views_designed: 2  # form inherit + tree inherit
+      acl_rules: 3
+      record_rules: 1
+      pitfall_check: "11/11 passed"
+      manifest_order: "security → views (P1-01 ✅)"
+      compute_deps: "complete (P1-02 ✅)"
+      passed: 11
+      warnings: 0
+      failed: 0
+    notes: "与 Slice 1 对称设计。receipt_status ↔ delivery_status。purchase_mfg 10 文件可安装。"
+
+  - stage: "s4-design + s5-implementation"
+    slice_id: "SLICE-04"
+    slice_name: "BOM + 生产计划"
+    action: "passed"
+    timestamp: "2026-03-12T23:15:00+08:00"
+    artifacts_produced:
+      - "slices/slice-04-mrp-bom-production/design.yaml"
+      - "addons/mrp_mfg/ (12 files)"
+    gate_checks:
+      stories_covered: "4/4 (US-001~005,008)"
+      models_designed: 3
+      custom_fields: 2  # state (BOM), qty_variance
+      custom_methods: 3  # action_activate, action_archive_bom, action_confirm
+      views_designed: 6
+      acl_rules: 5
+      record_rules: 2
+      pitfall_check: "12/12 passed"
+      passed: 12
+      warnings: 0
+      failed: 0
+    notes: "BOM 生命周期（draft→active→archived）+ 生产工单确认前置检查。mrp_mfg 可安装。"
+
+  - stage: "s4-design + s5-implementation + s6-testing"
+    slice_id: "SLICE-05"
+    slice_name: "生产执行与报工"
+    action: "passed"
+    timestamp: "2026-03-13T00:25:00+08:00"
+    artifacts_produced:
+      - "slices/slice-05-production-execution/design.yaml"
+      - "addons/mrp_mfg/models/mrp_production.py (updated)"
+      - "addons/mrp_mfg/views/mrp_production_views.xml (updated)"
+    gate_checks:
+      stories_covered: "4/4 (US-004,009,010,011)"
+      new_fields: 2  # is_material_consumed, consumption_note
+      new_methods: 3  # action_consume_materials, action_produce, _compute_is_material_consumed
+      pitfall_check: "12/12 passed"
+      docker_deploy: "success (0.14s, 210 queries)"
+      browser_test: "5/5 passed"
+      odoo17_bugfix: "P1-05 stock.move.quantity_done → quantity"
+      passed: 12
+      warnings: 0
+      failed: 0
+    notes: "领料→报工→成品入库完整闭环。浏览器自动验收全部通过。修复 Odoo 17 字段兼容性。"
+
+  - stage: "s4-design + s5-implementation"
+    slice_id: "SLICE-06"
+    slice_name: "工艺路线 + 生产建议"
+    action: "passed"
+    timestamp: "2026-03-13T00:50:00+08:00"
+    artifacts_produced:
+      - "slices/slice-06-routing-suggestion/design.yaml"
+      - "addons/mrp_mfg/wizards/mrp_production_suggestion.py"
+      - "addons/mrp_mfg/views/mrp_production_suggestion_views.xml"
+    gate_checks:
+      stories_covered: "3/3 (US-007,012,013)"
+      new_models: 2  # TransientModel (suggestion + line)
+      new_methods: 2  # action_compute_suggestions, action_create_productions
+      docker_deploy: "success (0.23s, 303 queries)"
+      passed: 8
+      warnings: 0
+      failed: 0
+    notes: "工艺路线利用标准 Odoo 功能。MRP 建议通过 TransientModel 向导实现。"
+
+  - stage: "s4-design + s5-implementation"
+    slice_id: "SLICE-07"
+    slice_name: "高级功能"
+    action: "passed"
+    timestamp: "2026-03-13T00:55:00+08:00"
+    artifacts_produced:
+      - "slices/slice-07-advanced-features/design.yaml"
+      - "addons/stock_mfg/views/stock_transfer_views.xml"
+      - "addons/sale_mfg/views/sale_pricelist_views.xml"
+    gate_checks:
+      stories_covered: "9/9 (US-016,020,022,025,029,030,038,039,040)"
+      approach: "Standard Odoo features + Chinese menu shortcuts"
+      new_views: 2  # transfer + pricelist
+      docker_deploy: "success (61 modules loaded)"
+      passed: 6
+      warnings: 0
+      failed: 0
+    notes: "全部利用标准 Odoo 功能，仅添加中文菜单快捷入口。7/7 Slices 完成，项目交付。"
+
+  - stage: "s8-retrospective"
+    slice_id: null
+    slice_name: null
+    action: "passed"
+    timestamp: "2026-03-13T07:52:00+08:00"
+    artifacts_produced:
+      - "artifacts/global/retrospective.yaml"
+      - ".aisep/knowledge/entries/learn-006~008.yaml"
+    gate_checks:
+      metrics_collected: true
+      pitfalls_reviewed: "1/1 (P1-05 已沉淀)"
+      patterns_evaluated: "4 candidates (2 promoted to L1)"
+      decisions_reviewed: "3 ADRs (all validated)"
+      knowledge_entries: "3 written (learn-006~008)"
+      backlog_updated: true
+      passed: 6
+      warnings: 0
+      failed: 0
+    notes: "首次执行 S8 复盘。Pipeline 完整闭环：S0→S8 共 12 Gates 全部通过。"

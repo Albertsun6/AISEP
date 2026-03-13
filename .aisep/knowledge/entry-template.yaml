@@ -1,0 +1,23 @@
+# 知识条目模板
+# /tidy 时 AI 按此格式生成条目，用户确认后写入 entries/
+
+id: "learn-XXX"                    # 自增编号
+title: ""                          # 一行标题
+date: ""                           # 提取日期
+source_conversation: ""            # 来源对话 ID（可选）
+
+# 分类
+category: ""                       # system_design | methodology | framework | engineering | concept
+tags: []                           # 自由标签
+
+# 核心内容（由简到深）
+one_liner: ""                      # 一句话精华
+analogy: ""                        # 类比（帮助直觉理解）
+key_insights:                      # 关键洞见（2-5 条）
+  - ""
+related_concepts: []               # 关联概念（可链接到其他条目）
+
+# 可选
+action_items: []                   # 后续行动（如有）
+references: []                     # 参考来源（URL、书名等）
+mastery: low                       # low | medium | high（自评掌握度，回顾时更新）

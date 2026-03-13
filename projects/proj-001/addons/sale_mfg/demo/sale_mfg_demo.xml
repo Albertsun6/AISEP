@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- P3-01: noupdate="1" 防止模块更新时覆盖用户修改的演示数据 -->
+    <data noupdate="1">
+
+        <!-- ══════════════════════════════════════════════════════════════
+             演示数据：3 个客户
+             ══════════════════════════════════════════════════════════════ -->
+
+        <record id="demo_customer_dahua" model="res.partner">
+            <field name="name">大华制造有限公司</field>
+            <field name="phone">0571-88888001</field>
+            <field name="email">contact@dahua-mfg.com</field>
+            <field name="street">杭州市滨江区江南大道 1288 号</field>
+            <field name="city">杭州</field>
+            <field name="customer_rank">1</field>
+        </record>
+
+        <record id="demo_customer_mingyuan" model="res.partner">
+            <field name="name">明远科技股份有限公司</field>
+            <field name="phone">021-66666002</field>
+            <field name="email">sales@mingyuan-tech.com</field>
+            <field name="street">上海市浦东新区张江路 500 号</field>
+            <field name="city">上海</field>
+            <field name="customer_rank">1</field>
+        </record>
+
+        <record id="demo_customer_xincheng" model="res.partner">
+            <field name="name">鑫诚贸易有限公司</field>
+            <field name="phone">0755-55555003</field>
+            <field name="email">info@xincheng-trade.com</field>
+            <field name="street">深圳市南山区科技园南路 88 号</field>
+            <field name="city">深圳</field>
+            <field name="customer_rank">1</field>
+        </record>
+
+        <!-- ══════════════════════════════════════════════════════════════
+             演示数据：2 个报价单（1 草稿 + 1 已确认）
+             注意：依赖标准产品模块中的 demo 产品
+             ══════════════════════════════════════════════════════════════ -->
+
+        <!-- 报价单 1：草稿状态 -->
+        <record id="demo_sale_order_1" model="sale.order">
+            <field name="partner_id" ref="demo_customer_dahua"/>
+            <field name="date_order" eval="datetime.datetime.now()"/>
+        </record>
+
+        <record id="demo_sale_order_line_1_1" model="sale.order.line">
+            <field name="order_id" ref="demo_sale_order_1"/>
+            <field name="product_id" ref="product.product_product_4"/>
+            <field name="product_uom_qty">10</field>
+            <field name="price_unit">150.00</field>
+        </record>
+
+        <record id="demo_sale_order_line_1_2" model="sale.order.line">
+            <field name="order_id" ref="demo_sale_order_1"/>
+            <field name="product_id" ref="product.product_product_5"/>
+            <field name="product_uom_qty">5</field>
+            <field name="price_unit">280.00</field>
+        </record>
+
+        <!-- 报价单 2：给明远科技 -->
+        <record id="demo_sale_order_2" model="sale.order">
+            <field name="partner_id" ref="demo_customer_mingyuan"/>
+            <field name="date_order" eval="datetime.datetime.now()"/>
+        </record>
+
+        <record id="demo_sale_order_line_2_1" model="sale.order.line">
+            <field name="order_id" ref="demo_sale_order_2"/>
+            <field name="product_id" ref="product.product_product_4"/>
+            <field name="product_uom_qty">20</field>
+            <field name="price_unit">145.00</field>
+        </record>
+
+    </data>
+</odoo>

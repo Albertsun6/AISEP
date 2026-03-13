@@ -1,0 +1,36 @@
+# S3 制品模板：架构设计
+# 输出文件：artifacts/global/architecture.yaml
+architecture:
+  tech_stack:
+    framework: ""            # 如 odoo17
+    language: ""             # 如 python3.10
+    database: ""             # 如 postgresql16
+    additional: []           # 其他技术组件
+
+  modules:
+    - module_name: ""
+      bounded_context: ""
+      dependencies: []       # 依赖的其他模块
+      models:
+        - name: ""           # model 技术名
+          business_name: ""  # 对应 glossary 术语
+          type: ""           # entity | value_object | aggregate_root
+          fields:
+            - name: ""
+              type: ""
+              required: true
+              description: ""
+          access_control:
+            groups: []
+            record_rules: []
+
+  security_model:
+    auth_method: ""
+    groups: []
+    acl_strategy: ""
+
+  deployment:
+    target: ""               # docker | bare-metal | cloud
+    environments: []         # dev | staging | production
+
+  adr: []                    # 引用 adr/ 目录下的决策记录

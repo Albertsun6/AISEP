@@ -1,0 +1,616 @@
+# S4 制品：Slice 4 详细设计
+# 项目：制造业ERP (proj-001)
+# Slice：SLICE-04 — BOM + 生产计划
+# 生成时间：2026-03-12T23:10:00+08:00
+
+slice_design:
+  slice_id: "SLICE-04"
+  slice_name: "BOM + 生产计划"
+  description: "物料清单管理 + 创建和确认生产工单。制造核心基础。"
+  bounded_context: "生产管理"
+  module: "mrp_mfg"
+
+  stories:
+    - "US-001"  # 创建 BOM
+    - "US-002"  # 查看 BOM 列表与详情
+    - "US-003"  # 编辑 BOM
+    - "US-005"  # 手动创建生产工单
+    - "US-006"  # 查看生产计划列表
+    - "US-008"  # 确认生产工单
+
+  # ══════════════════════════════════════════════════════════════
+  # Model 详细设计
+  # ══════════════════════════════════════════════════════════════
+  models:
+    # ── mrp.bom (物料清单 — 聚合根) ──
+    - name: "mrp.bom"
+      class_name: "MrpBom"
+      inherit: "mrp.bom"
+      _inherit_type: "class"           # _inherit = 'mrp.bom'
+      related_stories: ["US-001", "US-002", "US-003"]
+      slice_scope_note: |
+        继承 Odoo 标准 mrp.bom，新增 state 字段（草稿/生效/归档）
+        以支持 BOM 生命周期管理。标准字段已满足大部分需求。
+
+      fields:
+        # === 标准字段（本 Slice 使用） ===
+        - name: "product_tmpl_id"
+          type: "Many2one"
+          comodel: "product.template"
+          string: "产品"
+          required: true
+          index: true
+          ondelete: "cascade"
+          source: inherited
+        - name: "product_id"
+          type: "Many2one"
+          comodel: "product.product"
+          string: "产品变体"
+          index: true
+          ondelete: "set null"
+          source: inherited
+        - name: "company_id"
+          type: "Many2one"
+          comodel: "res.company"
+          string: "公司"
+          required: true
+          index: true
+          source: inherited
+        - name: "bom_line_ids"
+          type: "One2many"
+          comodel: "mrp.bom.line"
+          inverse_name: "bom_id"
+          string: "BOM 明细行"
+          source: inherited
+        - name: "product_qty"
+          type: "Float"
+          string: "数量"
+          required: true
+          default: 1.0
+          source: inherited
+        - name: "sequence"
+          type: "Integer"
+          string: "排序"
+          default: 10
+          source: inherited
+        - name: "active"
+          type: "Boolean"
+          string: "启用"
+          default: true
+          source: inherited
+          note: "归档 BOM 时通过 action_archive 设为 False"
+
+        # === 自定义字段 ===
+        - name: "state"
+          type: "Selection"
+          selection: "[('draft','草稿'),('active','生效'),('archived','已归档')]"
+          string: "状态"
+          default: "draft"
+          required: true
+          source: custom
+          note: "BOM 生命周期管理：草稿→生效→归档"
+
+      methods:
+        - name: "action_activate"
+          trigger: "button"
+          description: "将草稿 BOM 激活为生效状态"
+          business_rule: |
+            1. 检查 bom_line_ids 至少有 1 行（否则提示"BOM 必须至少有 1 个子件"）
+            2. 将 state 设为 'active'
+          related_story: "US-001"
+          override: true
+
+        - name: "action_archive_bom"
+          trigger: "button"
+          description: "归档 BOM（设 active=False, state='archived'）"
+          business_rule: |
+            1. 将 state 设为 'archived'
+            2. 将 active 设为 False（Odoo 标准归档机制）
+          related_story: "US-003"
+          override: true
+          note: "归档功能主要在 Slice 5 (US-004) 中使用，本 Slice 预埋按钮"
+
+        - name: "_check_bom_line_self_reference"
+          trigger: "constrains"
+          fields: ["bom_line_ids"]
+          description: "校验子件不可与父件相同"
+          business_rule: |
+            for bom in self:
+                for line in bom.bom_line_ids:
+                    if line.product_id == bom.product_tmpl_id.product_variant_id:
+                        raise ValidationError("子件不可与父件相同")
+          related_story: "US-001 (AC: 子件产品与父件产品相同 → 系统阻止保存)"
+          override: true
+
+      constraints:
+        sql_constraints:
+          - name: "qty_positive"
+            expression: "CHECK(product_qty > 0)"
+            message: "BOM 数量必须大于零"
+        api_constrains:
+          - name: "_check_bom_line_self_reference"
+            fields: ["bom_line_ids"]
+            rule: "子件产品不可与父件产品相同"
+            related_story: "US-001"
+
+    # ── mrp.bom.line (BOM 行 — 实体) ──
+    - name: "mrp.bom.line"
+      class_name: "MrpBomLine"
+      inherit: "mrp.bom.line"
+      _inherit_type: "class"
+      related_stories: ["US-001", "US-003"]
+
+      fields:
+        - name: "bom_id"
+          type: "Many2one"
+          comodel: "mrp.bom"
+          string: "BOM"
+          required: true
+          index: true
+          ondelete: "cascade"
+          source: inherited
+        - name: "product_id"
+          type: "Many2one"
+          comodel: "product.product"
+          string: "子件产品"
+          required: true
+          index: true
+          ondelete: "restrict"
+          source: inherited
+        - name: "product_qty"
+          type: "Float"
+          string: "用量"
+          required: true
+          default: 1.0
+          source: inherited
+        - name: "product_uom_id"
+          type: "Many2one"
+          comodel: "uom.uom"
+          string: "单位"
+          required: true
+          source: inherited
+        - name: "sequence"
+          type: "Integer"
+          string: "排序"
+          default: 10
+          source: inherited
+
+      methods: []
+      constraints:
+        sql_constraints:
+          - name: "qty_positive"
+            expression: "CHECK(product_qty > 0)"
+            message: "子件用量必须大于零"
+        api_constrains: []
+        note: "子件用量 > 0 通过 SQL 约束保证"
+
+    # ── mrp.production (生产工单 — 聚合根) ──
+    - name: "mrp.production"
+      class_name: "MrpProduction"
+      inherit: "mrp.production"
+      _inherit_type: "class"
+      related_stories: ["US-005", "US-006", "US-008"]
+      slice_scope_note: |
+        本 Slice 覆盖：创建工单（draft）→ 确认工单（confirmed）。
+        后续 Slice 5 扩展：confirmed → progress → done 的生产执行流程。
+        move_raw_ids / move_finished_ids 在确认时由标准逻辑自动生成。
+
+      fields:
+        # === 标准字段 ===
+        - name: "product_id"
+          type: "Many2one"
+          comodel: "product.product"
+          string: "产品"
+          required: true
+          index: true
+          ondelete: "restrict"
+          source: inherited
+        - name: "bom_id"
+          type: "Many2one"
+          comodel: "mrp.bom"
+          string: "物料清单"
+          index: true
+          ondelete: "restrict"
+          source: inherited
+          note: "非 required — 标准模块中 bom_id 可为空（手动指定原料）"
+        - name: "company_id"
+          type: "Many2one"
+          comodel: "res.company"
+          string: "公司"
+          required: true
+          index: true
+          source: inherited
+        - name: "move_raw_ids"
+          type: "One2many"
+          comodel: "stock.move"
+          inverse_name: "raw_material_production_id"
+          string: "原料消耗"
+          source: inherited
+        - name: "move_finished_ids"
+          type: "One2many"
+          comodel: "stock.move"
+          inverse_name: "production_id"
+          string: "成品产出"
+          source: inherited
+        - name: "state"
+          type: "Selection"
+          selection: "[('draft','草稿'),('confirmed','已确认'),('progress','进行中'),('done','已完工'),('cancel','已取消')]"
+          string: "状态"
+          default: "draft"
+          required: true
+          index: true
+          source: inherited
+        - name: "name"
+          type: "Char"
+          string: "工单编号"
+          required: true
+          readonly: true
+          default: "New"
+          source: inherited
+          note: "自动生成序列号（MO00001 格式）"
+        - name: "product_qty"
+          type: "Float"
+          string: "计划数量"
+          required: true
+          source: inherited
+        - name: "qty_producing"
+          type: "Float"
+          string: "完成数量"
+          source: inherited
+          note: "Slice 5 使用（报工完成时填写）"
+        - name: "date_start"
+          type: "Datetime"
+          string: "计划开始"
+          index: true
+          source: inherited
+        - name: "date_finished"
+          type: "Datetime"
+          string: "计划完成"
+          source: inherited
+
+        # === 自定义字段 ===
+        - name: "qty_variance"
+          type: "Float"
+          string: "数量差异"
+          compute: "_compute_qty_variance"
+          store: true
+          depends: ["product_qty", "qty_producing"]
+          source: custom
+          note: "计划数量 − 完成数量，Slice 5 报工后有意义"
+
+      methods:
+        - name: "action_confirm"
+          trigger: "button"
+          description: "确认生产工单（草稿 → 已确认）"
+          business_rule: |
+            1. 前置检查：bom_id 必须存在且 state != 'archived'
+            2. 调用 super()._button_mark_done() 或标准确认逻辑
+            3. 标准逻辑自动：生成 move_raw_ids（领料单）
+            注意：Odoo 17 mrp.production 的确认方法名为 action_confirm
+          related_story: "US-008"
+          override: true  # 加前置 BOM 检查
+
+        - name: "_compute_qty_variance"
+          trigger: "compute"
+          description: "计算计划数量与完成数量的差异"
+          business_rule: |
+            for production in self:
+                production.qty_variance = production.product_qty - production.qty_producing
+          related_story: "US-006"
+          override: true
+
+        - name: "_onchange_bom_id"
+          trigger: "onchange"
+          description: "选择 BOM 后自动设置产品"
+          business_rule: |
+            标准 onchange 逻辑：选择 BOM 后自动填充产品和计划原料
+            本 Slice 使用标准行为，无 override
+          related_story: "US-005"
+          override: false
+
+      constraints:
+        sql_constraints:
+          - name: "qty_positive"
+            expression: "CHECK(product_qty > 0)"
+            message: "生产数量必须大于零"
+        api_constrains:
+          - name: "_check_bom_active"
+            fields: ["bom_id"]
+            rule: "关联的 BOM 必须处于生效状态（非归档）"
+            related_story: "US-008 (AC: BOM 不存在或已归档 → 阻止确认)"
+
+  # ══════════════════════════════════════════════════════════════
+  # View 设计
+  # ══════════════════════════════════════════════════════════════
+  views:
+    # ── BOM Views ──
+    - id: "view_mrp_bom_form_inherit_mfg"
+      type: "form"
+      model: "mrp.bom"
+      inherit_id: "mrp.mrp_bom_form_view"
+      description: "继承标准 BOM 表单，添加 state 状态栏和激活/归档按钮"
+      layout:
+        header:
+          - statusbar: "state (draft → active → archived)"
+          - button: "action_activate (激活 → 仅 draft 状态可见)"
+          - button: "action_archive_bom (归档 → 仅 active 状态可见)"
+        sheet:
+          group_left:
+            - "product_tmpl_id (产品)"
+            - "product_qty (数量)"
+          group_right:
+            - "company_id (公司)"
+            - "state (状态 — 自定义)"
+          notebook:
+            - page: "BOM 明细"
+              content: "bom_line_ids (tree editable=bottom)"
+              columns: ["sequence", "product_id", "product_qty", "product_uom_id"]
+
+    - id: "view_mrp_bom_tree_inherit_mfg"
+      type: "tree"
+      model: "mrp.bom"
+      inherit_id: "mrp.mrp_bom_tree_view"
+      note: "继承标准列表，添加 state 列"
+      key_elements:
+        - "product_tmpl_id (产品)"
+        - "product_qty (数量)"
+        - "bom_line_ids count (子件数)"
+        - "state (状态 — 自定义)"
+
+    - id: "view_mrp_bom_search_inherit_mfg"
+      type: "search"
+      model: "mrp.bom"
+      inherit_id: "mrp.view_mrp_bom_filter"
+      note: "继承标准搜索，添加按状态筛选"
+      key_elements:
+        - filter: "state = draft → 草稿"
+        - filter: "state = active → 生效"
+        - group_by: "state"
+
+    # ── 生产工单 Views ──
+    - id: "view_mrp_production_form_inherit_mfg"
+      type: "form"
+      model: "mrp.production"
+      inherit_id: "mrp.mrp_production_form_view"
+      description: "继承标准生产工单表单，添加 qty_variance 字段和 BOM 状态校验"
+      layout:
+        header:
+          - statusbar: "state (draft → confirmed → progress → done)"
+          - button: "action_confirm (确认 → 仅 draft 状态可见)"
+        sheet:
+          group_left:
+            - "product_id (产品)"
+            - "bom_id (物料清单)"
+            - "product_qty (计划数量)"
+          group_right:
+            - "date_start (计划开始)"
+            - "date_finished (计划完成)"
+            - "company_id (公司)"
+          notebook:
+            - page: "原料消耗"
+              content: "move_raw_ids (tree readonly=1)"
+              columns: ["product_id", "product_uom_qty", "quantity_done"]
+              note: "确认后自动生成，本 Slice 只读展示"
+            - page: "成品产出"
+              content: "move_finished_ids (tree readonly=1)"
+              columns: ["product_id", "product_uom_qty", "quantity_done"]
+
+    - id: "view_mrp_production_tree_inherit_mfg"
+      type: "tree"
+      model: "mrp.production"
+      inherit_id: "mrp.mrp_production_tree_view"
+      note: "继承标准列表，添加 qty_variance"
+      key_elements:
+        - "name (工单编号)"
+        - "product_id (产品)"
+        - "product_qty (计划数量)"
+        - "date_start (计划日期)"
+        - "state (状态)"
+        - "qty_variance (数量差异 — 自定义)"
+
+    - id: "view_mrp_production_search_inherit_mfg"
+      type: "search"
+      model: "mrp.production"
+      inherit_id: "mrp.view_mrp_production_filter"
+      note: "继承标准搜索，添加按状态筛选"
+      key_elements:
+        - filter: "state = draft → 草稿"
+        - filter: "state = confirmed → 已确认"
+        - group_by: "state"
+        - group_by: "product_id"
+
+  # ══════════════════════════════════════════════════════════════
+  # Menu 与 Action 设计
+  # ══════════════════════════════════════════════════════════════
+  menus:
+    # 顶级菜单：使用 Odoo 标准的 "制造" 菜单
+    - id: "menu_mrp_root"
+      name: "制造"
+      source: "mrp.menu_mrp_root"
+      note: "使用标准制造模块的顶级菜单"
+
+    # 子菜单 1：物料清单（标准已有）
+    - id: "menu_mrp_bom"
+      name: "物料清单"
+      source: "mrp.menu_mrp_bom_form_action"
+      note: "使用标准 BOM 菜单"
+
+    # 子菜单 2：生产工单（标准已有）
+    - id: "menu_mrp_production"
+      name: "生产工单"
+      source: "mrp.menu_mrp_production_action"
+      note: "使用标准生产工单菜单"
+
+  actions: []
+  # 注意：BOM 和生产工单的标准 Action 已由 mrp 模块定义。
+  # 本模块仅通过 View 继承扩展显示，无需自定义 Action。
+
+  # ══════════════════════════════════════════════════════════════
+  # Wizard 设计
+  # ══════════════════════════════════════════════════════════════
+  wizards: []   # Slice 4 无向导需求
+
+  # ══════════════════════════════════════════════════════════════
+  # Security 细化
+  # ══════════════════════════════════════════════════════════════
+  security:
+    groups:
+      - id: "group_mfg_user"
+        name: "制造用户"
+        category: "mrp_mfg"
+        implied_ids: ["base.group_user"]
+      - id: "group_mfg_manager"
+        name: "制造经理"
+        category: "mrp_mfg"
+        implied_ids: ["mrp_mfg.group_mfg_user"]
+
+    acl:
+      # id, name, model, group, perm
+      - id: "access_mrp_bom_mfg_user"
+        model: "mrp.bom"
+        group: "mrp_mfg.group_mfg_user"
+        perm: { read: 1, write: 1, create: 1, unlink: 0 }
+      - id: "access_mrp_bom_mfg_manager"
+        model: "mrp.bom"
+        group: "mrp_mfg.group_mfg_manager"
+        perm: { read: 1, write: 1, create: 1, unlink: 1 }
+      - id: "access_mrp_bom_line_mfg_user"
+        model: "mrp.bom.line"
+        group: "mrp_mfg.group_mfg_user"
+        perm: { read: 1, write: 1, create: 1, unlink: 1 }
+      - id: "access_mrp_production_mfg_user"
+        model: "mrp.production"
+        group: "mrp_mfg.group_mfg_user"
+        perm: { read: 1, write: 1, create: 1, unlink: 0 }
+      - id: "access_mrp_production_mfg_manager"
+        model: "mrp.production"
+        group: "mrp_mfg.group_mfg_manager"
+        perm: { read: 1, write: 1, create: 1, unlink: 1 }
+
+    record_rules:
+      - id: "rule_mrp_bom_company"
+        name: "BOM：当前公司"
+        model: "mrp.bom"
+        domain: "[('company_id', 'in', company_ids)]"
+        groups: ["mrp_mfg.group_mfg_user"]
+      - id: "rule_mrp_production_company"
+        name: "生产工单：当前公司"
+        model: "mrp.production"
+        domain: "[('company_id', 'in', company_ids)]"
+        groups: ["mrp_mfg.group_mfg_user"]
+
+  # ══════════════════════════════════════════════════════════════
+  # Demo 数据
+  # ══════════════════════════════════════════════════════════════
+  data:
+    - file: "demo/mrp_mfg_demo.xml"
+      type: demo
+      description: |
+        演示数据：
+        - 3 个产品（成品 A = 主板组件, 子件 B = 电阻, 子件 C = 电容）
+        - 1 个 BOM（成品 A，子件 B×10 + 子件 C×20，状态生效）
+        - 2 个生产工单（1 个草稿, 1 个已确认）
+
+  # ══════════════════════════════════════════════════════════════
+  # 依赖关系
+  # ══════════════════════════════════════════════════════════════
+  dependencies:
+    upstream_slices: ["SLICE-02"]
+    upstream_reason: "生产工单确认后生成领料单（stock.move），需库存模块支撑"
+    external_modules:
+      - "mrp"                          # Odoo 标准制造模块
+      - "stock"                        # 领料/入库
+      - "product"                      # 产品主数据
+    notes: |
+      mrp_mfg 是首次创建的核心域模块。
+      本 Slice 仅覆盖 BOM 管理 + 工单创建/确认。
+      Slice 5 将扩展生产执行（领料/报工/成品入库）。
+
+  # ══════════════════════════════════════════════════════════════
+  # Slice 4 文件清单（S5 代码生成用）
+  # ══════════════════════════════════════════════════════════════
+  file_manifest:
+    module_root: "addons/mrp_mfg/"
+    files:
+      - path: "__init__.py"
+        action: create
+        content_hint: "from . import models"
+      - path: "__manifest__.py"
+        action: create
+        content_hint: "name, version, depends=[mrp, stock, product], data list"
+      - path: "models/__init__.py"
+        action: create
+        content_hint: "from . import mrp_bom, mrp_bom_line, mrp_production"
+      - path: "models/mrp_bom.py"
+        action: create
+        content_hint: "MrpBom(_inherit='mrp.bom') + state + action_activate + self_ref check"
+      - path: "models/mrp_bom_line.py"
+        action: create
+        content_hint: "MrpBomLine(_inherit='mrp.bom.line') + qty_positive constraint"
+      - path: "models/mrp_production.py"
+        action: create
+        content_hint: "MrpProduction(_inherit='mrp.production') + qty_variance + action_confirm override"
+      - path: "views/mrp_bom_views.xml"
+        action: create
+        content_hint: "form inherit + tree inherit + search inherit (添加 state)"
+      - path: "views/mrp_production_views.xml"
+        action: create
+        content_hint: "form inherit + tree inherit + search inherit (添加 qty_variance)"
+      - path: "views/mrp_mfg_menus.xml"
+        action: create
+        content_hint: "空文件或仅引用标准菜单（无自定义菜单）"
+      - path: "security/mrp_mfg_security.xml"
+        action: create
+        content_hint: "group_mfg_user + group_mfg_manager + 2 record rules"
+      - path: "security/ir.model.access.csv"
+        action: create
+        content_hint: "5 ACL rules (bom user/manager, bom.line, production user/manager)"
+      - path: "demo/mrp_mfg_demo.xml"
+        action: create
+        content_hint: "3 products + 1 BOM + 2 productions"
+    total_files: 12
+    estimated_lines: "400-600"
+
+  # ══════════════════════════════════════════════════════════════
+  # Story ↔ 设计追溯矩阵
+  # ══════════════════════════════════════════════════════════════
+  traceability:
+    - story: "US-001 创建物料清单"
+      model: "mrp.bom + mrp.bom.line"
+      view: "form (继承)"
+      method: "create (标准) + action_activate + _check_bom_line_self_reference"
+      ac_coverage: "选择产品 + 添加子件 + 数量校验 + 子件≠父件校验 → ✅"
+
+    - story: "US-002 查看 BOM 列表与详情"
+      model: "mrp.bom"
+      view: "tree (继承) + form (继承) + search (继承)"
+      method: "search (标准)"
+      ac_coverage: "列表含产品/子件数/状态 + 详情含所有子件 → ✅"
+
+    - story: "US-003 编辑物料清单"
+      model: "mrp.bom + mrp.bom.line"
+      view: "form (继承, editable)"
+      method: "write (标准)"
+      ac_coverage: "修改子件/数量 + 保存 → ✅"
+      note: |
+        AC 中"已被工单引用时提示"功能通过 onchange/write 可实现，
+        但本 Slice 暂不做（标准 Odoo 不阻止修改已引用的 BOM），
+        属于增强功能可在后续 Slice 添加。
+
+    - story: "US-005 手动创建生产工单"
+      model: "mrp.production"
+      view: "form (继承)"
+      method: "create (标准) + _onchange_bom_id (标准)"
+      ac_coverage: "选择产品/BOM/数量/日期 + 自动算原料 + 数量校验 → ✅"
+
+    - story: "US-006 查看生产计划列表"
+      model: "mrp.production"
+      view: "tree (继承) + search (继承)"
+      method: "search (标准)"
+      ac_coverage: "工单列表含产品/数量/日期/状态 + 按状态筛选 → ✅"
+
+    - story: "US-008 确认生产工单"
+      model: "mrp.production"
+      view: "form header button"
+      method: "action_confirm (override + BOM 校验)"
+      ac_coverage: "draft → confirmed + 原料需求单生成 + BOM 无效时阻止 → ✅"

@@ -1,0 +1,115 @@
+# AISEP 认知知识库索引
+# 每次 /tidy 时自动更新
+# 存储位置：后续可迁移至 ~/.aisep/knowledge/（全局共享）
+
+metadata:
+  created: "2026-03-12"
+  last_updated: "2026-03-13"
+  description: "对话中学到的概念、原理、方法论、设计决策"
+  purpose: "提升用户认知，不是改进系统"
+  total_entries: 11
+
+entries:
+  - id: learn-001
+    title: "递归问题与元层次思维"
+    category: system_design
+    tags: [递归, 自指, 元层次, 进化系统, 哥德尔]
+    date: "2026-03-12"
+  - id: learn-002
+    title: "摩擦即特性（Friction is a Feature）"
+    category: system_design
+    tags: [设计原则, 审批机制, 安全性, 人机协作]
+    date: "2026-03-12"
+  - id: learn-003
+    title: "规则生命周期管理"
+    category: methodology
+    tags: [生命周期, 规则管理, 进化, 渐进式]
+    date: "2026-03-12"
+  - id: learn-004
+    title: "自进化的四层架构 — 从记忆到能力生成"
+    category: system_design
+    tags: [自进化, 反馈循环, OpenClaw, AlphaEvolve, 闭环学习]
+    date: "2026-03-12"
+  - id: learn-005
+    title: "Spec-Driven Development — 从 Vibe Coding 到约束生成"
+    category: engineering
+    tags: [OpenSpec, SpecKit, specification, constitution, 变更隔离]
+    date: "2026-03-12"
+  - id: learn-006
+    title: "TransientModel 向导模式"
+    category: framework_pattern
+    tags: [odoo, TransientModel, wizard, design-pattern]
+    source_project: "proj-001"
+    date: "2026-03-13"
+  - id: learn-007
+    title: "Odoo 版本间 API 破坏性变更"
+    category: framework_gotcha
+    tags: [odoo, migration, breaking-change, stock.move]
+    source_project: "proj-001"
+    date: "2026-03-13"
+  - id: learn-008
+    title: "Vertical Slice 架构"
+    category: architecture
+    tags: [architecture, methodology, delivery, agile]
+    source_project: "proj-001"
+    date: "2026-03-13"
+  - id: learn-009
+    title: "Repo Map — 代码地图模式"
+    category: context_engineering
+    tags: [context-engineering, AST, progressive-disclosure, aider]
+    date: "2026-03-13"
+  - id: learn-010
+    title: "上下文控制成熟度模型（Context Control Maturity）"
+    category: context_engineering
+    tags: [context-engineering, maturity-model, audit, evolution]
+    date: "2026-03-13"
+  - id: learn-011
+    title: "Context Fence — 上下文围栏模式"
+    category: context_engineering
+    tags: [context-engineering, negative-prompting, multi-project, isolation]
+    date: "2026-03-13"
+
+# ── 倒排索引（自动维护，/tidy 时同步更新）──
+
+by_category:
+  system_design: [learn-001, learn-002, learn-004]
+  methodology: [learn-003]
+  engineering: [learn-005]
+  framework_pattern: [learn-006]
+  framework_gotcha: [learn-007]
+  architecture: [learn-008]
+  context_engineering: [learn-009, learn-010]
+
+by_tag:
+  # 系统设计
+  递归: [learn-001]
+  元层次: [learn-001]
+  进化系统: [learn-001]
+  设计原则: [learn-002]
+  人机协作: [learn-002]
+  自进化: [learn-004]
+  反馈循环: [learn-004]
+  闭环学习: [learn-004]
+  # 工程
+  specification: [learn-005]
+  变更隔离: [learn-005]
+  # 框架
+  odoo: [learn-006, learn-007]
+  design-pattern: [learn-006]
+  breaking-change: [learn-007]
+  # 架构
+  architecture: [learn-008]
+  agile: [learn-008]
+  # 上下文
+  context-engineering: [learn-009, learn-010, learn-011]
+  progressive-disclosure: [learn-009]
+  maturity-model: [learn-010]
+  negative-prompting: [learn-011]
+  multi-project: [learn-011]
+  isolation: [learn-011]
+
+by_framework:
+  odoo17: [learn-006, learn-007]
+
+by_project:
+  proj-001: [learn-006, learn-007, learn-008]

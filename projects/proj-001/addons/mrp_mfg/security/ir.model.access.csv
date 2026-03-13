@@ -1,0 +1,8 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_mrp_bom_mfg_user,mrp.bom.mfg.user,mrp.model_mrp_bom,mrp_mfg.group_mfg_user,1,1,1,0
+access_mrp_bom_mfg_manager,mrp.bom.mfg.manager,mrp.model_mrp_bom,mrp_mfg.group_mfg_manager,1,1,1,1
+access_mrp_bom_line_mfg_user,mrp.bom.line.mfg.user,mrp.model_mrp_bom_line,mrp_mfg.group_mfg_user,1,1,1,1
+access_mrp_production_mfg_user,mrp.production.mfg.user,mrp.model_mrp_production,mrp_mfg.group_mfg_user,1,1,1,0
+access_mrp_production_mfg_manager,mrp.production.mfg.manager,mrp.model_mrp_production,mrp_mfg.group_mfg_manager,1,1,1,1
+access_mrp_suggestion_mfg_user,mrp.production.suggestion.user,model_mrp_production_suggestion,mrp_mfg.group_mfg_user,1,1,1,1
+access_mrp_suggestion_line_mfg_user,mrp.production.suggestion.line.user,model_mrp_production_suggestion_line,mrp_mfg.group_mfg_user,1,1,1,1

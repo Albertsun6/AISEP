@@ -1,0 +1,50 @@
+# S3 制品摘要（Compaction）
+# 项目：制造业ERP (proj-001)
+# 生成时间：2026-03-12T21:36:00+08:00
+# 用途：后续阶段的 L2 上下文加载（按需）
+
+architecture_summary:
+  tech_stack: "Odoo 17 CE | Python 3.10+ | PostgreSQL 16 | Docker"
+
+  modules:
+    - name: "mrp_mfg"
+      context: "生产管理"
+      type: core
+      strategy: inherit
+      inherits: "mrp"
+      models: ["mrp.bom", "mrp.bom.line", "mrp.production", "mrp.routing.workcenter"]
+      custom_fields: ["state (BOM)", "qty_variance"]
+
+    - name: "purchase_mfg"
+      context: "采购管理"
+      type: supporting
+      strategy: inherit
+      inherits: "purchase"
+      models: ["purchase.order", "purchase.order.line", "res.partner"]
+      custom_fields: ["receipt_status"]
+
+    - name: "stock_mfg"
+      context: "库存管理"
+      type: supporting
+      strategy: inherit
+      inherits: "stock"
+      models: ["stock.warehouse", "stock.location", "stock.picking", "stock.move", "stock.quant"]
+      custom_fields: []
+
+    - name: "sale_mfg"
+      context: "销售管理"
+      type: generic
+      strategy: inherit
+      inherits: "sale_management"
+      models: ["sale.order", "sale.order.line", "product.pricelist", "product.pricelist.item"]
+      custom_fields: ["delivery_status"]
+
+  install_order: ["stock_mfg", "sale_mfg", "purchase_mfg", "mrp_mfg"]
+
+  security:
+    groups: ["group_mfg_user", "group_mfg_manager", "group_purchase_user", "group_sale_user"]
+    record_rules: "company-level isolation (4 rules)"
+
+  deployment: "Docker (odoo:17.0 + postgres:16-alpine)"
+
+  adr: ["ADR-001 技术栈", "ADR-002 模块策略"]

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ══════════════════════════════════════════════════════════════
+         sale_mfg: 菜单和 Action 定义
+         ══════════════════════════════════════════════════════════════ -->
+
+    <!-- 客户 Action — 使用 domain 过滤只显示客户 -->
+    <record id="action_sale_mfg_customers" model="ir.actions.act_window">
+        <field name="name">客户</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('customer_rank', '>', 0)]</field>
+        <field name="context">{'default_customer_rank': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                创建您的第一个客户
+            </p>
+            <p>录入客户名称、联系方式和地址信息。</p>
+        </field>
+    </record>
+
+    <!-- 客户菜单 — 挂在标准销售菜单下 -->
+    <menuitem id="menu_sale_mfg_customers"
+              name="客户"
+              parent="sale.sale_menu_root"
+              action="action_sale_mfg_customers"
+              sequence="20"
+              groups="sale_mfg.group_sale_user"/>
+
+</odoo>

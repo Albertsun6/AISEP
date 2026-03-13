@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ══════════════════════════════════════════════════
+         Slice 7: 价目表管理入口（US-039, US-040）
+         Standard Odoo 已内置 product.pricelist 功能
+         此处添加菜单快捷入口和中文标签增强
+         ══════════════════════════════════════════════════ -->
+
+    <!-- 价目表 Action -->
+    <record id="action_product_pricelist_mfg" model="ir.actions.act_window">
+        <field name="name">价目表</field>
+        <field name="res_model">product.pricelist</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                创建价目表
+            </p>
+            <p>配置不同价格策略，可按客户、日期区间或最小数量设置价格规则。</p>
+        </field>
+    </record>
+
+    <!-- 菜单入口 — 在销售模块下添加 -->
+    <menuitem id="menu_sale_pricelist"
+              name="价目表"
+              parent="sale.sale_menu_root"
+              action="action_product_pricelist_mfg"
+              sequence="50"
+              groups="sales_team.group_sale_manager"/>
+
+</odoo>

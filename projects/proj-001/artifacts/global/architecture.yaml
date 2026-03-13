@@ -1,0 +1,1183 @@
+# S3 制品：架构设计
+# 项目：制造业ERP (proj-001)
+# 生成时间：2026-03-12T21:30:00+08:00
+# 总览：4 自定义模块 | 12 Models | 4 安全组 | Docker 部署
+
+# ══════════════════════════════════════════════════════════════
+# 1. 技术栈
+# ══════════════════════════════════════════════════════════════
+architecture:
+  tech_stack:
+    framework: "odoo17"
+    edition: "community"
+    language: "python3.10+"
+    database: "postgresql16"
+    additional:
+      - name: "wkhtmltopdf"
+        purpose: "PDF 报表生成"
+        version: "0.12.6+"
+      - name: "Docker"
+        purpose: "容器化部署"
+        version: "24+"
+      - name: "docker-compose"
+        purpose: "多服务编排"
+        version: "2.20+"
+
+  # ══════════════════════════════════════════════════════════════
+  # 2. Bounded Context → 技术模块映射
+  # ══════════════════════════════════════════════════════════════
+  modules:
+    # ── 模块 1：生产管理（核心域） ──
+    - module_name: "mrp_mfg"
+      technical_name: "mrp_mfg"
+      bounded_context: "生产管理"
+      domain_type: core
+      relation_to_standard: "inherit"    # 继承 Odoo mrp 核心模块
+      description: "扩展 Odoo MRP 模块，实现 BOM 管理、生产工单、生产执行、工艺路线"
+      depends:
+        - "mrp"                          # Odoo 标准制造模块
+        - "stock"                        # 库存（领料/入库）
+        - "product"                      # 产品主数据
+      manifest:
+        name: "制造管理扩展"
+        version: "17.0.1.0.0"
+        category: "Manufacturing"
+        application: false               # 扩展模块，非独立应用
+        installable: true
+        auto_install: false
+        license: "LGPL-3"
+
+      models:
+        # ── mrp.bom (继承扩展) ──
+        - name: "mrp.bom"
+          class_name: "MrpBom"
+          business_name: "物料清单"
+          type: aggregate_root
+          inherit_type: "class_inherit"  # _inherit = 'mrp.bom'，无 _name
+          description: "物料清单"
+          _order: "sequence, id"
+          _rec_name: "product_tmpl_id"
+          fields:
+            # === 关系字段 ===
+            - name: "product_tmpl_id"
+              type: "Many2one"
+              comodel: "product.template"
+              string: "产品"
+              required: true
+              index: true
+              ondelete: "cascade"
+              inherited: true            # 标准字段（已存在）
+            - name: "product_id"
+              type: "Many2one"
+              comodel: "product.product"
+              string: "产品变体"
+              index: true
+              ondelete: "set null"
+              inherited: true
+            - name: "company_id"
+              type: "Many2one"
+              comodel: "res.company"
+              string: "公司"
+              required: true
+              index: true
+              inherited: true
+            - name: "bom_line_ids"
+              type: "One2many"
+              comodel: "mrp.bom.line"
+              inverse_name: "bom_id"
+              string: "BOM 明细行"
+              inherited: true
+            - name: "routing_id"
+              type: "Many2one"
+              comodel: "mrp.routing.workcenter"
+              string: "工艺路线"
+              index: true
+              ondelete: "set null"
+              help: "关联工艺路线，定义生产工序"
+              custom: true               # 自定义扩展字段
+            # === 选择字段 ===
+            - name: "state"
+              type: "Selection"
+              selection: "[('draft','草稿'),('active','生效'),('archived','已归档')]"
+              string: "状态"
+              default: "draft"
+              required: true
+              custom: true
+            # === 普通字段 ===
+            - name: "product_qty"
+              type: "Float"
+              string: "数量"
+              required: true
+              default: 1.0
+              inherited: true
+            - name: "sequence"
+              type: "Integer"
+              string: "排序"
+              default: 10
+              inherited: true
+            - name: "active"
+              type: "Boolean"
+              string: "启用"
+              default: true
+              inherited: true
+              help: "归档 BOM 时设为 False"
+          sql_constraints:
+            - name: "qty_positive"
+              expression: "CHECK(product_qty > 0)"
+              message: "BOM 数量必须大于零"
+
+        # ── mrp.bom.line (继承扩展) ──
+        - name: "mrp.bom.line"
+          class_name: "MrpBomLine"
+          business_name: "BOM 行（子件）"
+          type: entity
+          inherit_type: "class_inherit"
+          description: "BOM 子件行"
+          fields:
+            - name: "bom_id"
+              type: "Many2one"
+              comodel: "mrp.bom"
+              string: "BOM"
+              required: true
+              index: true
+              ondelete: "cascade"
+              inherited: true
+            - name: "product_id"
+              type: "Many2one"
+              comodel: "product.product"
+              string: "子件产品"
+              required: true
+              index: true
+              ondelete: "restrict"
+              inherited: true
+            - name: "product_qty"
+              type: "Float"
+              string: "用量"
+              required: true
+              default: 1.0
+              inherited: true
+            - name: "product_uom_id"
+              type: "Many2one"
+              comodel: "uom.uom"
+              string: "单位"
+              required: true
+              inherited: true
+            - name: "sequence"
+              type: "Integer"
+              string: "排序"
+              default: 10
+              inherited: true
+          sql_constraints:
+            - name: "qty_positive"
+              expression: "CHECK(product_qty > 0)"
+              message: "子件用量必须大于零"
+
+        # ── mrp.production (继承扩展) ──
+        - name: "mrp.production"
+          class_name: "MrpProduction"
+          business_name: "生产工单"
+          type: aggregate_root
+          inherit_type: "class_inherit"
+          description: "生产工单"
+          _order: "date_start desc, id desc"
+          fields:
+            # === 关系字段 ===
+            - name: "product_id"
+              type: "Many2one"
+              comodel: "product.product"
+              string: "产品"
+              required: true
+              index: true
+              ondelete: "restrict"
+              inherited: true
+            - name: "bom_id"
+              type: "Many2one"
+              comodel: "mrp.bom"
+              string: "物料清单"
+              required: true
+              index: true
+              ondelete: "restrict"
+              inherited: true
+            - name: "company_id"
+              type: "Many2one"
+              comodel: "res.company"
+              string: "公司"
+              required: true
+              index: true
+              inherited: true
+            - name: "move_raw_ids"
+              type: "One2many"
+              comodel: "stock.move"
+              inverse_name: "raw_material_production_id"
+              string: "原料消耗"
+              inherited: true
+            - name: "move_finished_ids"
+              type: "One2many"
+              comodel: "stock.move"
+              inverse_name: "production_id"
+              string: "成品产出"
+              inherited: true
+            # === 选择字段 ===
+            - name: "state"
+              type: "Selection"
+              selection: "[('draft','草稿'),('confirmed','已确认'),('progress','进行中'),('done','已完工'),('cancel','已取消')]"
+              string: "状态"
+              default: "draft"
+              required: true
+              index: true
+              inherited: true
+            # === 普通字段 ===
+            - name: "name"
+              type: "Char"
+              string: "工单编号"
+              required: true
+              readonly: true
+              default: "New"
+              inherited: true
+            - name: "product_qty"
+              type: "Float"
+              string: "计划数量"
+              required: true
+              inherited: true
+            - name: "qty_producing"
+              type: "Float"
+              string: "完成数量"
+              inherited: true
+            - name: "date_start"
+              type: "Datetime"
+              string: "计划开始"
+              index: true
+              inherited: true
+            - name: "date_finished"
+              type: "Datetime"
+              string: "计划完成"
+              inherited: true
+            # === 计算字段 ===
+            - name: "qty_variance"
+              type: "Float"
+              string: "数量差异"
+              compute: "_compute_qty_variance"
+              store: true
+              depends: ["product_qty", "qty_producing"]
+              help: "计划数量 - 完成数量"
+              custom: true
+          sql_constraints:
+            - name: "qty_positive"
+              expression: "CHECK(product_qty > 0)"
+              message: "生产数量必须大于零"
+
+        # ── mrp.routing.workcenter (工艺路线 — 继承扩展) ──
+        - name: "mrp.routing.workcenter"
+          class_name: "MrpRoutingWorkcenter"
+          business_name: "工艺路线工序"
+          type: entity
+          inherit_type: "class_inherit"
+          description: "生产工艺路线中的工序定义"
+          _order: "sequence, id"
+          fields:
+            - name: "bom_id"
+              type: "Many2one"
+              comodel: "mrp.bom"
+              string: "BOM"
+              required: true
+              index: true
+              ondelete: "cascade"
+              inherited: true
+            - name: "name"
+              type: "Char"
+              string: "工序名称"
+              required: true
+              inherited: true
+            - name: "workcenter_id"
+              type: "Many2one"
+              comodel: "mrp.workcenter"
+              string: "工作中心"
+              required: true
+              index: true
+              inherited: true
+            - name: "sequence"
+              type: "Integer"
+              string: "序号"
+              default: 10
+              inherited: true
+            - name: "time_cycle_manual"
+              type: "Float"
+              string: "标准工时(分)"
+              default: 60.0
+              inherited: true
+
+    # ── 模块 2：采购管理（支撑域） ──
+    - module_name: "purchase_mfg"
+      technical_name: "purchase_mfg"
+      bounded_context: "采购管理"
+      domain_type: supporting
+      relation_to_standard: "inherit"    # 继承 Odoo purchase 模块
+      description: "扩展 Odoo 采购模块，适配制造业采购收货流程"
+      depends:
+        - "purchase"                     # Odoo 标准采购模块
+        - "stock"                        # 库存（收货入库）
+        - "product"                      # 产品主数据
+      manifest:
+        name: "采购管理扩展"
+        version: "17.0.1.0.0"
+        category: "Purchases"
+        application: false
+        installable: true
+        auto_install: false
+        license: "LGPL-3"
+
+      models:
+        # ── purchase.order (继承扩展) ──
+        - name: "purchase.order"
+          class_name: "PurchaseOrder"
+          business_name: "采购订单"
+          type: aggregate_root
+          inherit_type: "class_inherit"
+          description: "采购订单/询价单"
+          _order: "date_order desc, id desc"
+          fields:
+            # === 关系字段 ===
+            - name: "partner_id"
+              type: "Many2one"
+              comodel: "res.partner"
+              string: "供应商"
+              required: true
+              index: true
+              domain: "[('supplier_rank', '>', 0)]"
+              inherited: true
+            - name: "company_id"
+              type: "Many2one"
+              comodel: "res.company"
+              string: "公司"
+              required: true
+              index: true
+              inherited: true
+            - name: "order_line"
+              type: "One2many"
+              comodel: "purchase.order.line"
+              inverse_name: "order_id"
+              string: "订单行"
+              inherited: true
+            - name: "picking_ids"
+              type: "One2many"
+              comodel: "stock.picking"
+              inverse_name: "purchase_id"
+              string: "收货单"
+              inherited: true
+            # === 选择字段 ===
+            - name: "state"
+              type: "Selection"
+              selection: "[('draft','询价单'),('sent','已发送'),('purchase','采购订单'),('done','已锁定'),('cancel','已取消')]"
+              string: "状态"
+              default: "draft"
+              required: true
+              index: true
+              inherited: true
+            # === 普通字段 ===
+            - name: "name"
+              type: "Char"
+              string: "订单编号"
+              required: true
+              readonly: true
+              inherited: true
+            - name: "date_order"
+              type: "Datetime"
+              string: "订单日期"
+              required: true
+              index: true
+              inherited: true
+            # === 计算字段 ===
+            - name: "amount_total"
+              type: "Monetary"
+              string: "总金额"
+              compute: "_amount_all"
+              store: true
+              inherited: true
+            - name: "receipt_status"
+              type: "Selection"
+              selection: "[('pending','待收货'),('partial','部分收货'),('full','已全部收货')]"
+              string: "收货状态"
+              compute: "_compute_receipt_status"
+              store: true
+              depends: ["picking_ids.state"]
+              custom: true
+
+        # ── purchase.order.line (继承扩展) ──
+        - name: "purchase.order.line"
+          class_name: "PurchaseOrderLine"
+          business_name: "采购订单行"
+          type: entity
+          inherit_type: "class_inherit"
+          description: "采购订单明细行"
+          fields:
+            - name: "order_id"
+              type: "Many2one"
+              comodel: "purchase.order"
+              string: "采购订单"
+              required: true
+              index: true
+              ondelete: "cascade"
+              inherited: true
+            - name: "product_id"
+              type: "Many2one"
+              comodel: "product.product"
+              string: "产品"
+              required: true
+              index: true
+              inherited: true
+            - name: "product_qty"
+              type: "Float"
+              string: "数量"
+              required: true
+              inherited: true
+            - name: "price_unit"
+              type: "Float"
+              string: "单价"
+              required: true
+              inherited: true
+            - name: "date_planned"
+              type: "Datetime"
+              string: "预计交期"
+              required: true
+              inherited: true
+            - name: "price_subtotal"
+              type: "Monetary"
+              string: "小计"
+              compute: "_compute_amount"
+              store: true
+              inherited: true
+          sql_constraints:
+            - name: "qty_positive"
+              expression: "CHECK(product_qty > 0)"
+              message: "采购数量必须大于零"
+            - name: "price_non_negative"
+              expression: "CHECK(price_unit >= 0)"
+              message: "单价不可为负"
+
+        # ── res.partner (供应商扩展) ──
+        - name: "res.partner"
+          class_name: "ResPartner"
+          business_name: "供应商/客户"
+          type: aggregate_root
+          inherit_type: "class_inherit"
+          description: "扩展联系人，供应商和客户共用"
+          fields:
+            - name: "name"
+              type: "Char"
+              string: "名称"
+              required: true
+              index: true
+              inherited: true
+            - name: "phone"
+              type: "Char"
+              string: "电话"
+              inherited: true
+            - name: "email"
+              type: "Char"
+              string: "邮箱"
+              inherited: true
+            - name: "street"
+              type: "Char"
+              string: "地址"
+              inherited: true
+            - name: "supplier_rank"
+              type: "Integer"
+              string: "供应商等级"
+              inherited: true
+              help: "> 0 表示是供应商"
+            - name: "customer_rank"
+              type: "Integer"
+              string: "客户等级"
+              inherited: true
+              help: "> 0 表示是客户"
+            - name: "property_payment_term_id"
+              type: "Many2one"
+              comodel: "account.payment.term"
+              string: "付款条件"
+              inherited: true
+
+    # ── 模块 3：库存管理（支撑域） ──
+    - module_name: "stock_mfg"
+      technical_name: "stock_mfg"
+      bounded_context: "库存管理"
+      domain_type: supporting
+      relation_to_standard: "inherit"
+      description: "扩展 Odoo 库存模块，适配制造业出入库、调拨、盘点"
+      depends:
+        - "stock"                        # Odoo 标准库存模块
+        - "product"                      # 产品主数据
+      manifest:
+        name: "库存管理扩展"
+        version: "17.0.1.0.0"
+        category: "Inventory"
+        application: false
+        installable: true
+        auto_install: false
+        license: "LGPL-3"
+
+      models:
+        # ── stock.warehouse (继承扩展) ──
+        - name: "stock.warehouse"
+          class_name: "StockWarehouse"
+          business_name: "仓库"
+          type: entity
+          inherit_type: "class_inherit"
+          description: "仓库配置"
+          fields:
+            - name: "name"
+              type: "Char"
+              string: "仓库名称"
+              required: true
+              inherited: true
+            - name: "code"
+              type: "Char"
+              string: "简码"
+              required: true
+              inherited: true
+              help: "仓库简码（如 WH）"
+            - name: "company_id"
+              type: "Many2one"
+              comodel: "res.company"
+              string: "公司"
+              required: true
+              index: true
+              inherited: true
+            - name: "lot_stock_id"
+              type: "Many2one"
+              comodel: "stock.location"
+              string: "默认库位"
+              inherited: true
+
+        # ── stock.location (继承扩展) ──
+        - name: "stock.location"
+          class_name: "StockLocation"
+          business_name: "库位"
+          type: entity
+          inherit_type: "class_inherit"
+          description: "仓库内的存储位置"
+          fields:
+            - name: "name"
+              type: "Char"
+              string: "库位名称"
+              required: true
+              inherited: true
+            - name: "complete_name"
+              type: "Char"
+              string: "完整路径"
+              compute: "_compute_complete_name"
+              store: true
+              inherited: true
+            - name: "location_id"
+              type: "Many2one"
+              comodel: "stock.location"
+              string: "父库位"
+              index: true
+              ondelete: "cascade"
+              inherited: true
+            - name: "usage"
+              type: "Selection"
+              selection: "[('supplier','供应商'),('view','视图'),('internal','内部'),('customer','客户'),('inventory','盘点'),('production','生产'),('transit','中转')]"
+              string: "库位类型"
+              required: true
+              default: "internal"
+              inherited: true
+
+        # ── stock.picking (继承扩展) ──
+        - name: "stock.picking"
+          class_name: "StockPicking"
+          business_name: "库存移动"
+          type: aggregate_root
+          inherit_type: "class_inherit"
+          description: "出入库操作单据"
+          _order: "date desc, id desc"
+          fields:
+            # === 关系字段 ===
+            - name: "partner_id"
+              type: "Many2one"
+              comodel: "res.partner"
+              string: "伙伴"
+              index: true
+              inherited: true
+            - name: "picking_type_id"
+              type: "Many2one"
+              comodel: "stock.picking.type"
+              string: "操作类型"
+              required: true
+              index: true
+              inherited: true
+              help: "入库/出库/内部调拨"
+            - name: "location_id"
+              type: "Many2one"
+              comodel: "stock.location"
+              string: "源库位"
+              required: true
+              index: true
+              inherited: true
+            - name: "location_dest_id"
+              type: "Many2one"
+              comodel: "stock.location"
+              string: "目标库位"
+              required: true
+              index: true
+              inherited: true
+            - name: "move_ids"
+              type: "One2many"
+              comodel: "stock.move"
+              inverse_name: "picking_id"
+              string: "移动行"
+              inherited: true
+            - name: "purchase_id"
+              type: "Many2one"
+              comodel: "purchase.order"
+              string: "采购订单"
+              index: true
+              inherited: true
+            # === 选择字段 ===
+            - name: "state"
+              type: "Selection"
+              selection: "[('draft','草稿'),('waiting','等待'),('confirmed','等待中'),('assigned','就绪'),('done','完成'),('cancel','已取消')]"
+              string: "状态"
+              default: "draft"
+              required: true
+              index: true
+              inherited: true
+            # === 普通字段 ===
+            - name: "name"
+              type: "Char"
+              string: "单据编号"
+              required: true
+              inherited: true
+            - name: "date"
+              type: "Datetime"
+              string: "日期"
+              index: true
+              inherited: true
+            - name: "origin"
+              type: "Char"
+              string: "来源单据"
+              inherited: true
+              help: "关联的销售订单/采购订单编号"
+
+        # ── stock.move (继承扩展) ──
+        - name: "stock.move"
+          class_name: "StockMove"
+          business_name: "库存移动行"
+          type: entity
+          inherit_type: "class_inherit"
+          description: "单个产品的库存移动记录"
+          fields:
+            - name: "picking_id"
+              type: "Many2one"
+              comodel: "stock.picking"
+              string: "库存操作单"
+              index: true
+              inherited: true
+            - name: "product_id"
+              type: "Many2one"
+              comodel: "product.product"
+              string: "产品"
+              required: true
+              index: true
+              inherited: true
+            - name: "product_uom_qty"
+              type: "Float"
+              string: "计划数量"
+              required: true
+              inherited: true
+            - name: "quantity_done"
+              type: "Float"
+              string: "完成数量"
+              inherited: true
+            - name: "location_id"
+              type: "Many2one"
+              comodel: "stock.location"
+              string: "源库位"
+              required: true
+              index: true
+              inherited: true
+            - name: "location_dest_id"
+              type: "Many2one"
+              comodel: "stock.location"
+              string: "目标库位"
+              required: true
+              index: true
+              inherited: true
+            - name: "raw_material_production_id"
+              type: "Many2one"
+              comodel: "mrp.production"
+              string: "原料消耗-工单"
+              index: true
+              inherited: true
+            - name: "production_id"
+              type: "Many2one"
+              comodel: "mrp.production"
+              string: "成品产出-工单"
+              index: true
+              inherited: true
+            - name: "state"
+              type: "Selection"
+              selection: "[('draft','草稿'),('waiting','等待'),('confirmed','等待中'),('assigned','就绪'),('done','完成'),('cancel','已取消')]"
+              string: "状态"
+              inherited: true
+
+        # ── stock.quant (继承扩展) ──
+        - name: "stock.quant"
+          class_name: "StockQuant"
+          business_name: "库存量"
+          type: entity
+          inherit_type: "class_inherit"
+          description: "某产品在某库位的实际库存数量"
+          fields:
+            - name: "product_id"
+              type: "Many2one"
+              comodel: "product.product"
+              string: "产品"
+              required: true
+              index: true
+              inherited: true
+            - name: "location_id"
+              type: "Many2one"
+              comodel: "stock.location"
+              string: "库位"
+              required: true
+              index: true
+              inherited: true
+            - name: "quantity"
+              type: "Float"
+              string: "在手数量"
+              inherited: true
+            - name: "reserved_quantity"
+              type: "Float"
+              string: "预留数量"
+              inherited: true
+            - name: "inventory_quantity"
+              type: "Float"
+              string: "盘点数量"
+              inherited: true
+            - name: "inventory_diff_quantity"
+              type: "Float"
+              string: "盘点差异"
+              compute: "_compute_inventory_diff_quantity"
+              store: false
+              inherited: true
+
+    # ── 模块 4：销售管理（通用域） ──
+    - module_name: "sale_mfg"
+      technical_name: "sale_mfg"
+      bounded_context: "销售管理"
+      domain_type: generic
+      relation_to_standard: "inherit"
+      description: "扩展 Odoo 销售模块，适配制造业报价-订单-发货流程"
+      depends:
+        - "sale_management"              # Odoo 标准销售管理模块
+        - "stock"                        # 库存（发货出库）
+        - "product"                      # 产品主数据
+      manifest:
+        name: "销售管理扩展"
+        version: "17.0.1.0.0"
+        category: "Sales"
+        application: false
+        installable: true
+        auto_install: false
+        license: "LGPL-3"
+
+      models:
+        # ── sale.order (继承扩展) ──
+        - name: "sale.order"
+          class_name: "SaleOrder"
+          business_name: "销售订单"
+          type: aggregate_root
+          inherit_type: "class_inherit"
+          description: "报价单/销售订单"
+          _order: "date_order desc, id desc"
+          fields:
+            # === 关系字段 ===
+            - name: "partner_id"
+              type: "Many2one"
+              comodel: "res.partner"
+              string: "客户"
+              required: true
+              index: true
+              domain: "[('customer_rank', '>', 0)]"
+              inherited: true
+            - name: "company_id"
+              type: "Many2one"
+              comodel: "res.company"
+              string: "公司"
+              required: true
+              index: true
+              inherited: true
+            - name: "order_line"
+              type: "One2many"
+              comodel: "sale.order.line"
+              inverse_name: "order_id"
+              string: "订单行"
+              inherited: true
+            - name: "picking_ids"
+              type: "One2many"
+              comodel: "stock.picking"
+              string: "发货单"
+              inherited: true
+            - name: "pricelist_id"
+              type: "Many2one"
+              comodel: "product.pricelist"
+              string: "价目表"
+              index: true
+              inherited: true
+            # === 选择字段 ===
+            - name: "state"
+              type: "Selection"
+              selection: "[('draft','报价单'),('sent','已发送'),('sale','销售订单'),('done','已锁定'),('cancel','已取消')]"
+              string: "状态"
+              default: "draft"
+              required: true
+              index: true
+              inherited: true
+            # === 普通字段 ===
+            - name: "name"
+              type: "Char"
+              string: "订单编号"
+              required: true
+              readonly: true
+              inherited: true
+            - name: "date_order"
+              type: "Datetime"
+              string: "订单日期"
+              required: true
+              index: true
+              inherited: true
+            # === 计算字段 ===
+            - name: "amount_total"
+              type: "Monetary"
+              string: "总金额"
+              compute: "_amount_all"
+              store: true
+              inherited: true
+            - name: "delivery_status"
+              type: "Selection"
+              selection: "[('pending','待发货'),('partial','部分发货'),('full','已全部发货')]"
+              string: "发货状态"
+              compute: "_compute_delivery_status"
+              store: true
+              depends: ["picking_ids.state"]
+              custom: true
+
+        # ── sale.order.line (继承扩展) ──
+        - name: "sale.order.line"
+          class_name: "SaleOrderLine"
+          business_name: "销售订单行"
+          type: entity
+          inherit_type: "class_inherit"
+          description: "销售订单明细行"
+          fields:
+            - name: "order_id"
+              type: "Many2one"
+              comodel: "sale.order"
+              string: "销售订单"
+              required: true
+              index: true
+              ondelete: "cascade"
+              inherited: true
+            - name: "product_id"
+              type: "Many2one"
+              comodel: "product.product"
+              string: "产品"
+              required: true
+              index: true
+              inherited: true
+            - name: "product_uom_qty"
+              type: "Float"
+              string: "数量"
+              required: true
+              default: 1.0
+              inherited: true
+            - name: "price_unit"
+              type: "Float"
+              string: "单价"
+              required: true
+              inherited: true
+            - name: "discount"
+              type: "Float"
+              string: "折扣(%)"
+              default: 0.0
+              inherited: true
+            - name: "price_subtotal"
+              type: "Monetary"
+              string: "小计"
+              compute: "_compute_amount"
+              store: true
+              inherited: true
+          sql_constraints:
+            - name: "qty_positive"
+              expression: "CHECK(product_uom_qty > 0)"
+              message: "销售数量必须大于零"
+
+        # ── product.pricelist (继承扩展) ──
+        - name: "product.pricelist"
+          class_name: "ProductPricelist"
+          business_name: "价目表"
+          type: aggregate_root
+          inherit_type: "class_inherit"
+          description: "价目表"
+          fields:
+            - name: "name"
+              type: "Char"
+              string: "名称"
+              required: true
+              inherited: true
+            - name: "item_ids"
+              type: "One2many"
+              comodel: "product.pricelist.item"
+              inverse_name: "pricelist_id"
+              string: "价格规则"
+              inherited: true
+            - name: "company_id"
+              type: "Many2one"
+              comodel: "res.company"
+              string: "公司"
+              index: true
+              inherited: true
+
+        # ── product.pricelist.item (继承扩展) ──
+        - name: "product.pricelist.item"
+          class_name: "ProductPricelistItem"
+          business_name: "价格规则"
+          type: entity
+          inherit_type: "class_inherit"
+          description: "价目表中的具体价格规则"
+          fields:
+            - name: "pricelist_id"
+              type: "Many2one"
+              comodel: "product.pricelist"
+              string: "价目表"
+              required: true
+              index: true
+              ondelete: "cascade"
+              inherited: true
+            - name: "product_tmpl_id"
+              type: "Many2one"
+              comodel: "product.template"
+              string: "产品"
+              index: true
+              inherited: true
+            - name: "min_quantity"
+              type: "Float"
+              string: "最小数量"
+              default: 0.0
+              inherited: true
+            - name: "fixed_price"
+              type: "Float"
+              string: "固定价格"
+              inherited: true
+            - name: "percent_price"
+              type: "Float"
+              string: "折扣百分比"
+              inherited: true
+            - name: "compute_price"
+              type: "Selection"
+              selection: "[('fixed','固定价格'),('percentage','百分比'),('formula','公式')]"
+              string: "价格计算方式"
+              default: "fixed"
+              inherited: true
+
+  # ══════════════════════════════════════════════════════════════
+  # 3. 模块依赖图
+  # ══════════════════════════════════════════════════════════════
+  module_dependency_graph:
+    description: "自定义模块间的依赖关系（不含 Odoo 标准模块）"
+    edges:
+      - from: "sale_mfg"
+        to: "stock_mfg"
+        reason: "销售确认 → 生成发货单"
+      - from: "purchase_mfg"
+        to: "stock_mfg"
+        reason: "采购收货 → 入库操作"
+      - from: "mrp_mfg"
+        to: "stock_mfg"
+        reason: "生产领料 + 成品入库"
+      - from: "mrp_mfg"
+        to: "purchase_mfg"
+        reason: "MRP 建议 → 生成采购申请（Slice 6）"
+    install_order:
+      - "stock_mfg"      # 基础层 — 零依赖
+      - "sale_mfg"        # 依赖 stock_mfg
+      - "purchase_mfg"    # 依赖 stock_mfg
+      - "mrp_mfg"         # 依赖 stock_mfg + purchase_mfg
+
+  # ══════════════════════════════════════════════════════════════
+  # 4. 安全模型
+  # ══════════════════════════════════════════════════════════════
+  security_model:
+    auth_method: "odoo_builtin"          # Odoo 内置用户认证
+    password_policy: "Odoo 默认（8字符+复杂度）"
+
+    groups:
+      - id: "group_mfg_user"
+        name: "制造用户"
+        module: "mrp_mfg"
+        implied_ids: ["base.group_user"]
+        description: "基础操作权限：查看 BOM/工单/库存，执行领料/报工"
+
+      - id: "group_mfg_manager"
+        name: "制造管理员"
+        module: "mrp_mfg"
+        implied_ids: ["mrp_mfg.group_mfg_user"]
+        description: "管理权限：创建/修改/归档 BOM，创建/确认工单，配置仓库"
+
+      - id: "group_purchase_user"
+        name: "采购用户"
+        module: "purchase_mfg"
+        implied_ids: ["base.group_user"]
+        description: "基础采购权限：查看供应商/订单，执行收货"
+
+      - id: "group_sale_user"
+        name: "销售用户"
+        module: "sale_mfg"
+        implied_ids: ["base.group_user"]
+        description: "基础销售权限：创建报价/订单，查看客户"
+
+    acl:
+      description: "ir.model.access.csv 权限矩阵"
+      rules:
+        # ── 生产模块 ACL ──
+        - model: "mrp.bom"
+          group_mfg_user: { read: 1, write: 0, create: 0, unlink: 0 }
+          group_mfg_manager: { read: 1, write: 1, create: 1, unlink: 0 }
+        - model: "mrp.bom.line"
+          group_mfg_user: { read: 1, write: 0, create: 0, unlink: 0 }
+          group_mfg_manager: { read: 1, write: 1, create: 1, unlink: 1 }
+        - model: "mrp.production"
+          group_mfg_user: { read: 1, write: 1, create: 0, unlink: 0 }
+          group_mfg_manager: { read: 1, write: 1, create: 1, unlink: 0 }
+        - model: "mrp.routing.workcenter"
+          group_mfg_user: { read: 1, write: 0, create: 0, unlink: 0 }
+          group_mfg_manager: { read: 1, write: 1, create: 1, unlink: 1 }
+
+        # ── 采购模块 ACL ──
+        - model: "purchase.order"
+          group_purchase_user: { read: 1, write: 1, create: 1, unlink: 0 }
+        - model: "purchase.order.line"
+          group_purchase_user: { read: 1, write: 1, create: 1, unlink: 1 }
+        - model: "res.partner"
+          base_group_user: { read: 1, write: 0, create: 0, unlink: 0 }
+          group_purchase_user: { read: 1, write: 1, create: 1, unlink: 0 }
+          group_sale_user: { read: 1, write: 1, create: 1, unlink: 0 }
+
+        # ── 库存模块 ACL ──
+        - model: "stock.warehouse"
+          base_group_user: { read: 1, write: 0, create: 0, unlink: 0 }
+          group_mfg_manager: { read: 1, write: 1, create: 1, unlink: 0 }
+        - model: "stock.location"
+          base_group_user: { read: 1, write: 0, create: 0, unlink: 0 }
+          group_mfg_manager: { read: 1, write: 1, create: 1, unlink: 0 }
+        - model: "stock.picking"
+          group_mfg_user: { read: 1, write: 1, create: 1, unlink: 0 }
+        - model: "stock.move"
+          group_mfg_user: { read: 1, write: 1, create: 1, unlink: 0 }
+        - model: "stock.quant"
+          group_mfg_user: { read: 1, write: 0, create: 0, unlink: 0 }
+          group_mfg_manager: { read: 1, write: 1, create: 0, unlink: 0 }
+
+        # ── 销售模块 ACL ──
+        - model: "sale.order"
+          group_sale_user: { read: 1, write: 1, create: 1, unlink: 0 }
+        - model: "sale.order.line"
+          group_sale_user: { read: 1, write: 1, create: 1, unlink: 1 }
+        - model: "product.pricelist"
+          group_sale_user: { read: 1, write: 0, create: 0, unlink: 0 }
+          group_mfg_manager: { read: 1, write: 1, create: 1, unlink: 0 }
+        - model: "product.pricelist.item"
+          group_sale_user: { read: 1, write: 0, create: 0, unlink: 0 }
+          group_mfg_manager: { read: 1, write: 1, create: 1, unlink: 1 }
+
+    record_rules:
+      - id: "rule_company_mfg"
+        name: "制造数据：当前公司"
+        models: ["mrp.bom", "mrp.production"]
+        domain: "('company_id', 'in', company_ids)"
+        description: "用户只能访问当前公司的制造数据"
+
+      - id: "rule_company_stock"
+        name: "库存数据：当前公司"
+        models: ["stock.warehouse", "stock.picking"]
+        domain: "('company_id', 'in', company_ids)"
+        description: "用户只能访问当前公司的库存数据"
+
+      - id: "rule_company_purchase"
+        name: "采购数据：当前公司"
+        models: ["purchase.order"]
+        domain: "('company_id', 'in', company_ids)"
+        description: "用户只能访问当前公司的采购数据"
+
+      - id: "rule_company_sale"
+        name: "销售数据：当前公司"
+        models: ["sale.order"]
+        domain: "('company_id', 'in', company_ids)"
+        description: "用户只能访问当前公司的销售数据"
+
+  # ══════════════════════════════════════════════════════════════
+  # 5. 部署架构
+  # ══════════════════════════════════════════════════════════════
+  deployment:
+    target: "docker"
+    environments:
+      - name: "dev"
+        description: "本地开发环境"
+      - name: "production"
+        description: "生产环境"
+
+    docker_compose:
+      services:
+        - name: "odoo"
+          image: "odoo:17.0"
+          ports: ["8069:8069", "8072:8072"]
+          volumes:
+            - "odoo-data:/var/lib/odoo"
+            - "./addons:/mnt/extra-addons"
+            - "./config/odoo.conf:/etc/odoo/odoo.conf"
+          depends_on: ["db"]
+
+        - name: "db"
+          image: "postgres:16-alpine"
+          ports: ["5432:5432"]
+          volumes:
+            - "db-data:/var/lib/postgresql/data"
+          environment:
+            POSTGRES_DB: "odoo"
+            POSTGRES_USER: "odoo"
+            POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+
+    environment_variables:
+      - name: "POSTGRES_PASSWORD"
+        description: "PostgreSQL 密码"
+        required: true
+      - name: "ODOO_ADMIN_PASSWORD"
+        description: "Odoo 管理员密码"
+        required: true
+      - name: "ODOO_DB_NAME"
+        description: "Odoo 数据库名"
+        default: "odoo_mfg"
+
+    odoo_conf:
+      addons_path: "/mnt/extra-addons,/usr/lib/python3/dist-packages/odoo/addons"
+      db_host: "db"
+      db_port: 5432
+      db_user: "odoo"
+      db_password: "${POSTGRES_PASSWORD}"
+      admin_passwd: "${ODOO_ADMIN_PASSWORD}"
+      http_port: 8069
+      longpolling_port: 8072
+
+    module_install_command: |
+      docker exec -it odoo odoo -d odoo_mfg -i stock_mfg,sale_mfg,purchase_mfg,mrp_mfg --stop-after-init
+
+  # ══════════════════════════════════════════════════════════════
+  # 6. ADR 引用
+  # ══════════════════════════════════════════════════════════════
+  adr:
+    - id: "ADR-001"
+      title: "技术栈选择：Odoo 17 Community Edition"
+      file: "adr/001-tech-stack.md"
+    - id: "ADR-002"
+      title: "模块策略：继承扩展标准模块"
+      file: "adr/002-module-strategy.md"

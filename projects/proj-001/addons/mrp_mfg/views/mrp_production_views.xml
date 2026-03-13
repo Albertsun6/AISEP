@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ══════════════════════════════════════════════════
+         生产工单 Form View — 继承标准表单
+         Slice 4: qty_variance 字段
+         Slice 5: 领料/报工按钮 + 执行详情 tab + qty_producing 展示
+         ══════════════════════════════════════════════════ -->
+    <record id="view_mrp_production_form_inherit_mfg" model="ir.ui.view">
+        <field name="name">mrp.production.form.inherit.mfg</field>
+        <field name="model">mrp.production</field>
+        <field name="inherit_id" ref="mrp.mrp_production_form_view"/>
+        <field name="priority">20</field>
+        <field name="arch" type="xml">
+            <!-- Slice 5: Header 添加领料和报工按钮 -->
+            <xpath expr="//form/header" position="inside">
+                <button name="action_consume_materials"
+                        type="object"
+                        string="领料"
+                        class="btn-primary"
+                        invisible="state != 'confirmed'"
+                        confirm="确认对工单执行全量领料？原料的实际领用量将设为计划量。"/>
+                <button name="action_produce"
+                        type="object"
+                        string="报工完工"
+                        class="btn-primary"
+                        invisible="state != 'progress'"
+                        confirm="确认报工完成？工单将完工，成品自动入库。"/>
+            </xpath>
+
+            <!-- Slice 4+5: 在 product_qty 字段后添加执行相关字段 -->
+            <xpath expr="//field[@name='product_qty']" position="after">
+                <field name="qty_producing"
+                       invisible="state not in ('progress', 'done')"/>
+                <field name="qty_variance" readonly="1"
+                       invisible="state != 'done'"/>
+                <field name="is_material_consumed" widget="boolean_toggle"
+                       readonly="1"
+                       invisible="state not in ('confirmed', 'progress', 'done')"/>
+            </xpath>
+
+            <!-- Slice 5: 在 notebook 中添加执行详情 page -->
+            <xpath expr="//notebook" position="inside">
+                <page string="执行详情" name="execution_details"
+                      invisible="state not in ('progress', 'done')">
+                    <group>
+                        <group string="生产数量">
+                            <field name="product_qty" string="计划数量" readonly="1"/>
+                            <field name="qty_producing" string="完成数量"/>
+                            <field name="qty_variance" string="数量差异" readonly="1"/>
+                        </group>
+                        <group string="生产时间">
+                            <field name="date_start" string="计划开始" readonly="1"/>
+                            <field name="date_finished" string="实际完成" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="领料备注">
+                        <field name="consumption_note" nolabel="1"
+                               placeholder="记录领料时的特殊情况…"
+                               readonly="state == 'done'"/>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════
+         生产工单 Tree View — 继承标准列表
+         Slice 4: qty_variance
+         Slice 5: is_material_consumed 指示
+         ══════════════════════════════════════════════════ -->
+    <record id="view_mrp_production_tree_inherit_mfg" model="ir.ui.view">
+        <field name="name">mrp.production.tree.inherit.mfg</field>
+        <field name="model">mrp.production</field>
+        <field name="inherit_id" ref="mrp.mrp_production_tree_view"/>
+        <field name="priority">20</field>
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="is_material_consumed" string="已领料"
+                       widget="boolean_toggle" readonly="1"
+                       optional="show"/>
+                <field name="qty_variance" string="差异"
+                       optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════
+         生产工单 Search View — 继承搜索，添加状态筛选
+         ══════════════════════════════════════════════════ -->
+    <record id="view_mrp_production_search_inherit_mfg" model="ir.ui.view">
+        <field name="name">mrp.production.search.inherit.mfg</field>
+        <field name="model">mrp.production</field>
+        <field name="inherit_id" ref="mrp.view_mrp_production_filter"/>
+        <field name="priority">20</field>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <separator/>
+                <filter name="filter_draft" string="草稿"
+                        domain="[('state', '=', 'draft')]"/>
+                <filter name="filter_confirmed" string="已确认"
+                        domain="[('state', '=', 'confirmed')]"/>
+                <filter name="filter_progress" string="进行中"
+                        domain="[('state', '=', 'progress')]"/>
+                <filter name="filter_done" string="已完工"
+                        domain="[('state', '=', 'done')]"/>
+                <separator/>
+                <group expand="0" string="分组">
+                    <filter name="group_by_state" string="按状态"
+                            context="{'group_by': 'state'}"/>
+                    <filter name="group_by_product" string="按产品"
+                            context="{'group_by': 'product_id'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

@@ -1,0 +1,199 @@
+# S8 制品：复盘报告
+# 项目：制造业ERP (proj-001)
+# 生成时间：2026-03-13T07:50:00+08:00
+
+retrospective:
+  project_id: "proj-001"
+  project_name: "制造业ERP"
+  timestamp: "2026-03-13T07:50:00+08:00"
+
+  # ══════════════════════════════════════════════════════════════
+  # Step 1: 项目度量
+  # ══════════════════════════════════════════════════════════════
+  metrics:
+    timeline:
+      start: "2026-03-12T18:29:00+08:00"  # S0 Gate
+      end: "2026-03-13T07:50:00+08:00"    # S8 复盘
+      elapsed_hours: ~13
+      active_sessions: 3  # 跨 3 个对话窗口
+    scope:
+      total_slices: 7
+      total_stories: 40
+      must_stories: 24
+      should_stories: 10
+      could_stories: 6
+    deliverables:
+      modules: 4  # sale_mfg, stock_mfg, purchase_mfg, mrp_mfg
+      total_files: 45
+      total_lines: 1688
+      custom_model_code_lines: ~400  # 排除 XML/CSV/demo
+      standard_reuse_ratio: "~75%"  # 大部分功能利用标准 Odoo
+    quality:
+      gate_passes: 11
+      gate_failures: 0
+      gate_rollbacks: 0
+      bugs_found: 1  # P1-05 quantity_done → quantity
+      bug_severity: "P1 (致命级)"
+      browser_tests_passed: 11  # Slice 5 验收 + E2E 演示
+    gates_detail:
+      - { stage: "S0", result: "pass", checks: "6/6 (+1 warning)" }
+      - { stage: "S1", result: "pass", checks: "9/9" }
+      - { stage: "S2", result: "pass", checks: "12/12" }
+      - { stage: "S3", result: "pass", checks: "14/14" }
+      - { stage: "S4+S5 Slice 1", result: "pass", checks: "11/11" }
+      - { stage: "S4+S5 Slice 2", result: "pass", checks: "8/8" }
+      - { stage: "S4+S5 Slice 3", result: "pass", checks: "11/11" }
+      - { stage: "S4+S5 Slice 4", result: "pass", checks: "12/12" }
+      - { stage: "S4+S5+S6 Slice 5", result: "pass", checks: "12/12" }
+      - { stage: "S4+S5 Slice 6", result: "pass", checks: "8/8" }
+      - { stage: "S4+S5 Slice 7", result: "pass", checks: "6/6" }
+
+  # ══════════════════════════════════════════════════════════════
+  # Step 2a: 踩坑记录
+  # ══════════════════════════════════════════════════════════════
+  pitfalls:
+    encountered:
+      - id: "P1-05"
+        description: "Odoo 17 将 stock.move.quantity_done 合并为 quantity"
+        discovered_at: "Slice 5"
+        fix_cost: "低（2 处代码修改）"
+        already_in_knowledge_base: true
+        prevention: "pitfalls.md P1-05 已收录，后续项目自动检查"
+    assessment: |
+      仅 1 个 P1 级踩坑，且已即时修复并沉淀。
+      说明 Odoo 17 知识库（6 文件 802 行）在实战中覆盖度良好，
+      但版本间 API 破坏性变更仍是主要风险源。
+
+  # ══════════════════════════════════════════════════════════════
+  # Step 2b: 模式识别
+  # ══════════════════════════════════════════════════════════════
+  patterns:
+    - name: "View 继承 + 中文菜单快捷入口"
+      frequency: 4  # sale_mfg, stock_mfg, purchase_mfg, mrp_mfg 都用了
+      description: "利用标准 Odoo 功能，仅通过 ir.actions.act_window + menuitem 添加中文入口"
+      promoted_to: "L1"
+      action: "已体现在 best-practices.md 的设计原则中"
+
+    - name: "TransientModel 向导模式"
+      frequency: 1  # MRP 建议
+      description: "用 TransientModel 实现一次性操作向导（计算→展示→确认→执行）"
+      promoted_to: null
+      action: "保留在 L2。如下个项目再用（如审批向导），提升到 L1"
+
+    - name: "Compute 字段 + Constraint 组合"
+      frequency: 3  # delivery_status, receipt_status, qty_variance
+      description: "计算字段做展示，constraint 做校验，职责分离"
+      promoted_to: "L1"
+      action: "已在 best-practices.md Model 设计部分体现"
+
+    - name: "对称模块设计"
+      frequency: 1  # sale_mfg ↔ purchase_mfg
+      description: "销售和采购模块镜像设计（delivery_status ↔ receipt_status）"
+      promoted_to: null
+      action: "作为架构设计参考记录"
+
+  # ══════════════════════════════════════════════════════════════
+  # Step 2c: 决策回顾
+  # ══════════════════════════════════════════════════════════════
+  decisions:
+    - adr: "ADR-001 技术栈选型"
+      decision: "Odoo 17 CE + Docker"
+      status: "validated"
+      evidence: "7 Slices 全部成功交付，Docker 部署零问题"
+
+    - adr: "ADR-002 模块策略"
+      decision: "4 个自定义模块继承标准模块，不修改 core"
+      status: "validated"
+      evidence: "标准复用 ~75%，自定义代码仅 ~400 行"
+
+    - adr_implicit: "标准功能优先策略"
+      decision: "能用标准 Odoo 功能的就不写自定义代码"
+      status: "validated"
+      evidence: "Slice 7 的 9 个故事全部用标准功能覆盖，零自定义模型代码"
+      recommendation: "应明确记录为 ADR-003"
+
+  # ══════════════════════════════════════════════════════════════
+  # Step 3: 知识分层沉淀
+  # ══════════════════════════════════════════════════════════════
+  knowledge_layering:
+    L2_project:
+      - "P1-05 pitfall 已沉淀到 pitfalls.md"
+      - "proj-001 特定的 docker-compose 配置"
+      - "deployment-guide.md"
+
+    L1_framework:
+      - item: "View 继承 + 中文菜单模式"
+        status: "已体现在 best-practices.md"
+      - item: "Compute+Constraint 组合模式"
+        status: "已体现在 best-practices.md"
+      - item: "P1-05 stock.move 字段变更"
+        status: "已体现在 pitfalls.md"
+
+    L0_universal:
+      - item: "S8 复盘进化 Workflow"
+        status: "新创建 — 首次从实践中提炼"
+      - item: "/tidy 流程"
+        status: "验证有效，无需修改"
+
+  # ══════════════════════════════════════════════════════════════
+  # Step 4: 认知笔记
+  # ══════════════════════════════════════════════════════════════
+  knowledge_entries:
+    - id: "learn-001"
+      topic: "TransientModel 向导模式"
+      one_liner: "Odoo 用 TransientModel（临时模型）实现一次性操作，数据自动过期清理"
+      analogy: "像便利贴 — 写完就丢，不占永久空间"
+      key_insights:
+        - "TransientModel 不在数据库中永久存储，系统定期清理"
+        - "适合向导（wizard）场景：计算→展示→确认→执行"
+        - "用 One2many 关联 TransientModel 行，实现明细表"
+      tags: [odoo, design-pattern, database]
+
+    - id: "learn-002"
+      topic: "Odoo 版本间 API 破坏性变更"
+      one_liner: "Odoo 大版本升级经常重命名字段，不向后兼容"
+      analogy: "像搬家后门牌号变了 — 地址（字段名）变了，但房子（功能）还在"
+      key_insights:
+        - "quantity_done → quantity 是 Odoo 17 的典型例子"
+        - "@api.depends 中引用错误字段名会在模块更新时才报错"
+        - "最佳实践：每个新版本项目，先建 pitfalls.md 收录已知变更"
+      tags: [odoo, migration, api-compatibility]
+
+    - id: "learn-003"
+      topic: "Vertical Slice 架构"
+      one_liner: "按业务功能纵切而非按技术层横切，每个 Slice 交付一个完整的用户价值"
+      analogy: "切蛋糕用纵切（每块都有奶油+面包+水果），不用横切（单独拿走水果层）"
+      key_insights:
+        - "Slice 内从 Model → View → Security → Demo 全覆盖"
+        - "Slice 间通过拓扑排序确保依赖正确"
+        - "MVP = 前 N 个 Slice，增强 = 后续 Slice"
+      tags: [architecture, methodology, delivery]
+
+  # ══════════════════════════════════════════════════════════════
+  # Step 5: 系统自进化
+  # ══════════════════════════════════════════════════════════════
+  system_evolutions:
+    - type: "workflow"
+      description: "新增 S8-Retrospective 阶段（Pipeline 闭环）"
+      impact: "L0 — 所有项目受益"
+
+    - type: "pitfall"
+      description: "新增 P1-05 到 Odoo 17 知识库"
+      impact: "L1 — Odoo 项目受益"
+
+    - type: "tidy"
+      description: "/tidy 清单已验证完整，无需新增检查项"
+      impact: "无变更"
+
+    - type: "gate"
+      description: "Slice 5 首次加入浏览器自动验收"
+      recommendation: "考虑将浏览器验收纳入 S6 Gate 标准检查项"
+
+  # ══════════════════════════════════════════════════════════════
+  # 下一步行动
+  # ══════════════════════════════════════════════════════════════
+  next_actions:
+    - "如 TransientModel 模式在下个项目再次出现 → 提升为 L1 Skill"
+    - "将浏览器验收纳入 S6 Testing Workflow 标准步骤"
+    - "考虑创建 ADR-003：标准功能优先策略"
+    - "功能增强迭代：多级 BOM 展开、工艺排程甘特图"
