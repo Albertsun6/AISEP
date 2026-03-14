@@ -3,6 +3,7 @@
 **一种约束驱动的 AI-人类协作软件工程系统**
 
 > **Version 0.1** · 2026-03-13
+> **GitHub**: [Albertsun6/AISEP](https://github.com/Albertsun6/AISEP)
 >
 > 摘要：本文提出 AISEP（AI-Integrated Software Engineering Process），一种将结构化工程约束与大语言模型（LLM）能力深度融合的软件工程系统。AISEP 通过**五面体架构**（控制面/知识面/管理面/进化面/数据面）组织 181 个系统文件，实施 **8 大上下文机制**控制 AI 的认知边界，并内置**四层自进化架构**使系统越用越好。在一个制造业 ERP 项目的全生命周期验证（S0→S8，7 个垂直切片、12 个质量门禁全部通过）中，AISEP 展现了 AI 在约束框架内进行高质量软件交付的可行性。
 
