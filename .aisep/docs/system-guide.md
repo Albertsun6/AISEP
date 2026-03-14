@@ -1,7 +1,7 @@
 # AISEP 系统指南
 
 > **这是你了解、使用和改进 AISEP 的唯一入口。** 每次迭代后更新此文件。
-> 最后更新：2026-03-13 09:21（Backlog 7 方案落地 + L2 知识沉淀协议）
+> 最后更新：2026-03-13 17:54（系统设计论文 v0.1 + 架构图 + PDF 导出）
 
 ---
 
@@ -76,7 +76,7 @@ AISEP250311/
 │   │   ├── idea-mgmt.md     ← 想法管理
 │   │   ├── project-mgmt.md  ← 项目管理
 │   │   ├── onboard.md       ← 逆向接管
-│   │   ├── tidy.md          ← 收尾整理（14 步检查清单）
+│   │   ├── tidy.md          ← 收尾整理（15 步检查清单）
 │   │   └── s0~s8            ← 9 个阶段 workflow（含 S8 复盘进化）
 │   │   （全部 14 个 Workflow 均已充实为可执行级）
 │   └── skills/              ← 知识面
@@ -95,7 +95,7 @@ AISEP250311/
 │   ├── knowledge/           ← 认知知识库（学习笔记）
 │   ├── evolution/           ← 自进化引擎数据
 │   ├── backlog.md           ← 待做想法
-│   └── docs/ (11 份)        ← 设计文档
+│   └── docs/ (12 份)        ← 设计文档 + 系统论文
 │
 └── projects/                ← 「项目数据」（待创建）
 ```
@@ -233,7 +233,7 @@ S7 部署配置                           ← deployment.yaml
 |--------|---------|---------|
 | **对标分析 (Benchmarking)** | 研究 OpenClaw / SpecKit / OpenSpec | 不重新发明轮子，提取已验证的模式 |
 | **渐进披露 (Progressive Disclosure)** | 上下文三层加载 L0→L1→L2 | 按需下钻，不一次性全量加载 |
-| **Context Engineering** | 上下文加载协议（5 大机制） | Compaction + Just-in-Time + Gating |
+| **Context Engineering** | 上下文加载协议（8 大机制） | Compaction + Just-in-Time + Gating + Fence + Audit |
 | **YAGNI** | 延迟项目类型 Profile | 不提前实现不确定的功能 |
 | **关注点分离 (SoC)** | 五面体分层 + Concern Map | 改一个面不影响其他面 |
 | **Prototype vs Factory** | 项目脚手架模板设计 | 模板复制 + 版本追踪 vs 动态生成 |

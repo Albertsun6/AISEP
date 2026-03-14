@@ -10,7 +10,7 @@
 
 ---
 
-## 设计文档索引（11 份）
+## 设计文档索引（13 份）
 
 | 文档 | 内容 |
 |------|------|
@@ -22,7 +22,9 @@
 | [vertical-slice-evaluation.md](file:///Users/yongqian/Desktop/AISEP250311/.aisep/docs/vertical-slice-evaluation.md) | 垂直切片策略评估 |
 | [onboard-reverse-engineering.md](file:///Users/yongqian/Desktop/AISEP250311/.aisep/docs/onboard-reverse-engineering.md) | 逆向 Onboard + changes/ 增量演进 |
 | [self-evolution.md](file:///Users/yongqian/Desktop/AISEP250311/.aisep/docs/self-evolution.md) | 四层进化架构 |
-| [context-loading-protocol.md](file:///Users/yongqian/Desktop/AISEP250311/.aisep/docs/context-loading-protocol.md) | 上下文加载协议（六大机制，含会话审计与交接） |
+| [context-loading-protocol.md](file:///Users/yongqian/Desktop/AISEP250311/.aisep/docs/context-loading-protocol.md) | 上下文加载协议（八大机制，含会话审计与交接） |
+| [memory-architecture.md](file:///Users/yongqian/Desktop/AISEP250311/.aisep/docs/memory-architecture.md) | 🆕 记忆引擎架构（解决 LLM 遗忘的短、中、长期上下文空间映射） |
+| [system-design-paper-v0.1.md](file:///Users/yongqian/Desktop/AISEP250311/.aisep/docs/system-design-paper-v0.1.md) | 🆕 系统设计论文 v0.1（动机、架构、上下文工程、自进化、案例验证、演进路线图） |
 | implementation_plan.md（本文件） | 构建计划 |
 
 ---
