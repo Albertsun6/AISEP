@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- 预置拍品分类 -->
+        <record id="category_painting" model="auction.lot.category">
+            <field name="name">书画</field>
+        </record>
+        <record id="category_ceramics" model="auction.lot.category">
+            <field name="name">瓷器</field>
+        </record>
+        <record id="category_jade" model="auction.lot.category">
+            <field name="name">玉器</field>
+        </record>
+        <record id="category_antique" model="auction.lot.category">
+            <field name="name">古董家具</field>
+        </record>
+        <record id="category_jewelry" model="auction.lot.category">
+            <field name="name">珠宝</field>
+        </record>
+        <record id="category_watch" model="auction.lot.category">
+            <field name="name">钟表</field>
+        </record>
+        <record id="category_wine" model="auction.lot.category">
+            <field name="name">名酒</field>
+        </record>
+        <record id="category_other" model="auction.lot.category">
+            <field name="name">其他</field>
+        </record>
+
+    </data>
+</odoo>

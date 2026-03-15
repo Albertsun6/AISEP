@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_bidding_round_manager,auction.bidding.round manager,model_auction_bidding_round,auction_lot.group_auction_manager,1,1,1,1
+access_bidding_round_user,auction.bidding.round user,model_auction_bidding_round,auction_lot.group_auction_user,1,0,0,0
+access_bidding_round_base,auction.bidding.round base,model_auction_bidding_round,base.group_user,1,0,0,0
+access_bid_manager,auction.bid manager,model_auction_bid,auction_lot.group_auction_manager,1,0,1,0
+access_bid_user,auction.bid user,model_auction_bid,auction_lot.group_auction_user,1,0,1,0
+access_bid_base,auction.bid base,model_auction_bid,base.group_user,1,0,0,0

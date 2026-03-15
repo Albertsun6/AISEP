@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ════════════════════════════════════════════ -->
+    <!--  auction.lot.category — Form View            -->
+    <!-- ════════════════════════════════════════════ -->
+    <record id="view_auction_lot_category_form" model="ir.ui.view">
+        <field name="name">auction.lot.category.form</field>
+        <field name="model">auction.lot.category</field>
+        <field name="arch" type="xml">
+            <form string="拍品分类">
+                <sheet>
+                    <group>
+                        <group string="基本信息">
+                            <field name="name"/>
+                            <field name="parent_id"/>
+                        </group>
+                    </group>
+                    <group string="子分类">
+                        <field name="child_ids" nolabel="1">
+                            <tree>
+                                <field name="name"/>
+                            </tree>
+                        </field>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ════════════════════════════════════════════ -->
+    <!--  auction.lot.category — Tree View            -->
+    <!-- ════════════════════════════════════════════ -->
+    <record id="view_auction_lot_category_tree" model="ir.ui.view">
+        <field name="name">auction.lot.category.tree</field>
+        <field name="model">auction.lot.category</field>
+        <field name="arch" type="xml">
+            <tree string="拍品分类">
+                <field name="name"/>
+                <field name="parent_id"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- ════════════════════════════════════════════ -->
+    <!--  auction.lot.category — Search View          -->
+    <!-- ════════════════════════════════════════════ -->
+    <record id="view_auction_lot_category_search" model="ir.ui.view">
+        <field name="name">auction.lot.category.search</field>
+        <field name="model">auction.lot.category</field>
+        <field name="arch" type="xml">
+            <search string="搜索分类">
+                <field name="name"/>
+                <field name="parent_id"/>
+            </search>
+        </field>
+    </record>
+
+</odoo>

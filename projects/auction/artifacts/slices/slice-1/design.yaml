@@ -1,0 +1,624 @@
+# S4 Slice-1 详细设计：拍品管理
+# 输出文件：artifacts/slices/slice-1/design.yaml
+# 生成时间: 2026-03-15T23:50:00+08:00
+
+slice_design:
+  slice_id: "slice-1"
+  slice_name: "拍品管理"
+  stories: [US-01, US-02, US-03, US-04, US-05]
+  bounded_context: "拍品管理"
+  module_name: "auction_lot"
+
+  # ════════════════════════════════════════════════════════
+  #  MODELS
+  # ════════════════════════════════════════════════════════
+
+  models:
+
+    # ── auction.lot (聚合根) ──────────────────────────────
+    - name: "auction.lot"
+      class_name: "AuctionLot"
+      inherit: ["mail.thread", "mail.activity.mixin"]
+      _description: "拍品"
+      _order: "name"
+      _rec_name: "name"
+
+      fields:
+        # --- 关系字段 ---
+        - name: "category_id"
+          type: "Many2one"
+          comodel: "auction.lot.category"
+          string: "分类"
+          required: true
+          index: true
+          ondelete: "restrict"
+          tracking: true
+
+        - name: "consignor_id"
+          type: "Many2one"
+          comodel: "res.partner"
+          string: "委托方"
+          required: false
+          index: true
+          ondelete: "set null"
+          tracking: true
+
+        - name: "currency_id"
+          type: "Many2one"
+          comodel: "res.currency"
+          string: "币种"
+          required: true
+          index: true
+          default: "lambda self: self.env.company.currency_id"
+
+        - name: "company_id"
+          type: "Many2one"
+          comodel: "res.company"
+          string: "公司"
+          required: true
+          index: true
+          default: "lambda self: self.env.company"
+
+        - name: "image_ids"
+          type: "One2many"
+          comodel: "auction.lot.image"
+          inverse: "lot_id"
+          string: "拍品图片"
+
+        # --- Selection 字段 ---
+        - name: "state"
+          type: "Selection"
+          selection: >
+            [('draft','草稿'),('approved','已审核'),
+             ('assigned','已编排'),('sold','已成交'),
+             ('unsold','流拍'),('withdrawn','已撤回')]
+          string: "状态"
+          required: true
+          default: "draft"
+          tracking: true
+          copy: false
+
+        # --- 普通数据字段 ---
+        - name: "name"
+          type: "Char"
+          size: 128
+          string: "拍品名称"
+          required: true
+          tracking: true
+
+        - name: "description"
+          type: "Html"
+          string: "拍品描述"
+          sanitize_style: true
+
+        - name: "reserve_price"
+          type: "Monetary"
+          string: "底价"
+          required: true
+          default: 0
+          groups: "auction_lot.group_auction_manager"
+          tracking: true
+          help: "仅拍卖经理可见。无底价拍卖时置 0"
+
+        - name: "starting_price"
+          type: "Monetary"
+          string: "起拍价"
+          required: true
+          tracking: true
+
+        - name: "is_no_reserve"
+          type: "Boolean"
+          string: "无底价拍卖"
+          default: false
+          help: "勾选后底价字段自动置 0"
+          tracking: true
+
+        - name: "low_estimate"
+          type: "Monetary"
+          string: "低估价"
+
+        - name: "high_estimate"
+          type: "Monetary"
+          string: "高估价"
+
+        - name: "active"
+          type: "Boolean"
+          string: "启用"
+          default: true
+
+        # --- 计算字段 ---
+        - name: "image_count"
+          type: "Integer"
+          string: "图片数量"
+          compute: "_compute_image_count"
+          store: true
+          depends: ["image_ids"]
+
+      methods:
+        # --- 计算方法 ---
+        - name: "_compute_image_count"
+          trigger: "compute"
+          description: "统计拍品关联图片数量"
+          business_rule: |
+            for record in self:
+                record.image_count = len(record.image_ids)
+
+        # --- 约束方法 ---
+        - name: "_check_reserve_starting_price"
+          trigger: "constrains"
+          constrains_fields: ["reserve_price", "starting_price", "is_no_reserve"]
+          description: "起拍价不超过底价（无底价时跳过）"
+          business_rule: |
+            for record in self:
+                if not record.is_no_reserve and record.starting_price > record.reserve_price:
+                    raise ValidationError("起拍价不得超过底价")
+
+        - name: "_check_estimate_range"
+          trigger: "constrains"
+          constrains_fields: ["low_estimate", "high_estimate"]
+          description: "低估价不超过高估价"
+          business_rule: |
+            for record in self:
+                if record.low_estimate and record.high_estimate:
+                    if record.low_estimate > record.high_estimate:
+                        raise ValidationError("低估价不得超过高估价")
+
+        - name: "_check_images_before_approve"
+          trigger: "constrains"
+          constrains_fields: ["state"]
+          description: "审核前至少 1 张图片"
+          business_rule: |
+            for record in self:
+                if record.state != 'draft' and not record.image_ids:
+                    raise ValidationError("至少上传 1 张图片后才能审核")
+
+        # --- onchange 方法 ---
+        - name: "_onchange_is_no_reserve"
+          trigger: "onchange"
+          onchange_field: "is_no_reserve"
+          description: "勾选无底价时清空底价（UI 提示）"
+          business_rule: |
+            # 遵循 P2-01: onchange 仅做 UI 交互，不做业务逻辑
+            if self.is_no_reserve:
+                self.reserve_price = 0
+
+        # --- 业务动作 ---
+        - name: "action_approve"
+          trigger: "button"
+          description: "审核通过（draft → approved）"
+          business_rule: |
+            self.ensure_one()
+            if not self.image_ids:
+                raise UserError("至少上传 1 张图片后才能审核")
+            self.write({'state': 'approved'})
+
+        - name: "action_withdraw"
+          trigger: "button"
+          description: "撤回拍品（approved → withdrawn）"
+          business_rule: |
+            # 已编排的拍品不允许直接撤回
+            self.ensure_one()
+            if self.state == 'assigned':
+                raise UserError("已编排入拍卖会的拍品请先移出场次")
+            self.write({'state': 'withdrawn'})
+
+        - name: "action_reset_draft"
+          trigger: "button"
+          description: "重置为草稿（withdrawn → draft）"
+          business_rule: |
+            self.ensure_one()
+            self.write({'state': 'draft'})
+
+      sql_constraints:
+        - name: "check_reserve_starting"
+          check: "is_no_reserve = true OR starting_price <= reserve_price"
+          message: "起拍价不得超过底价"
+        - name: "check_estimate"
+          check: "low_estimate IS NULL OR high_estimate IS NULL OR low_estimate <= high_estimate"
+          message: "低估价不得超过高估价"
+
+    # ── auction.lot.image (实体) ──────────────────────────
+    - name: "auction.lot.image"
+      class_name: "AuctionLotImage"
+      inherit: []
+      _description: "拍品图片"
+      _rec_name: "lot_id"
+      _order: "sequence, id"
+
+      fields:
+        # --- 关系字段 ---
+        - name: "lot_id"
+          type: "Many2one"
+          comodel: "auction.lot"
+          string: "所属拍品"
+          required: true
+          index: true
+          ondelete: "cascade"
+
+        # --- 普通数据字段 ---
+        - name: "image"
+          type: "Binary"
+          string: "图片"
+          required: true
+          attachment: true
+
+        - name: "sequence"
+          type: "Integer"
+          string: "排序"
+          default: 10
+
+        - name: "description"
+          type: "Char"
+          string: "图片说明"
+
+      methods: []
+      sql_constraints: []
+
+    # ── auction.lot.category (值对象 — 分类树) ────────────
+    - name: "auction.lot.category"
+      class_name: "AuctionLotCategory"
+      inherit: []
+      _description: "拍品分类"
+      _order: "name"
+      _rec_name: "name"
+      _parent_name: "parent_id"
+      _parent_store: true          # 启用树形查询优化
+
+      fields:
+        # --- 关系字段 ---
+        - name: "parent_id"
+          type: "Many2one"
+          comodel: "auction.lot.category"
+          string: "父分类"
+          ondelete: "cascade"
+          index: true
+
+        - name: "child_ids"
+          type: "One2many"
+          comodel: "auction.lot.category"
+          inverse: "parent_id"
+          string: "子分类"
+
+        # --- 普通数据字段 ---
+        - name: "name"
+          type: "Char"
+          size: 64
+          string: "分类名称"
+          required: true
+
+        - name: "parent_path"
+          type: "Char"
+          string: "路径"
+          index: true
+          # Odoo _parent_store 自动维护
+
+      methods:
+        - name: "_check_category_recursion"
+          trigger: "constrains"
+          constrains_fields: ["parent_id"]
+          description: "防止分类循环嵌套"
+          business_rule: |
+            if not self._check_recursion():
+                raise ValidationError("不允许创建循环分类")
+
+      sql_constraints:
+        - name: "name_parent_uniq"
+          check: "UNIQUE(name, parent_id)"
+          message: "同级分类名称不可重复"
+
+  # ════════════════════════════════════════════════════════
+  #  VIEWS
+  # ════════════════════════════════════════════════════════
+
+  views:
+
+    # ── auction.lot Views ──
+
+    - id: "view_auction_lot_form"
+      type: "form"
+      model: "auction.lot"
+      key_elements:
+        - section: "header"
+          elements:
+            - { type: "button", name: "action_approve", string: "审核通过", class: "btn-primary", attrs: "{'invisible': [('state','!=','draft')]}" }
+            - { type: "button", name: "action_withdraw", string: "撤回", attrs: "{'invisible': [('state','not in',['approved'])]}" }
+            - { type: "button", name: "action_reset_draft", string: "重置草稿", attrs: "{'invisible': [('state','!=','withdrawn')]}" }
+            - { type: "statusbar", field: "state", statusbar_visible: "draft,approved,assigned,sold" }
+        - section: "sheet"
+          elements:
+            - group: "左列"
+              fields: ["name", "category_id", "consignor_id"]
+            - group: "右列"
+              fields: ["state", "company_id", "currency_id"]
+        - section: "notebook"
+          pages:
+            - page: "定价信息"
+              fields:
+                - group: "起拍与底价"
+                  elements:
+                    - { field: "is_no_reserve" }
+                    - { field: "starting_price" }
+                    - { field: "reserve_price", attrs: "{'invisible': [('is_no_reserve','=',True)]}", groups: "auction_lot.group_auction_manager" }
+                - group: "估价区间"
+                  elements:
+                    - { field: "low_estimate" }
+                    - { field: "high_estimate" }
+            - page: "图片"
+              fields:
+                - { field: "image_ids", widget: "one2many", tree_editable: false }
+                - note: "图片子表用 kanban 模式显示缩略图（见下方 kanban view 内嵌）"
+            - page: "描述"
+              fields:
+                - { field: "description", widget: "html" }
+        - section: "chatter"
+          elements:
+            - { field: "message_ids" }
+            - { field: "activity_ids" }
+
+    - id: "view_auction_lot_tree"
+      type: "tree"
+      model: "auction.lot"
+      key_elements:
+        - { field: "name" }
+        - { field: "category_id" }
+        - { field: "consignor_id", optional: "show" }
+        - { field: "starting_price" }
+        - { field: "reserve_price", groups: "auction_lot.group_auction_manager", optional: "hide" }
+        - { field: "is_no_reserve", widget: "boolean_toggle" }
+        - { field: "image_count" }
+        - { field: "state", widget: "badge", decoration: "{'success': [('state','=','sold')], 'warning': [('state','=','approved')], 'danger': [('state','=','unsold')]}" }
+      default_order: "name"
+
+    - id: "view_auction_lot_search"
+      type: "search"
+      model: "auction.lot"
+      key_elements:
+        - search_fields:
+            - { field: "name", operator: "ilike" }
+            - { field: "description", operator: "ilike" }
+            - { field: "category_id" }
+            - { field: "consignor_id" }
+        - filters:
+            - { name: "filter_draft", string: "草稿", domain: "[('state','=','draft')]" }
+            - { name: "filter_approved", string: "已审核", domain: "[('state','=','approved')]" }
+            - { name: "filter_assigned", string: "已编排", domain: "[('state','=','assigned')]" }
+            - { name: "filter_sold", string: "已成交", domain: "[('state','=','sold')]" }
+            - { name: "filter_unsold", string: "流拍", domain: "[('state','=','unsold')]" }
+            - { name: "filter_no_reserve", string: "无底价", domain: "[('is_no_reserve','=',True)]" }
+        - group_by:
+            - { name: "group_category", string: "按分类", field: "category_id" }
+            - { name: "group_state", string: "按状态", field: "state" }
+            - { name: "group_consignor", string: "按委托方", field: "consignor_id" }
+
+    - id: "view_auction_lot_kanban"
+      type: "kanban"
+      model: "auction.lot"
+      group_by_default: "state"
+      key_elements:
+        - fields: ["name", "category_id", "starting_price", "state", "image_count", "is_no_reserve"]
+        - card_content: |
+            拍品名称（粗体）
+            分类标签
+            起拍价
+            图片数量 badge
+            无底价标记（红色 badge 当 is_no_reserve=True）
+
+    # ── auction.lot.image Views ──
+
+    - id: "view_auction_lot_image_tree"
+      type: "tree"
+      model: "auction.lot.image"
+      key_elements:
+        - { field: "sequence", widget: "handle" }
+        - { field: "image", widget: "image", options: "{'size': [100, 100]}" }
+        - { field: "description" }
+      note: "主要作为 lot form 的内嵌子表使用"
+
+    # ── auction.lot.category Views ──
+
+    - id: "view_auction_lot_category_form"
+      type: "form"
+      model: "auction.lot.category"
+      key_elements:
+        - section: "sheet"
+          elements:
+            - group: "基本信息"
+              fields: ["name", "parent_id"]
+            - group: "子分类"
+              fields:
+                - { field: "child_ids", widget: "one2many" }
+
+    - id: "view_auction_lot_category_tree"
+      type: "tree"
+      model: "auction.lot.category"
+      key_elements:
+        - { field: "name" }
+        - { field: "parent_id" }
+      note: "支持树形展开（Odoo tree 原生 child_of 支持）"
+
+    - id: "view_auction_lot_category_search"
+      type: "search"
+      model: "auction.lot.category"
+      key_elements:
+        - search_fields:
+            - { field: "name" }
+
+  # ════════════════════════════════════════════════════════
+  #  MENUS & ACTIONS
+  # ════════════════════════════════════════════════════════
+
+  actions:
+    - id: "action_auction_lot"
+      type: "ir.actions.act_window"
+      name: "拍品"
+      res_model: "auction.lot"
+      view_mode: "tree,form,kanban"
+      search_view_id: "view_auction_lot_search"
+      context: "{}"
+      help: "创建第一个拍品"
+
+    - id: "action_auction_lot_category"
+      type: "ir.actions.act_window"
+      name: "拍品分类"
+      res_model: "auction.lot.category"
+      view_mode: "tree,form"
+      search_view_id: "view_auction_lot_category_search"
+
+  menus:
+    # 顶级菜单 — 仅 Slice-1 建立入口
+    - id: "menu_auction_root"
+      name: "拍卖管理"
+      sequence: 10
+      groups: ["group_auction_user"]
+      web_icon: "auction_lot,static/description/icon.png"
+
+    # 二级菜单
+    - id: "menu_auction_lot"
+      name: "拍品管理"
+      parent: "menu_auction_root"
+      sequence: 10
+
+    # 三级菜单
+    - id: "menu_auction_lot_all"
+      name: "拍品列表"
+      parent: "menu_auction_lot"
+      action: "action_auction_lot"
+      sequence: 10
+      groups: ["group_auction_user"]
+
+    - id: "menu_auction_lot_category"
+      name: "拍品分类"
+      parent: "menu_auction_lot"
+      action: "action_auction_lot_category"
+      sequence: 20
+      groups: ["group_auction_manager"]
+
+  # ════════════════════════════════════════════════════════
+  #  DATA — 初始分类数据
+  # ════════════════════════════════════════════════════════
+
+  data:
+    - file: "data/auction_lot_category_data.xml"
+      type: "data"
+      noupdate: true    # P3-01: 用户可能修改分类
+      records:
+        - { xml_id: "category_painting", name: "书画" }
+        - { xml_id: "category_ceramics", name: "瓷器" }
+        - { xml_id: "category_jade", name: "玉器" }
+        - { xml_id: "category_antique", name: "古董家具" }
+        - { xml_id: "category_jewelry", name: "珠宝" }
+        - { xml_id: "category_watch", name: "钟表" }
+        - { xml_id: "category_wine", name: "名酒" }
+        - { xml_id: "category_other", name: "其他" }
+
+    - file: "data/auction_lot_groups.xml"
+      type: "data"
+      noupdate: false
+      records:
+        - xml_id: "group_auction_user"
+          model: "res.groups"
+          values:
+            name: "拍卖运营"
+            implied_ids: ["base.group_user"]
+            category_id: "base.module_category_uncategorized"
+        - xml_id: "group_auction_manager"
+          model: "res.groups"
+          values:
+            name: "拍卖经理"
+            implied_ids: ["group_auction_user"]
+            category_id: "base.module_category_uncategorized"
+
+  # ════════════════════════════════════════════════════════
+  #  SECURITY
+  # ════════════════════════════════════════════════════════
+
+  security:
+
+    acl:    # → security/ir.model.access.csv
+      # model                    | xml_id                              | group                 | C R U D
+      - { model: "auction.lot",          id: "access_lot_manager",          group: "group_auction_manager", perm: "1,1,1,1" }
+      - { model: "auction.lot",          id: "access_lot_user",             group: "group_auction_user",    perm: "1,1,1,0" }
+      - { model: "auction.lot",          id: "access_lot_public",           group: "base.group_user",       perm: "1,0,0,0" }
+      - { model: "auction.lot.image",    id: "access_lot_image_manager",    group: "group_auction_manager", perm: "1,1,1,1" }
+      - { model: "auction.lot.image",    id: "access_lot_image_user",       group: "group_auction_user",    perm: "1,1,1,1" }
+      - { model: "auction.lot.image",    id: "access_lot_image_public",     group: "base.group_user",       perm: "1,0,0,0" }
+      - { model: "auction.lot.category", id: "access_lot_category_manager", group: "group_auction_manager", perm: "1,1,1,1" }
+      - { model: "auction.lot.category", id: "access_lot_category_user",    group: "group_auction_user",    perm: "1,0,0,0" }
+      - { model: "auction.lot.category", id: "access_lot_category_public",  group: "base.group_user",       perm: "1,0,0,0" }
+
+    record_rules:
+      - id: "rule_lot_company"
+        model: "auction.lot"
+        domain: "[('company_id','in',company_ids)]"
+        groups: ["group_auction_user"]
+        description: "多公司隔离 — 只看本公司拍品"
+
+  # ════════════════════════════════════════════════════════
+  #  DEPENDENCIES
+  # ════════════════════════════════════════════════════════
+
+  dependencies:
+    upstream_slices: []              # Slice-1 无上游依赖
+    external_modules:
+      - name: "base"
+        reason: "res.partner, res.company, res.currency"
+      - name: "mail"
+        reason: "mail.thread + mail.activity.mixin (Chatter 消息跟踪)"
+
+  # ════════════════════════════════════════════════════════
+  #  MANIFEST 骨架
+  # ════════════════════════════════════════════════════════
+
+  manifest:
+    name: "Auction - Lot Management"
+    version: "17.0.1.0.0"
+    category: "Sales"
+    author: "Auction Team"
+    license: "LGPL-3"
+    depends: ["base", "mail"]
+    application: true
+    data:
+      # P1-01: Security 文件优先加载
+      - "security/ir.model.access.csv"
+      - "data/auction_lot_groups.xml"
+      - "data/auction_lot_category_data.xml"
+      - "views/auction_lot_category_views.xml"
+      - "views/auction_lot_views.xml"
+      - "views/auction_lot_menus.xml"
+    installable: true
+
+  # ════════════════════════════════════════════════════════
+  #  PITFALL 自检 (S4 设计阶段)
+  # ════════════════════════════════════════════════════════
+
+  pitfall_checklist:
+    - { id: "P1-01", status: "✅", note: "manifest.data 中 security/ir.model.access.csv 放在首位" }
+    - { id: "P1-02", status: "✅", note: "image_count depends=[image_ids] — 完整" }
+    - { id: "P1-03", status: "✅", note: "depends 字段名全部与 Model 字段匹配" }
+    - { id: "P1-04", status: "✅", note: "无循环 depends" }
+    - { id: "P2-01", status: "✅", note: "_onchange_is_no_reserve 仅做 UI 清空，业务验证在 constrains" }
+    - { id: "P2-03", status: "✅", note: "所有 Many2one 均有 ondelete" }
+    - { id: "P2-04", status: "✅", note: "lot 有 name; image 用 _rec_name=lot_id; category 有 name" }
+    - { id: "P3-01", status: "✅", note: "category_data.xml 用 noupdate=1" }
+    - { id: "P3-04", status: "✅", note: "lot 有 company_id + record rule" }
+
+  # ════════════════════════════════════════════════════════
+  #  S4 GATE 自检
+  # ════════════════════════════════════════════════════════
+
+  gate_checklist:
+    model_design:
+      - { check: "所有 Story 有对应 Model?", pass: true, note: "US-01~05 → lot + image + category" }
+      - { check: "字段类型正确?", pass: true, note: "参照 architecture.yaml + best-practices" }
+      - { check: "计算字段 depends 完整?", pass: true, note: "仅 image_count depends image_ids" }
+      - { check: "业务规则约束明确?", pass: true, note: "3 个 constrains + 2 个 sql_constraints" }
+    view_design:
+      - { check: "每个 Model 有必要视图?", pass: true, note: "lot: form+tree+search+kanban; image: tree; category: form+tree+search" }
+      - { check: "表单分组合理?", pass: true, note: "lot: 基本信息/定价/图片/描述 四页签" }
+      - { check: "必填字段标注?", pass: true, note: "required 字段在 form 中自动标注" }
+    security:
+      - { check: "ACL 完整?", pass: true, note: "3 Model × 3 Group = 9 行 ACL" }
+      - { check: "Record Rules 定义?", pass: true, note: "rule_lot_company 多公司隔离" }
+    dependencies:
+      - { check: "依赖 Slice 已完成?", pass: true, note: "无上游依赖" }
+      - { check: "depends 列表正确?", pass: true, note: "base, mail" }

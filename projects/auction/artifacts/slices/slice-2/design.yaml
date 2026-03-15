@@ -1,0 +1,390 @@
+# Slice-2 详细设计: 拍卖会编排
+# S4 输出 | auction | slice-2
+# 生成时间: 2026-03-16T00:33:00+08:00
+
+slice:
+  id: slice-2
+  name: 拍卖会编排
+  module_name: auction_session
+  stories: [US-06, US-07, US-08, US-09]
+  upstream_slices: [slice-1]
+
+  sharding:
+    enabled: false
+    reason: "2 Model / ~400 行 / 2 关注点（model+view），未超阈值"
+
+  # ════════════════════════════════════════════════════════════════
+  #  MODELS
+  # ════════════════════════════════════════════════════════════════
+
+  models:
+
+    # ── auction.session (聚合根) ──
+    - name: auction.session
+      _description: "拍卖会"
+      _inherit: ["mail.thread", "mail.activity.mixin"]
+      _order: "start_time desc"
+
+      fields:
+        # 关系字段
+        - name: currency_id
+          type: Many2one
+          comodel: res.currency
+          required: true
+          index: true
+          default: "lambda self: self.env.company.currency_id"
+
+        - name: company_id
+          type: Many2one
+          comodel: res.company
+          required: true
+          index: true
+          default: "lambda self: self.env.company"
+
+        - name: session_lot_ids
+          type: One2many
+          comodel: auction.session.lot
+          inverse: session_id
+          string: "编排拍品"
+
+        # Selection
+        - name: state
+          type: Selection
+          selection: "[('draft','草稿'),('published','已发布'),('ongoing','进行中'),('closed','已结束'),('cancelled','已取消')]"
+          required: true
+          default: "draft"
+          tracking: true
+          copy: false
+
+        # 普通字段
+        - name: name
+          type: Char
+          size: 128
+          required: true
+          tracking: true
+
+        - name: start_time
+          type: Datetime
+          required: true
+          tracking: true
+
+        - name: end_time
+          type: Datetime
+          required: true
+          tracking: true
+
+        - name: default_increment
+          type: Monetary
+          required: true
+          tracking: true
+          string: "默认加价幅度"
+
+        - name: countdown_seconds
+          type: Integer
+          required: true
+          default: 30
+          string: "倒计时秒数"
+
+        - name: extension_seconds
+          type: Integer
+          required: true
+          default: 10
+          string: "延时秒数"
+
+        - name: conditional_sale_pct
+          type: Float
+          required: true
+          default: 80.0
+          string: "有条件成交阈值(%)"
+          help: "最高价在底价的此百分比以上时，标记为有条件成交"
+
+        - name: description
+          type: Html
+          sanitize_style: true
+
+        # 计算字段
+        - name: lot_count
+          type: Integer
+          compute: "_compute_lot_count"
+          store: true
+          depends: ["session_lot_ids"]
+          string: "拍品数量"
+
+      sql_constraints:
+        - name: check_time
+          check: "start_time < end_time"
+          message: "开始时间必须早于结束时间"
+        - name: check_threshold
+          check: "conditional_sale_pct > 0 AND conditional_sale_pct <= 100"
+          message: "阈值必须在 0-100 之间"
+
+      compute_methods:
+        - method: "_compute_lot_count"
+          depends: ["session_lot_ids"]
+          body: "self.lot_count = len(self.session_lot_ids)"
+
+      constrains_methods: []
+
+      business_actions:
+        - method: action_publish
+          string: "发布"
+          description: "draft → published（需至少 1 件拍品）"
+          from_state: draft
+          to_state: published
+
+        - method: action_start
+          string: "开始拍卖"
+          description: "published → ongoing"
+          from_state: published
+          to_state: ongoing
+
+        - method: action_close
+          string: "结束拍卖"
+          description: "ongoing → closed"
+          from_state: ongoing
+          to_state: closed
+
+        - method: action_cancel
+          string: "取消"
+          description: "draft/published → cancelled"
+          from_state: "draft,published"
+          to_state: cancelled
+
+    # ── auction.session.lot (实体 — 编排中间表) ──
+    - name: auction.session.lot
+      _description: "场次拍品编排"
+      _rec_name: lot_id
+      _order: "sequence, id"
+
+      fields:
+        # 关系字段
+        - name: session_id
+          type: Many2one
+          comodel: auction.session
+          required: true
+          index: true
+          ondelete: cascade
+
+        - name: lot_id
+          type: Many2one
+          comodel: auction.lot
+          required: true
+          index: true
+          ondelete: restrict
+
+        # 普通字段
+        - name: sequence
+          type: Integer
+          required: true
+          default: 10
+          string: "上拍顺序"
+
+        - name: lot_state
+          type: Selection
+          selection: "[('pending','等待'),('active','竞价中'),('sold','成交'),('unsold','流拍'),('conditional','有条件成交')]"
+          default: "pending"
+          string: "竞价状态"
+
+      constrains_methods:
+        - method: "_check_lot_unique_active_session"
+          fields: ["lot_id", "session_id"]
+          description: "同一拍品不可同时在多场活跃拍卖会中"
+          body: |
+            for record in self:
+                active_states = ('draft', 'published', 'ongoing')
+                domain = [
+                    ('lot_id', '=', record.lot_id.id),
+                    ('session_id.state', 'in', active_states),
+                    ('id', '!=', record.id),
+                ]
+                if self.search_count(domain) > 0:
+                    raise ValidationError(
+                        f'拍品 "{record.lot_id.name}" 已在其他活跃拍卖会中'
+                    )
+
+      onchange_methods:
+        - method: "_onchange_lot_id"
+          trigger: lot_id
+          description: "编入拍品时同步修改 lot.state → assigned"
+          note: "仅 UI 提示，实际状态变更在 create/write 覆写中执行"
+
+  # ════════════════════════════════════════════════════════════════
+  #  VIEWS
+  # ════════════════════════════════════════════════════════════════
+
+  views:
+
+    # ── auction.session Views ──
+    - model: auction.session
+      type: form
+      xml_id: view_auction_session_form
+      spec:
+        header:
+          buttons:
+            - { name: action_publish, string: "发布", class: "btn-primary", invisible: "state != 'draft'" }
+            - { name: action_start, string: "开始拍卖", class: "btn-primary", invisible: "state != 'published'" }
+            - { name: action_close, string: "结束拍卖", invisible: "state != 'ongoing'" }
+            - { name: action_cancel, string: "取消", invisible: "state not in ('draft','published')" }
+          statusbar:
+            field: state
+            statusbar_visible: "draft,published,ongoing,closed"
+        sheet:
+          groups:
+            - title: "基本信息"
+              fields: [name, start_time, end_time]
+            - title: "系统信息"
+              fields: [company_id, currency_id]
+          notebook:
+            - page: "拍卖规则"
+              name: rules
+              fields: [default_increment, countdown_seconds, extension_seconds, conditional_sale_pct]
+            - page: "拍品编排"
+              name: lots
+              widget: "one2many tree editable=bottom"
+              field: session_lot_ids
+              tree_fields: [sequence(handle), lot_id, lot_state]
+            - page: "描述"
+              name: description
+              fields: [description]
+        chatter: true
+
+    - model: auction.session
+      type: tree
+      xml_id: view_auction_session_tree
+      spec:
+        fields: [name, start_time, end_time, lot_count, state]
+        state_widget: badge
+        decorations:
+          success: "state == 'closed'"
+          warning: "state == 'ongoing'"
+          danger: "state == 'cancelled'"
+
+    - model: auction.session
+      type: search
+      xml_id: view_auction_session_search
+      spec:
+        search_fields: [name]
+        filters:
+          - { name: filter_draft, string: "草稿", domain: "[('state','=','draft')]" }
+          - { name: filter_published, string: "已发布", domain: "[('state','=','published')]" }
+          - { name: filter_ongoing, string: "进行中", domain: "[('state','=','ongoing')]" }
+          - { name: filter_closed, string: "已结束", domain: "[('state','=','closed')]" }
+        group_by:
+          - { name: group_state, string: "按状态", field: state }
+
+    - model: auction.session
+      type: kanban
+      xml_id: view_auction_session_kanban
+      spec:
+        default_group_by: state
+        card_fields: [name, start_time, lot_count]
+
+  # ════════════════════════════════════════════════════════════════
+  #  MENUS & ACTIONS
+  # ════════════════════════════════════════════════════════════════
+
+  menus:
+    actions:
+      - xml_id: action_auction_session
+        name: "拍卖会"
+        model: auction.session
+        view_mode: "tree,form,kanban"
+
+    items:
+      # 复用 auction_lot 的顶级菜单 menu_auction_root
+      - xml_id: menu_auction_session
+        name: "拍卖会管理"
+        parent: auction_lot.menu_auction_root
+        sequence: 20
+
+      - xml_id: menu_auction_session_all
+        name: "拍卖会列表"
+        parent: menu_auction_session
+        action: action_auction_session
+        sequence: 10
+        groups: "auction_lot.group_auction_user"
+
+  # ════════════════════════════════════════════════════════════════
+  #  SECURITY
+  # ════════════════════════════════════════════════════════════════
+
+  security:
+
+    acl:
+      # model                    | group                              | C | R | W | D
+      - { model: auction.session, group: "auction_lot.group_auction_manager", perm: "CRUD" }
+      - { model: auction.session, group: "auction_lot.group_auction_user", perm: "CRU" }
+      - { model: auction.session, group: "base.group_user", perm: "R" }
+      - { model: auction.session.lot, group: "auction_lot.group_auction_manager", perm: "CRUD" }
+      - { model: auction.session.lot, group: "auction_lot.group_auction_user", perm: "CRU" }
+      - { model: auction.session.lot, group: "base.group_user", perm: "R" }
+
+    record_rules:
+      - xml_id: rule_session_company
+        model: auction.session
+        domain: "[('company_id', 'in', company_ids)]"
+        groups: "auction_lot.group_auction_user"
+        description: "拍卖会: 多公司隔离"
+
+  # ════════════════════════════════════════════════════════════════
+  #  DATA
+  # ════════════════════════════════════════════════════════════════
+
+  data:
+    # 无预置数据（场次由用户创建）
+
+  # ════════════════════════════════════════════════════════════════
+  #  DEPENDENCIES
+  # ════════════════════════════════════════════════════════════════
+
+  dependencies:
+    upstream_slices: [slice-1]
+    external_modules: [base, mail, auction_lot]
+
+  # ════════════════════════════════════════════════════════════════
+  #  PITFALL CHECKLIST
+  # ════════════════════════════════════════════════════════════════
+
+  pitfall_checklist:
+    - id: P1-01
+      check: "__manifest__.py data 列表中 security XML 在最前面"
+      passed: true
+    - id: P1-02
+      check: "@api.depends 列表完整（lot_count → session_lot_ids）"
+      passed: true
+    - id: P1-03
+      check: "onchange 不做业务逻辑（仅 UI 提示）"
+      passed: true
+    - id: P1-04
+      check: "覆写 create/write 时调用 super()"
+      passed: true
+      note: "Slice-2 不覆写 create/write，lot.state 变更在 session_lot 的 create 覆写中处理"
+    - id: P2-01
+      check: "Many2one 均声明 ondelete"
+      passed: true
+      note: "session_id→cascade, lot_id→restrict"
+    - id: P2-02
+      check: "_rec_name 或 name 字段存在"
+      passed: true
+    - id: P2-03
+      check: "company_id 字段和 record rule 存在"
+      passed: true
+    - id: P2-04
+      check: "拍品唯一性约束（_check_lot_unique_active_session）"
+      passed: true
+      note: "Python 约束而非 SQL UNIQUE，因需检查 session.state"
+
+  # ════════════════════════════════════════════════════════════════
+  #  GATE CHECKLIST
+  # ════════════════════════════════════════════════════════════════
+
+  gate_checklist:
+    model_design:
+      - "auction.session: 12 字段 + 2 SQL 约束 + 4 业务动作 + 1 计算字段"
+      - "auction.session.lot: 4 字段 + 1 Python 约束"
+    view_design:
+      - "session: form(header+rules+lots+chatter) + tree + search + kanban"
+    security:
+      - "6 ACL (2 model × 3 group) + 1 Record Rule"
+    dependencies:
+      - "base, mail, auction_lot"

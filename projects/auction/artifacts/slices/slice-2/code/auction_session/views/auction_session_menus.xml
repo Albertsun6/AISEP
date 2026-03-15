@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ════════════════════════════════════════════ -->
+    <!--  Actions                                     -->
+    <!-- ════════════════════════════════════════════ -->
+    <record id="action_auction_session" model="ir.actions.act_window">
+        <field name="name">拍卖会</field>
+        <field name="res_model">auction.session</field>
+        <field name="view_mode">tree,form,kanban</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                创建第一场拍卖会
+            </p>
+            <p>
+                创建拍卖会、编入拍品、配置拍卖规则。
+            </p>
+        </field>
+    </record>
+
+    <!-- ════════════════════════════════════════════ -->
+    <!--  Menus — 挂载到 auction_lot 的顶级菜单下      -->
+    <!-- ════════════════════════════════════════════ -->
+
+    <!-- 二级菜单: 拍卖会管理 -->
+    <menuitem id="menu_auction_session"
+              name="拍卖会管理"
+              parent="auction_lot.menu_auction_root"
+              sequence="20"/>
+
+    <!-- 三级菜单: 拍卖会列表 -->
+    <menuitem id="menu_auction_session_all"
+              name="拍卖会列表"
+              parent="menu_auction_session"
+              action="action_auction_session"
+              sequence="10"
+              groups="auction_lot.group_auction_user"/>
+
+</odoo>

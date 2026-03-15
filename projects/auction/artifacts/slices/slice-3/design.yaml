@@ -1,0 +1,411 @@
+# Slice-3 详细设计: 竞价引擎
+# S4 输出 | auction | slice-3
+# 生成时间: 2026-03-16T07:03:00+08:00
+
+slice:
+  id: slice-3
+  name: 竞价引擎
+  module_name: auction_bidding
+  stories: [US-10, US-11, US-12, US-13, US-14]
+  upstream_slices: [slice-1, slice-2]
+
+  sharding:
+    enabled: false
+    reason: "2 Model / ~500 行 / 核心逻辑集中在 place_bid 方法，不宜拆分"
+
+  # ════════════════════════════════════════════════════════════════
+  #  ADR 引用
+  # ════════════════════════════════════════════════════════════════
+
+  adr_references:
+    - id: ADR-001
+      title: "实时推送用 Odoo Bus"
+      impact: "place_bid 成功后通过 bus.bus._sendone 推送竞价更新"
+    - id: ADR-002
+      title: "并发锁用 FOR UPDATE"
+      impact: "place_bid 方法在读取 current_price 前执行 SELECT FOR UPDATE"
+
+  # ════════════════════════════════════════════════════════════════
+  #  MODELS
+  # ════════════════════════════════════════════════════════════════
+
+  models:
+
+    # ── auction.bidding.round (聚合根) ──
+    - name: auction.bidding.round
+      _description: "竞价轮次"
+      _inherit: []
+      _order: "id desc"
+
+      fields:
+        # 关系字段
+        - name: session_lot_id
+          type: Many2one
+          comodel: auction.session.lot
+          required: true
+          index: true
+          ondelete: cascade
+
+        - name: lot_id
+          type: Many2one
+          comodel: auction.lot
+          related: "session_lot_id.lot_id"
+          store: true
+          string: "拍品（冗余）"
+
+        - name: session_id
+          type: Many2one
+          comodel: auction.session
+          related: "session_lot_id.session_id"
+          store: true
+          string: "场次（冗余）"
+
+        - name: bid_ids
+          type: One2many
+          comodel: auction.bid
+          inverse: round_id
+          string: "出价记录"
+
+        - name: winner_id
+          type: Many2one
+          comodel: res.partner
+          index: true
+          string: "买受人"
+
+        - name: currency_id
+          type: Many2one
+          comodel: res.currency
+          required: true
+          index: true
+          default: "lambda self: self.env.company.currency_id"
+
+        # Selection
+        - name: state
+          type: Selection
+          selection: >-
+            [('open','竞价中'),('hammer','已落槌'),('unsold','流拍'),
+             ('conditional_pending','有条件成交-待确认'),
+             ('conditional_accepted','有条件成交-已接受'),
+             ('conditional_rejected','有条件成交-已拒绝')]
+          required: true
+          default: "open"
+          copy: false
+
+        # Monetary
+        - name: current_price
+          type: Monetary
+          string: "当前最高价"
+          currency_field: currency_id
+
+        - name: starting_price
+          type: Monetary
+          required: true
+          string: "本轮起拍价"
+          currency_field: currency_id
+
+        - name: bid_increment
+          type: Monetary
+          required: true
+          string: "本轮加价幅度"
+          currency_field: currency_id
+
+        - name: hammer_price
+          type: Monetary
+          string: "成交价"
+          currency_field: currency_id
+
+        # 计算字段
+        - name: bid_count
+          type: Integer
+          compute: "_compute_bid_count"
+          store: true
+          depends: ["bid_ids"]
+          string: "出价次数"
+
+      compute_methods:
+        - method: "_compute_bid_count"
+          depends: ["bid_ids"]
+          body: "self.bid_count = len(self.bid_ids)"
+
+      business_methods:
+
+        - method: place_bid
+          args: "bidder_id, amount"
+          adr_ref: ADR-002
+          description: |
+            出价核心方法（含 FOR UPDATE 行级锁）
+            1. SELECT FOR UPDATE 锁定竞价轮次行
+            2. 验证 state == 'open'
+            3. 验证 amount >= current_price + bid_increment（首次出价 >= starting_price）
+            4. 创建 auction.bid 记录
+            5. 更新 current_price = amount
+            6. 通过 bus.bus._sendone 推送竞价更新（ADR-001）
+            7. 返回新 bid 记录
+          raises:
+            - "UserError: 竞价已结束"
+            - "UserError: 出价低于最低要求"
+          returns: "auction.bid recordset"
+
+        - method: _check_hammer
+          args: ""
+          description: |
+            落槌判定逻辑（在拍品竞价结束时调用）
+            1. 获取 lot.reserve_price 和 session.conditional_sale_pct
+            2. 判定:
+               - current_price >= reserve_price → state='hammer', lot_state='sold'
+               - current_price >= reserve_price * pct/100 → state='conditional_pending', lot_state='conditional'
+               - current_price < threshold 或无出价 → state='unsold', lot_state='unsold'
+            3. 设置 winner_id 和 hammer_price
+            4. 同步更新 session_lot.lot_state
+
+        - method: action_accept_conditional
+          args: ""
+          description: "委托方确认有条件成交 → conditional_accepted, lot_state=sold"
+          from_state: conditional_pending
+          to_state: conditional_accepted
+
+        - method: action_reject_conditional
+          args: ""
+          description: "委托方拒绝有条件成交 → conditional_rejected, lot_state=unsold"
+          from_state: conditional_pending
+          to_state: conditional_rejected
+
+    # ── auction.bid (不可修改实体) ──
+    - name: auction.bid
+      _description: "出价记录"
+      _order: "bid_time desc, amount desc"
+      _immutable: true
+      _note: "业务铁律: 禁止 update/delete，通过覆写 write() 和 unlink() 抛 UserError"
+
+      fields:
+        - name: round_id
+          type: Many2one
+          comodel: auction.bidding.round
+          required: true
+          index: true
+          ondelete: cascade
+
+        - name: bidder_id
+          type: Many2one
+          comodel: res.partner
+          required: true
+          index: true
+          ondelete: restrict
+          string: "竞拍者"
+
+        - name: amount
+          type: Monetary
+          required: true
+          string: "出价金额"
+          currency_field: currency_id
+
+        - name: currency_id
+          type: Many2one
+          comodel: res.currency
+          required: true
+          index: true
+          default: "lambda self: self.env.company.currency_id"
+
+        - name: bid_time
+          type: Datetime
+          required: true
+          default: "fields.Datetime.now"
+          string: "出价时间"
+
+        - name: is_winning
+          type: Boolean
+          compute: "_compute_is_winning"
+          store: true
+          depends: ["round_id.current_price", "amount"]
+          string: "是否当前最高"
+
+      sql_constraints:
+        - name: amount_positive
+          check: "amount > 0"
+          message: "出价金额必须大于零"
+
+      compute_methods:
+        - method: "_compute_is_winning"
+          depends: ["round_id.current_price", "amount"]
+          body: "self.is_winning = (self.amount == self.round_id.current_price)"
+
+      immutable_enforcement:
+        write: "raise UserError('出价记录不可修改')"
+        unlink: "raise UserError('出价记录不可删除')"
+
+  # ════════════════════════════════════════════════════════════════
+  #  VIEWS
+  # ════════════════════════════════════════════════════════════════
+
+  views:
+
+    # ── auction.bidding.round Views ──
+    - model: auction.bidding.round
+      type: form
+      xml_id: view_auction_bidding_round_form
+      spec:
+        header:
+          buttons:
+            - { name: action_accept_conditional, string: "确认成交", class: "btn-success", invisible: "state != 'conditional_pending'" }
+            - { name: action_reject_conditional, string: "拒绝成交", class: "btn-danger", invisible: "state != 'conditional_pending'" }
+          statusbar:
+            field: state
+            statusbar_visible: "open,hammer,unsold"
+        sheet:
+          groups:
+            - title: "竞价信息"
+              fields: [lot_id, session_id, starting_price, bid_increment, current_price]
+            - title: "成交信息"
+              fields: [state, winner_id, hammer_price, bid_count]
+          notebook:
+            - page: "出价记录"
+              name: bids
+              field: bid_ids
+              tree_fields: [bid_time, bidder_id, amount, is_winning]
+              readonly: true
+
+    - model: auction.bidding.round
+      type: tree
+      xml_id: view_auction_bidding_round_tree
+      spec:
+        fields: [lot_id, session_id, starting_price, current_price, bid_count, state]
+        state_widget: badge
+        decorations:
+          success: "state == 'hammer'"
+          danger: "state == 'unsold'"
+          warning: "state == 'conditional_pending'"
+
+    - model: auction.bidding.round
+      type: search
+      xml_id: view_auction_bidding_round_search
+      spec:
+        search_fields: [lot_id, session_id]
+        filters:
+          - { name: filter_open, string: "竞价中", domain: "[('state','=','open')]" }
+          - { name: filter_hammer, string: "已落槌", domain: "[('state','=','hammer')]" }
+          - { name: filter_unsold, string: "流拍", domain: "[('state','=','unsold')]" }
+          - { name: filter_conditional, string: "有条件成交", domain: "[('state','in',['conditional_pending','conditional_accepted','conditional_rejected'])]" }
+        group_by:
+          - { name: group_state, string: "按状态", field: state }
+          - { name: group_session, string: "按场次", field: session_id }
+
+    # ── auction.bid Views (只读列表) ──
+    - model: auction.bid
+      type: tree
+      xml_id: view_auction_bid_tree
+      spec:
+        fields: [bid_time, bidder_id, amount, is_winning, round_id]
+        create: false
+        edit: false
+        delete: false
+
+  # ════════════════════════════════════════════════════════════════
+  #  MENUS & ACTIONS
+  # ════════════════════════════════════════════════════════════════
+
+  menus:
+    actions:
+      - xml_id: action_auction_bidding_round
+        name: "竞价轮次"
+        model: auction.bidding.round
+        view_mode: "tree,form"
+
+      - xml_id: action_auction_bid
+        name: "出价记录"
+        model: auction.bid
+        view_mode: "tree"
+
+    items:
+      - xml_id: menu_auction_bidding
+        name: "竞价管理"
+        parent: auction_lot.menu_auction_root
+        sequence: 30
+
+      - xml_id: menu_auction_bidding_rounds
+        name: "竞价轮次"
+        parent: menu_auction_bidding
+        action: action_auction_bidding_round
+        sequence: 10
+        groups: "auction_lot.group_auction_user"
+
+      - xml_id: menu_auction_bidding_history
+        name: "出价记录"
+        parent: menu_auction_bidding
+        action: action_auction_bid
+        sequence: 20
+        groups: "auction_lot.group_auction_user"
+
+  # ════════════════════════════════════════════════════════════════
+  #  SECURITY
+  # ════════════════════════════════════════════════════════════════
+
+  security:
+    acl:
+      - { model: auction.bidding.round, group: "auction_lot.group_auction_manager", perm: "CRUD" }
+      - { model: auction.bidding.round, group: "auction_lot.group_auction_user", perm: "R" }
+      - { model: auction.bidding.round, group: "base.group_user", perm: "R" }
+      - { model: auction.bid, group: "auction_lot.group_auction_manager", perm: "CR" }
+      - { model: auction.bid, group: "auction_lot.group_auction_user", perm: "CR" }
+      - { model: auction.bid, group: "base.group_user", perm: "R" }
+
+    record_rules: []
+    # 竞价轮次通过 session_lot → session → company_id 间接隔离
+    # 不需要直接的 company record rule
+
+  # ════════════════════════════════════════════════════════════════
+  #  DEPENDENCIES
+  # ════════════════════════════════════════════════════════════════
+
+  dependencies:
+    upstream_slices: [slice-1, slice-2]
+    external_modules: [base, bus, auction_lot, auction_session]
+
+  # ════════════════════════════════════════════════════════════════
+  #  PITFALL CHECKLIST
+  # ════════════════════════════════════════════════════════════════
+
+  pitfall_checklist:
+    - id: P1-01
+      check: "security XML 在 data 列表最前面"
+      passed: true
+    - id: P1-02
+      check: "@api.depends 列表完整（bid_count→bid_ids, is_winning→round_id.current_price+amount）"
+      passed: true
+    - id: P1-03
+      check: "FOR UPDATE 在 place_bid 中正确使用"
+      passed: true
+      note: "self.env.cr.execute('SELECT id FROM auction_bidding_round WHERE id=%s FOR UPDATE', [self.id])"
+    - id: P1-04
+      check: "auction.bid 覆写 write/unlink 抛 UserError"
+      passed: true
+    - id: P2-01
+      check: "Many2one 均声明 ondelete"
+      passed: true
+    - id: P2-02
+      check: "related 字段 store=True 确保索引可用"
+      passed: true
+    - id: P2-03
+      check: "bus._sendone channel 命名规范"
+      passed: true
+      note: "使用 self.env.cr.dbname + '/auction.bidding.round/' + str(self.id)"
+    - id: P2-04
+      check: "conditional_sale_pct 从 session 读取（不硬编码 80%）"
+      passed: true
+
+  # ════════════════════════════════════════════════════════════════
+  #  GATE CHECKLIST
+  # ════════════════════════════════════════════════════════════════
+
+  gate_checklist:
+    model_design:
+      - "auction.bidding.round: 12 字段 + 4 业务方法（place_bid/check_hammer/accept/reject）"
+      - "auction.bid: 6 字段 + 1 SQL约束 + immutable write/unlink 覆写"
+    view_design:
+      - "round: form(header+info+bids) + tree + search"
+      - "bid: tree (只读)"
+    security:
+      - "6 ACL (2 model × 3 group)"
+    key_risks:
+      - "FOR UPDATE 锁定范围需控制为单行，避免死锁"
+      - "bus._sendone 需要 bus 模块依赖"
+      - "immutable 规则在 ORM 层面覆写，不影响 SQL 直接操作"

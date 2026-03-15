@@ -53,3 +53,105 @@ gates:
       - "adr/001-realtime-bidding.md"
       - "adr/002-concurrency-locking.md"
     notes: "3 模块(auction_lot/auction_session/auction_bidding) · 7 Model 字段级设计 · 2 Groups + ACL 矩阵 · 2 Record Rules · Docker 部署 · 2 ADR · 7 条项目铁律。Gate 14 项全部通过。"
+
+  - stage: s4
+    slice_id: slice-1
+    action: passed
+    timestamp: "2026-03-15T23:53:00+08:00"
+    artifacts_produced:
+      - "artifacts/slices/slice-1/design.yaml"
+    notes: "3 Model (lot/image/category) · 14+4+4 字段 · 5 约束方法 · 3 业务动作 · 9 View(form/tree/search/kanban) · 3 级菜单 · 9 ACL + 1 Record Rule · 8 初始分类 · Pitfall 9/9 通过。同步沉淀分片策略规则到模板和工作流。"
+
+  - stage: s5
+    slice_id: slice-1
+    action: passed
+    timestamp: "2026-03-16T00:11:00+08:00"
+    artifacts_produced:
+      - "artifacts/slices/slice-1/code/auction_lot/"
+    file_count: 12
+    total_lines: 672
+    notes: "auction_lot 模块完整生成。3 Model Python + 3 View XML + Security(ACL+Groups+Rule) + Data(8分类) + Manifest。自检 5/5 通过。"
+
+  - stage: s6
+    slice_id: slice-1
+    action: passed
+    timestamp: "2026-03-16T00:27:00+08:00"
+    artifacts_produced:
+      - "artifacts/slices/slice-1/code/auction_lot/tests/test_auction_lot.py"
+    test_stats:
+      total: 33
+      passed: 33
+      failed: 0
+      errors: 0
+      iterations: 7
+    notes: "Odoo 17 Docker 安装验证通过。33 tests / 0 failures / 0 errors。测试覆盖：CRUD(8) + 业务规则(8) + 计算字段(1) + 状态流转(4) + 搜索(3) + 安全(5) + 约束(2)。7 轮迭代修复了 TransactionCase 中 SQL/Python 约束交互的测试可靠性问题。"
+
+  - stage: s4
+    slice_id: slice-2
+    action: passed
+    timestamp: "2026-03-16T00:33:00+08:00"
+    artifacts_produced:
+      - "artifacts/slices/slice-2/design.yaml"
+    notes: "Slice-2 拍卖会编排设计。2 Model(session 12字段+4动作+2SQL约束 / session_lot 4字段+1Python约束) + 4 View(form/tree/search/kanban) + 6 ACL + 1 RecordRule。复用 auction_lot 顶级菜单。Pitfall checklist 7/7。"
+
+  - stage: s5
+    slice_id: slice-2
+    action: passed
+    timestamp: "2026-03-16T06:55:00+08:00"
+    artifacts_produced:
+      - "artifacts/slices/slice-2/code/auction_session/"
+    metrics:
+      files: 11
+      lines: 766
+    notes: "auction_session 模块生成。11 文件 / 766 行。Models(2) + Views(2) + Security(2) + Tests(2) + Init(2) + Manifest(1)。S5 自检通过：import 链完整、manifest data 安全优先、comodel_name 拼写正确。"
+
+  - stage: s6
+    slice_id: slice-2
+    action: passed
+    timestamp: "2026-03-16T07:00:00+08:00"
+    metrics:
+      tests: 20
+      failures: 0
+      errors: 0
+      iterations: 2
+    notes: "Odoo 17 Docker 安装验证通过。20 tests / 0 failures / 0 errors。2 轮迭代修复 1 个 One2many 缓存刷新问题（invalidate_recordset）。覆盖：CRUD(3) + 约束(4) + 编排(3) + 状态流转(6) + 搜索(1) + 唯一性(2) + 默认值(1)。"
+
+  - stage: s4
+    slice_id: slice-3
+    action: passed
+    timestamp: "2026-03-16T07:03:00+08:00"
+    artifacts_produced:
+      - "artifacts/slices/slice-3/design.yaml"
+    notes: "Slice-3 竞价引擎设计。2 Model(bidding.round 12字段+4方法 / bid 6字段+immutable)。核心：place_bid FOR UPDATE 行级锁 + bus._sendone 实时推送 + _check_hammer 三路判定。Pitfall checklist 8/8。"
+
+  - stage: s5
+    slice_id: slice-3
+    action: passed
+    timestamp: "2026-03-16T07:20:00+08:00"
+    artifacts_produced:
+      - "artifacts/slices/slice-3/code/auction_bidding/"
+    metrics:
+      files: 10
+      lines: 852
+    notes: "auction_bidding 模块生成。10 文件 / 852 行。Models(2) + Views(2) + Security(1) + Tests(2) + Init(2) + Manifest(1)。核心：place_bid FOR UPDATE + Bus + 三路判定。bid immutable write/unlink 覆写。"
+
+  - stage: s6
+    slice_id: slice-3
+    action: passed
+    timestamp: "2026-03-16T07:21:00+08:00"
+    metrics:
+      tests: 21
+      failures: 0
+      errors: 0
+      iterations: 1
+    notes: "Odoo 17 Docker 安装验证通过。21 tests / 0 failures / 0 errors。一次通过（zero iteration fix）。覆盖：CRUD(2) + 出价(4) + 落槌判定(5) + 有条件成交(3) + immutable(2) + 计算(2) + SQL约束(1) + 搜索(1) + 默认值(1)。"
+
+  - stage: s7
+    action: passed
+    timestamp: "2026-03-16T07:22:00+08:00"
+    artifacts_produced:
+      - "deploy/docker-compose.yml"
+      - "deploy/.env.example"
+      - "deploy/nginx/default.conf"
+      - "deploy/prepare.sh"
+    notes: "Docker Compose 生产配置。Odoo 17(4 workers) + PostgreSQL 15(healthcheck) + Nginx(WebSocket proxy for Bus)。prepare.sh 自动复制 3 Slice 模块。"

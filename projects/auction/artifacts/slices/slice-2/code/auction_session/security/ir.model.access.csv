@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_auction_session_manager,auction.session manager,model_auction_session,auction_lot.group_auction_manager,1,1,1,1
+access_auction_session_user,auction.session user,model_auction_session,auction_lot.group_auction_user,1,1,1,0
+access_auction_session_base,auction.session base,model_auction_session,base.group_user,1,0,0,0
+access_auction_session_lot_manager,auction.session.lot manager,model_auction_session_lot,auction_lot.group_auction_manager,1,1,1,1
+access_auction_session_lot_user,auction.session.lot user,model_auction_session_lot,auction_lot.group_auction_user,1,1,1,0
+access_auction_session_lot_base,auction.session.lot base,model_auction_session_lot,base.group_user,1,0,0,0

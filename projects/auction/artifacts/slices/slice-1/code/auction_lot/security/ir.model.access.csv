@@ -1,0 +1,10 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_lot_manager,auction.lot.manager,model_auction_lot,auction_lot.group_auction_manager,1,1,1,1
+access_lot_user,auction.lot.user,model_auction_lot,auction_lot.group_auction_user,1,1,1,0
+access_lot_public,auction.lot.public,model_auction_lot,base.group_user,1,0,0,0
+access_lot_image_manager,auction.lot.image.manager,model_auction_lot_image,auction_lot.group_auction_manager,1,1,1,1
+access_lot_image_user,auction.lot.image.user,model_auction_lot_image,auction_lot.group_auction_user,1,1,1,1
+access_lot_image_public,auction.lot.image.public,model_auction_lot_image,base.group_user,1,0,0,0
+access_lot_category_manager,auction.lot.category.manager,model_auction_lot_category,auction_lot.group_auction_manager,1,1,1,1
+access_lot_category_user,auction.lot.category.user,model_auction_lot_category,auction_lot.group_auction_user,1,0,0,0
+access_lot_category_public,auction.lot.category.public,model_auction_lot_category,base.group_user,1,0,0,0

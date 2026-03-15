@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ════════════════════════════════════════════ -->
+    <!--  Actions                                     -->
+    <!-- ════════════════════════════════════════════ -->
+    <record id="action_auction_lot" model="ir.actions.act_window">
+        <field name="name">拍品</field>
+        <field name="res_model">auction.lot</field>
+        <field name="view_mode">tree,form,kanban</field>
+        <field name="search_view_id" ref="view_auction_lot_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                创建第一个拍品
+            </p>
+            <p>
+                录入拍品信息、上传图片、设定底价和起拍价。
+            </p>
+        </field>
+    </record>
+
+    <record id="action_auction_lot_category" model="ir.actions.act_window">
+        <field name="name">拍品分类</field>
+        <field name="res_model">auction.lot.category</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_auction_lot_category_search"/>
+    </record>
+
+    <!-- ════════════════════════════════════════════ -->
+    <!--  Menus                                       -->
+    <!-- ════════════════════════════════════════════ -->
+
+    <!-- 顶级菜单 -->
+    <menuitem id="menu_auction_root"
+              name="拍卖管理"
+              sequence="10"
+              groups="group_auction_user"
+              web_icon="auction_lot,static/description/icon.png"/>
+
+    <!-- 二级菜单 -->
+    <menuitem id="menu_auction_lot"
+              name="拍品管理"
+              parent="menu_auction_root"
+              sequence="10"/>
+
+    <!-- 三级菜单 -->
+    <menuitem id="menu_auction_lot_all"
+              name="拍品列表"
+              parent="menu_auction_lot"
+              action="action_auction_lot"
+              sequence="10"
+              groups="group_auction_user"/>
+
+    <menuitem id="menu_auction_lot_category"
+              name="拍品分类"
+              parent="menu_auction_lot"
+              action="action_auction_lot_category"
+              sequence="20"
+              groups="group_auction_manager"/>
+
+</odoo>

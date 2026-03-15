@@ -38,3 +38,23 @@ slice_design:
   dependencies:
     upstream_slices: []       # 依赖的已完成 Slice
     external_modules: []     # 依赖的外部模块
+
+  # ── 分片策略（当 design.yaml 超出阈值时触发） ──
+  sharding:
+    enabled: false            # AI 评估后设置；超出阈值时 → true
+    thresholds:
+      max_lines: 300
+      max_size_kb: 8
+      max_concerns: 2         # model / view / menu / security / data 各算 1
+    strategy: ""              # concern | model
+    # concern: design.models.yaml + design.views.yaml + design.security.yaml + design.menus.yaml
+    # model:   models/{model}.yaml + views/{model}_views.yaml（适合 ≥5 Model）
+    files: []                 # 分片后的文件列表
+
+  # ── Gate 自检 ──
+  gate_checklist:
+    model_design: []
+    view_design: []
+    security: []
+    dependencies: []
+    pitfall_checklist: []

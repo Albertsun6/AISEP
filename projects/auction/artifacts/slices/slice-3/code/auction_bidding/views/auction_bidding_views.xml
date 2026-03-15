@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ════════════════════════════════════════════ -->
+    <!--  auction.bidding.round — Form                -->
+    <!-- ════════════════════════════════════════════ -->
+    <record id="view_auction_bidding_round_form" model="ir.ui.view">
+        <field name="name">auction.bidding.round.form</field>
+        <field name="model">auction.bidding.round</field>
+        <field name="arch" type="xml">
+            <form string="竞价轮次">
+                <header>
+                    <button name="action_check_hammer" string="落槌判定"
+                            type="object" class="btn-primary"
+                            invisible="state != 'open'"/>
+                    <button name="action_accept_conditional" string="确认成交"
+                            type="object" class="btn-success"
+                            invisible="state != 'conditional_pending'"/>
+                    <button name="action_reject_conditional" string="拒绝成交"
+                            type="object" class="btn-danger"
+                            invisible="state != 'conditional_pending'"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="open,hammer,unsold"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group string="竞价信息">
+                            <field name="lot_id"/>
+                            <field name="session_id"/>
+                            <field name="starting_price"/>
+                            <field name="bid_increment"/>
+                            <field name="current_price"/>
+                        </group>
+                        <group string="成交信息">
+                            <field name="winner_id"/>
+                            <field name="hammer_price"/>
+                            <field name="bid_count"/>
+                            <field name="currency_id" groups="base.group_multi_currency"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="出价记录" name="bids">
+                            <field name="bid_ids" readonly="1">
+                                <tree create="false" edit="false" delete="false"
+                                      decoration-success="is_winning == True">
+                                    <field name="bid_time"/>
+                                    <field name="bidder_id"/>
+                                    <field name="amount"/>
+                                    <field name="is_winning"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ════════════════════════════════════════════ -->
+    <!--  auction.bidding.round — Tree                -->
+    <!-- ════════════════════════════════════════════ -->
+    <record id="view_auction_bidding_round_tree" model="ir.ui.view">
+        <field name="name">auction.bidding.round.tree</field>
+        <field name="model">auction.bidding.round</field>
+        <field name="arch" type="xml">
+            <tree string="竞价轮次列表"
+                  decoration-success="state == 'hammer'"
+                  decoration-danger="state == 'unsold'"
+                  decoration-warning="state in ('conditional_pending','conditional_accepted','conditional_rejected')">
+                <field name="lot_id"/>
+                <field name="session_id"/>
+                <field name="starting_price"/>
+                <field name="current_price"/>
+                <field name="bid_count"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'hammer'"
+                       decoration-danger="state == 'unsold'"
+                       decoration-warning="state == 'conditional_pending'"
+                       decoration-info="state == 'open'"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- ════════════════════════════════════════════ -->
+    <!--  auction.bidding.round — Search              -->
+    <!-- ════════════════════════════════════════════ -->
+    <record id="view_auction_bidding_round_search" model="ir.ui.view">
+        <field name="name">auction.bidding.round.search</field>
+        <field name="model">auction.bidding.round</field>
+        <field name="arch" type="xml">
+            <search string="搜索竞价轮次">
+                <field name="lot_id"/>
+                <field name="session_id"/>
+                <separator/>
+                <filter name="filter_open" string="竞价中"
+                        domain="[('state', '=', 'open')]"/>
+                <filter name="filter_hammer" string="已落槌"
+                        domain="[('state', '=', 'hammer')]"/>
+                <filter name="filter_unsold" string="流拍"
+                        domain="[('state', '=', 'unsold')]"/>
+                <filter name="filter_conditional" string="有条件成交"
+                        domain="[('state', 'in', ['conditional_pending', 'conditional_accepted', 'conditional_rejected'])]"/>
+                <separator/>
+                <group expand="0" string="分组">
+                    <filter name="group_state" string="按状态"
+                            context="{'group_by': 'state'}"/>
+                    <filter name="group_session" string="按场次"
+                            context="{'group_by': 'session_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ════════════════════════════════════════════ -->
+    <!--  auction.bid — Tree (只读)                    -->
+    <!-- ════════════════════════════════════════════ -->
+    <record id="view_auction_bid_tree" model="ir.ui.view">
+        <field name="name">auction.bid.tree</field>
+        <field name="model">auction.bid</field>
+        <field name="arch" type="xml">
+            <tree string="出价记录" create="false" edit="false" delete="false"
+                  decoration-success="is_winning == True">
+                <field name="bid_time"/>
+                <field name="bidder_id"/>
+                <field name="amount"/>
+                <field name="is_winning"/>
+                <field name="round_id"/>
+            </tree>
+        </field>
+    </record>
+
+</odoo>
