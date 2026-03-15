@@ -44,3 +44,12 @@ gates:
       - "artifacts/global/functional.yaml"
       - "artifacts/global/slice-plan.yaml"
     notes: "14 Stories (Must 9/Should 4/Won't 1, Must=64%)。3 Slices 按拓扑序。US-08 经 /deepdive 降为 Should。CRUD 矩阵完整。"
+
+  - stage: s3
+    action: passed
+    timestamp: "2026-03-15T22:58:00+08:00"
+    artifacts_produced:
+      - "artifacts/global/architecture.yaml"
+      - "adr/001-realtime-bidding.md"
+      - "adr/002-concurrency-locking.md"
+    notes: "3 模块(auction_lot/auction_session/auction_bidding) · 7 Model 字段级设计 · 2 Groups + ACL 矩阵 · 2 Record Rules · Docker 部署 · 2 ADR · 7 条项目铁律。Gate 14 项全部通过。"

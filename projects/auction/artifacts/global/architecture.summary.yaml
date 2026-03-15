@@ -1,0 +1,35 @@
+# 线上拍卖系统 — 架构摘要
+# S3 Compaction 输出 | 供 S4+ 阶段加载
+
+version: "1.0"
+generated_at: "2026-03-15T22:58:00+08:00"
+
+tech_stack: { framework: odoo17, language: python3.10+, database: postgresql16, realtime: odoo_bus }
+
+modules:
+  - name: auction_lot
+    bc: 拍品管理
+    type: new
+    depends: [base, mail]
+    models: [auction.lot, auction.lot.image, auction.lot.category]
+
+  - name: auction_session
+    bc: 拍卖会管理
+    type: new
+    depends: [base, auction_lot]
+    models: [auction.session, auction.session.lot]
+
+  - name: auction_bidding
+    bc: 竞价引擎
+    type: new
+    depends: [base, bus, auction_lot, auction_session]
+    models: [auction.bidding.round, auction.bid]
+
+security:
+  groups: [group_auction_user, group_auction_manager]
+  acl_models: 7
+  record_rules: [rule_lot_company, rule_session_company]
+
+deployment: { target: docker, services: [odoo:17, postgres:16] }
+
+adr: [001-realtime-bidding, 002-concurrency-locking]

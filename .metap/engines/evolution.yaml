@@ -24,6 +24,40 @@ triggers:
   - id: trust_milestone
     event: "信任积分达到升级阈值"
     action: "评估是否可提升某些操作的自治级别"
+  - id: gate_auto_observation
+    event: "任意 Gate 通过后"
+    action: "AI 自动检测进化信号 → 静默写入 observations.yaml"
+    autonomy: L3   # 纯记录，无需人确认
+
+# ─── 自动观察配置（prop-013）───
+
+auto_observation:
+  description: "Gate 通过后 AI 自动分析执行过程，发现可沉淀的模式"
+  nudge_mode: silent       # silent: 仅记录不展示 | inline: Gate 后立即展示 | off: 关闭
+  trigger: every_gate      # every_gate: 每次 Gate | key_gates: 仅 S3/S6/S8
+  max_per_gate: 3          # 单次 Gate 最多生成的观察数
+
+  detection_dimensions:
+    - id: anomaly
+      name: "异常模式"
+      signals: ["Gate 修正次数 ≥ 2", "回退事件", "执行耗时显著偏离估计"]
+    - id: decision
+      name: "决策模式"
+      signals: ["ADR 中的权衡点", "偏离 Skill/Pitfalls 默认建议", "新增 constitution 条款"]
+    - id: repetition
+      name: "重复模式"
+      signals: ["与历史 Gate 的相似修正原因", "跨项目相似 ADR 主题"]
+    - id: discovery
+      name: "新发现"
+      signals: ["未被 Skill/Pitfalls 覆盖的问题", "新的业务模式或技术方案"]
+    - id: success
+      name: "成功模式"
+      signals: ["Gate 零修正一次通过", "执行耗时显著低于估计", "用户无修改直接确认"]
+      note: "prop-015 — 针对 DevOps post-mortem 缺失正向经验提取的补充"
+
+  observation_format:
+    fields: [id, gate_stage, dimension, confidence, summary, evidence, suggested_action]
+    confidence_range: [0.0, 1.0]   # 全部记录，不做静默过滤（用户指示）
 
 # ─── 进化层级（继承 AISEP constitution §10-12）───
 

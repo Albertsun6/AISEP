@@ -1,0 +1,42 @@
+# 下一轮会话预加载清单
+next_session:
+  generated_at: "2026-03-15T23:40:00+08:00"
+  predicted_task: "S4 Slice-1 拍品管理详细设计"
+  predicted_stage: "s4-design"
+
+  recommended:
+    - path: "AISEP.md"
+      reason: "系统导航入口"
+    - path: "projects/auction/project.yaml"
+      reason: "项目状态（current_stage: s4-design）"
+    - path: "projects/auction/artifacts/global/architecture.summary.yaml"
+      reason: "S3 架构摘要（轻量版，替代完整 architecture.yaml）"
+    - path: "projects/auction/artifacts/global/slice-plan.yaml"
+      reason: "Slice 拓扑序 — 确认 slice-1 的 models 和 stories"
+    - path: "projects/auction/glossary.yaml"
+      reason: "术语一致性"
+    - path: ".agents/workflows/s4.md"
+      reason: "S4 工作流定义"
+    - path: ".agents/skills/frameworks/odoo17/SKILL.md"
+      reason: "Odoo17 框架知识（tech_stack 匹配）"
+
+  optional:
+    - path: "projects/auction/artifacts/global/architecture.yaml"
+      reason: "需要字段级细节时按需加载"
+    - path: "projects/auction/artifacts/global/functional.yaml"
+      reason: "Story 验收标准参考"
+    - path: ".agents/skills/frameworks/odoo17/best-practices.md"
+      reason: "View/Action/Menu 设计规范"
+
+  excluded:
+    - pattern: "projects/proj-001/**"
+      reason: "已归档项目"
+    - pattern: ".metap/explorations/**"
+      reason: "探索历史，S4 不需要"
+    - pattern: "history/**"
+      reason: "只需摘要版"
+
+  rationale: |
+    S4 详细设计需要 S3 架构产出作为输入。使用 architecture.summary.yaml（30 行）
+    替代完整 architecture.yaml（250+ 行）节省上下文预算。slice-plan.yaml 确认 
+    slice-1 涵盖 auction.lot/auction.lot.image/auction.lot.category 3 个 Model。

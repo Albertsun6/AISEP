@@ -1,6 +1,52 @@
 # .metap/evolution/observations.yaml — L1 进化观察记录
 metadata:
-  total_observations: 0
+  total_observations: 3
   last_updated: "2026-03-15"
 
-observations: []
+observations:
+
+  # ── S3 Gate Auto-Observation (auction 项目) ──
+
+  - id: obs-001
+    gate_stage: s3
+    project: auction
+    dimension: decision
+    confidence: 0.9
+    timestamp: "2026-03-15T22:58:00+08:00"
+    source: auto_observation
+    summary: "Odoo ORM 无法满足竞价并发一致性需求，需使用 PostgreSQL FOR UPDATE 裸 SQL"
+    evidence:
+      - "ADR-002 记录了 FOR UPDATE vs 乐观锁 vs Redis 的权衡"
+      - "constitution.md TC-01 为此建立了受控例外机制"
+    suggested_action: "补充 odoo17/pitfalls.md，新增 P2-05: ORM 无行级锁语义，竞价/抢购等并发场景需 FOR UPDATE"
+    status: pending    # pending → processed (by /evolve)
+
+  - id: obs-002
+    gate_stage: s3
+    project: auction
+    dimension: discovery
+    confidence: 0.75
+    timestamp: "2026-03-15T22:58:00+08:00"
+    source: auto_observation
+    summary: "Odoo Monetary 字段的 currency_id 伴侣字段容易遗漏 index，Gate 自动检查发现此问题"
+    evidence:
+      - "Gate 检查脚本发现 6 个 currency_id/company_id 字段缺少 index: true"
+      - "修复后通过，但属于设计模板级缺陷"
+    suggested_action: "在 S3/S4 数据模型设计时，自动为 currency_id 和 company_id 添加 index（更新 architecture 模板或 Skill checklist）"
+    status: pending
+
+  # ── 进化引擎自身的 Observation ──
+
+  - id: obs-003
+    gate_stage: n/a
+    project: system
+    dimension: anomaly
+    confidence: 0.95
+    timestamp: "2026-03-15T23:37:00+08:00"
+    source: user_feedback
+    summary: "跨文件引用同一概念时硬编码数字/枚举值，修改源文件后引用方不同步，导致一致性断裂"
+    evidence:
+      - "evolution.yaml 从 4 维增至 5 维，但 pipeline.md L164 仍写 '4 维度'"
+      - "用户发现并指出，AI 未自动检测到"
+    suggested_action: "建立规则：跨文件引用配置值时，使用'参见 {file}'引用，不硬编码数字。修改配置源文件后必须 grep 检查所有引用方。"
+    status: pending

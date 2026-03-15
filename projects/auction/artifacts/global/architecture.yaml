@@ -1,0 +1,247 @@
+# 线上拍卖系统 — 架构设计
+# S3 输出 | auction
+# 生成时间: 2026-03-15T22:57:00+08:00
+
+architecture:
+
+  # ─── 技术栈 ───
+  tech_stack:
+    framework: "odoo17"
+    language: "python3.10+"
+    database: "postgresql16"
+    additional:
+      - name: "bus"
+        purpose: "Odoo Bus — 竞价实时推送 (Long Polling)"
+      - name: "mail"
+        purpose: "Chatter 消息跟踪"
+
+  # ─── 模块列表 ───
+  modules:
+
+    # ── 模块 1: 拍品管理 ──
+    - module_name: "auction_lot"
+      bounded_context: "拍品管理"
+      relation_type: "new"
+      dependencies: ["base", "mail"]
+      application: true             # 顶层应用
+      models:
+
+        # Model: auction.lot (聚合根)
+        - name: "auction.lot"
+          business_name: "拍品"
+          type: "aggregate_root"
+          _description: "拍品"
+          _order: "name"
+          fields:
+            - { name: "name",           type: "Char(128)",        required: true,  description: "拍品名称" }
+            - { name: "description",    type: "Html",             required: false, description: "拍品描述（富文本）" }
+            - { name: "category_id",    type: "Many2one",         required: true,  comodel: "auction.lot.category", index: true, ondelete: "restrict", description: "分类" }
+            - { name: "consignor_id",   type: "Many2one",         required: false, comodel: "res.partner", index: true, ondelete: "set null", description: "委托方" }
+            - { name: "state",          type: "Selection",        required: true,  selection: "draft,approved,assigned,sold,unsold,withdrawn", default: "draft", description: "状态" }
+            - { name: "reserve_price",  type: "Monetary",         required: true,  default: 0, groups: "auction_lot.group_auction_manager", description: "底价（仅经理可见）" }
+            - { name: "starting_price", type: "Monetary",         required: true,  description: "起拍价" }
+            - { name: "is_no_reserve",  type: "Boolean",          required: false, default: false, description: "无底价拍卖标记" }
+            - { name: "low_estimate",   type: "Monetary",         required: false, description: "低估价" }
+            - { name: "high_estimate",  type: "Monetary",         required: false, description: "高估价" }
+            - { name: "currency_id",    type: "Many2one",         required: true,  comodel: "res.currency", index: true, description: "币种" }
+            - { name: "company_id",     type: "Many2one",         required: true,  comodel: "res.company", index: true, default: "lambda self: self.env.company", description: "公司" }
+            - { name: "image_ids",      type: "One2many",         required: false, comodel: "auction.lot.image", inverse: "lot_id", description: "拍品图片" }
+            - { name: "active",         type: "Boolean",          required: false, default: true, description: "软删除" }
+
+          sql_constraints:
+            - { name: "check_reserve_starting", check: "is_no_reserve = true OR starting_price <= reserve_price", message: "起拍价不得超过底价" }
+            - { name: "check_estimate",          check: "low_estimate IS NULL OR high_estimate IS NULL OR low_estimate <= high_estimate", message: "低估价不得超过高估价" }
+
+          access_control:
+            groups: ["group_auction_manager", "group_auction_user"]
+            record_rules:
+              - { id: "rule_lot_company", domain: "[('company_id','in',company_ids)]", description: "多公司隔离" }
+
+        # Model: auction.lot.image (实体)
+        - name: "auction.lot.image"
+          business_name: "拍品图片"
+          type: "entity"
+          _description: "拍品图片"
+          _rec_name: "lot_id"
+          fields:
+            - { name: "lot_id",      type: "Many2one",  required: true, comodel: "auction.lot", index: true, ondelete: "cascade", description: "所属拍品" }
+            - { name: "image",       type: "Binary",    required: true, attachment: true, description: "图片" }
+            - { name: "sequence",    type: "Integer",    required: false, default: 10, description: "排序" }
+            - { name: "description", type: "Char",       required: false, description: "图片说明" }
+
+          access_control:
+            groups: ["group_auction_manager", "group_auction_user"]
+
+        # Model: auction.lot.category (辅助)
+        - name: "auction.lot.category"
+          business_name: "拍品分类"
+          type: "value_object"
+          _description: "拍品分类"
+          _order: "name"
+          fields:
+            - { name: "name",       type: "Char(64)", required: true,  description: "分类名称" }
+            - { name: "parent_id",  type: "Many2one", required: false, comodel: "auction.lot.category", ondelete: "cascade", description: "父分类" }
+            - { name: "child_ids",  type: "One2many", required: false, comodel: "auction.lot.category", inverse: "parent_id", description: "子分类" }
+
+          access_control:
+            groups: ["group_auction_manager"]
+
+    # ── 模块 2: 拍卖会管理 ──
+    - module_name: "auction_session"
+      bounded_context: "拍卖会管理"
+      relation_type: "new"
+      dependencies: ["base", "auction_lot"]
+      models:
+
+        # Model: auction.session (聚合根)
+        - name: "auction.session"
+          business_name: "拍卖会"
+          type: "aggregate_root"
+          _description: "拍卖会"
+          _order: "start_time desc"
+          fields:
+            - { name: "name",                 type: "Char(128)",  required: true,  description: "场次名称" }
+            - { name: "state",                type: "Selection",  required: true,  selection: "draft,published,ongoing,closed,cancelled", default: "draft", description: "状态" }
+            - { name: "start_time",           type: "Datetime",   required: true,  description: "开始时间" }
+            - { name: "end_time",             type: "Datetime",   required: true,  description: "结束时间" }
+            - { name: "default_increment",    type: "Monetary",   required: true,  description: "默认加价幅度" }
+            - { name: "countdown_seconds",    type: "Integer",    required: true,  default: 30, description: "倒计时秒数" }
+            - { name: "extension_seconds",    type: "Integer",    required: true,  default: 10, description: "延时秒数" }
+            - { name: "conditional_sale_pct", type: "Float",      required: true,  default: 80.0, description: "有条件成交阈值（百分比）" }
+            - { name: "currency_id",          type: "Many2one",   required: true,  comodel: "res.currency", index: true, description: "币种" }
+            - { name: "company_id",           type: "Many2one",   required: true,  comodel: "res.company", index: true, default: "lambda self: self.env.company", description: "公司" }
+            - { name: "session_lot_ids",      type: "One2many",   required: false, comodel: "auction.session.lot", inverse: "session_id", description: "编排拍品" }
+            - { name: "lot_count",            type: "Integer",    required: false, compute: "_compute_lot_count", store: true, depends: ["session_lot_ids"], description: "拍品数量" }
+
+          sql_constraints:
+            - { name: "check_time",      check: "start_time < end_time", message: "开始时间必须早于结束时间" }
+            - { name: "check_threshold", check: "conditional_sale_pct > 0 AND conditional_sale_pct <= 100", message: "阈值必须在 0-100 之间" }
+
+          access_control:
+            groups: ["group_auction_manager", "group_auction_user"]
+            record_rules:
+              - { id: "rule_session_company", domain: "[('company_id','in',company_ids)]", description: "多公司隔离" }
+
+        # Model: auction.session.lot (实体 — 拍品编排)
+        - name: "auction.session.lot"
+          business_name: "场次拍品"
+          type: "entity"
+          _description: "场次拍品编排"
+          _rec_name: "lot_id"
+          _order: "sequence, id"
+          fields:
+            - { name: "session_id", type: "Many2one",  required: true, comodel: "auction.session", index: true, ondelete: "cascade", description: "所属场次" }
+            - { name: "lot_id",     type: "Many2one",  required: true, comodel: "auction.lot", index: true, ondelete: "restrict", description: "拍品" }
+            - { name: "sequence",   type: "Integer",    required: true, default: 10, description: "上拍顺序" }
+            - { name: "lot_state",  type: "Selection",  required: false, selection: "pending,active,sold,unsold,conditional", default: "pending", description: "拍品状态" }
+
+          python_constraints:
+            - { method: "_check_lot_unique_active_session", description: "同一拍品不可同时在多场活跃拍卖会中" }
+
+          access_control:
+            groups: ["group_auction_manager", "group_auction_user"]
+
+    # ── 模块 3: 竞价引擎 ──
+    - module_name: "auction_bidding"
+      bounded_context: "竞价引擎"
+      relation_type: "new"
+      dependencies: ["base", "bus", "auction_lot", "auction_session"]
+      models:
+
+        # Model: auction.bidding.round (聚合根)
+        - name: "auction.bidding.round"
+          business_name: "竞价轮次"
+          type: "aggregate_root"
+          _description: "竞价轮次"
+          _order: "id desc"
+          fields:
+            - { name: "session_lot_id",  type: "Many2one",  required: true,  comodel: "auction.session.lot", index: true, ondelete: "cascade", description: "对应场次拍品" }
+            - { name: "lot_id",          type: "Many2one",  required: false, comodel: "auction.lot", related: "session_lot_id.lot_id", store: true, description: "拍品（冗余）" }
+            - { name: "session_id",      type: "Many2one",  required: false, comodel: "auction.session", related: "session_lot_id.session_id", store: true, description: "场次（冗余）" }
+            - { name: "state",           type: "Selection",  required: true,  selection: "open,hammer,unsold,conditional_pending,conditional_accepted,conditional_rejected", default: "open", description: "状态" }
+            - { name: "current_price",   type: "Monetary",   required: false, description: "当前最高价" }
+            - { name: "starting_price",  type: "Monetary",   required: true,  description: "本轮起拍价" }
+            - { name: "bid_increment",   type: "Monetary",   required: true,  description: "本轮加价幅度" }
+            - { name: "bid_ids",         type: "One2many",   required: false, comodel: "auction.bid", inverse: "round_id", description: "出价记录" }
+            - { name: "winner_id",       type: "Many2one",   required: false, comodel: "res.partner", index: true, description: "买受人" }
+            - { name: "hammer_price",    type: "Monetary",   required: false, description: "成交价" }
+            - { name: "currency_id",     type: "Many2one",   required: true,  comodel: "res.currency", index: true, description: "币种" }
+            - { name: "bid_count",       type: "Integer",    required: false, compute: "_compute_bid_count", store: true, depends: ["bid_ids"], description: "出价次数" }
+
+          business_methods:
+            - { name: "place_bid", args: "bidder_id, amount", description: "出价（含 FOR UPDATE 行级锁 + 金额校验 + 自动判定）", adr_ref: "ADR-002" }
+            - { name: "_check_hammer", args: "", description: "落槌判定逻辑（≥底价→sold | 在阈值内→conditional | 否则→unsold）" }
+            - { name: "action_accept_conditional", args: "", description: "委托方确认有条件成交" }
+            - { name: "action_reject_conditional", args: "", description: "委托方拒绝有条件成交" }
+
+          access_control:
+            groups: ["group_auction_manager", "group_auction_user"]
+
+        # Model: auction.bid (实体 — 不可修改/不可删除)
+        - name: "auction.bid"
+          business_name: "出价记录"
+          type: "entity"
+          _description: "出价记录"
+          _order: "bid_time desc, amount desc"
+          _immutable: true            # 业务铁律: 不可 update/delete
+          fields:
+            - { name: "round_id",    type: "Many2one",  required: true,  comodel: "auction.bidding.round", index: true, ondelete: "cascade", description: "所属竞价轮次" }
+            - { name: "bidder_id",   type: "Many2one",  required: true,  comodel: "res.partner", index: true, ondelete: "restrict", description: "竞拍者" }
+            - { name: "amount",      type: "Monetary",  required: true,  description: "出价金额" }
+            - { name: "currency_id", type: "Many2one",  required: true,  comodel: "res.currency", index: true, description: "币种" }
+            - { name: "bid_time",    type: "Datetime",  required: true,  default: "fields.Datetime.now", description: "出价时间" }
+            - { name: "is_winning",  type: "Boolean",   required: false, compute: "_compute_is_winning", store: true, depends: ["round_id.current_price", "amount"], description: "是否当前最高" }
+
+          sql_constraints:
+            - { name: "amount_positive", check: "amount > 0", message: "出价金额必须大于零" }
+
+          access_control:
+            groups: ["group_auction_manager", "group_auction_user"]
+            note: "User 仅有 CR 权限，禁止 Update/Delete"
+
+  # ─── 安全模型 ───
+  security_model:
+    auth_method: "odoo_session"   # Odoo 内置会话认证
+    groups:
+      - { xml_id: "group_auction_user",    name: "拍卖运营",  implied_ids: ["base.group_user"] }
+      - { xml_id: "group_auction_manager", name: "拍卖经理",  implied_ids: ["group_auction_user"] }
+
+    acl_matrix:
+      # model                     | Manager | User      | Base User
+      auction.lot:                 { manager: "CRUD", user: "CRU",  base: "R" }
+      auction.lot.image:           { manager: "CRUD", user: "CRUD", base: "R" }
+      auction.lot.category:        { manager: "CRUD", user: "R",    base: "R" }
+      auction.session:             { manager: "CRUD", user: "CRU",  base: "R" }
+      auction.session.lot:         { manager: "CRUD", user: "CRU",  base: "R" }
+      auction.bidding.round:       { manager: "CRUD", user: "R",    base: "R" }
+      auction.bid:                 { manager: "CR",   user: "CR",   base: "R" }
+
+    record_rules:
+      - { id: "rule_lot_company",     model: "auction.lot",     domain: "[('company_id','in',company_ids)]" }
+      - { id: "rule_session_company", model: "auction.session",  domain: "[('company_id','in',company_ids)]" }
+
+  # ─── 部署方案 ───
+  deployment:
+    target: "docker"
+    environments: ["dev", "staging"]
+    services:
+      - name: "odoo"
+        image: "odoo:17"
+        ports: ["8069:8069", "8072:8072"]
+        volumes:
+          - "./addons:/mnt/extra-addons"
+          - "./config/odoo.conf:/etc/odoo/odoo.conf"
+      - name: "db"
+        image: "postgres:16"
+        volumes:
+          - "pgdata:/var/lib/postgresql/data"
+    env_vars:
+      - "POSTGRES_DB"
+      - "POSTGRES_USER"
+      - "POSTGRES_PASSWORD"
+      - "ODOO_ADMIN_PASSWORD"
+
+  # ─── ADR 引用 ───
+  adr:
+    - "adr/001-realtime-bidding.md"
+    - "adr/002-concurrency-locking.md"

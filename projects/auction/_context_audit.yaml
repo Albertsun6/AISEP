@@ -1,0 +1,43 @@
+# 上下文审计日志
+audits:
+  - session_date: "2026-03-15"
+    stage: "s3-architecture"
+    scope: "S3 架构设计 + 进化引擎重构 + deepdive exp-007"
+
+    files:
+      # S3 核心
+      - { path: "artifacts/global/architecture.yaml", times: 3, verdict: "essential" }
+      - { path: "artifacts/global/domain-model.yaml", times: 1, verdict: "referenced" }
+      - { path: "artifacts/global/functional.yaml", times: 1, verdict: "referenced" }
+      - { path: "artifacts/global/slice-plan.yaml", times: 1, verdict: "referenced" }
+      - { path: "glossary.yaml", times: 1, verdict: "referenced" }
+      - { path: "project.yaml", times: 2, verdict: "essential" }
+      - { path: "constitution.md", times: 2, verdict: "essential" }
+      - { path: "history/gate-log.yaml", times: 2, verdict: "essential" }
+      # Skill 文件
+      - { path: ".agents/skills/frameworks/odoo17/SKILL.md", times: 1, verdict: "referenced" }
+      - { path: ".agents/skills/frameworks/odoo17/best-practices.md", times: 1, verdict: "referenced" }
+      - { path: ".agents/skills/frameworks/odoo17/pitfalls.md", times: 1, verdict: "referenced" }
+      - { path: ".agents/skills/frameworks/odoo17/philosophy.md", times: 1, verdict: "referenced" }
+      # 进化引擎
+      - { path: ".metap/engines/evolution.yaml", times: 3, verdict: "essential" }
+      - { path: ".metap/evolution/observations.yaml", times: 3, verdict: "essential" }
+      - { path: ".metap/evolution/history.yaml", times: 3, verdict: "essential" }
+      - { path: ".metap/evolution/interaction-rules.yaml", times: 1, verdict: "referenced" }
+      # Workflow
+      - { path: ".agents/workflows/s3.md", times: 1, verdict: "referenced" }
+      - { path: ".agents/workflows/pipeline.md", times: 2, verdict: "essential" }
+      - { path: ".agents/workflows/evolve.md", times: 2, verdict: "essential" }
+      - { path: ".agents/workflows/explore.md", times: 1, verdict: "referenced" }
+      - { path: ".agents/workflows/deliberate.md", times: 1, verdict: "referenced" }
+      - { path: ".agents/workflows/deepdive.md", times: 1, verdict: "referenced" }
+
+    late_discoveries:
+      - { path: ".agents/workflows/deepdive.md", reason: "首次 deepdive 时跳过了完整流程，后补做才加载" }
+
+    topic_drift:
+      anchor: "S3 架构设计"
+      events:
+        - { at: "Gate 通过后", topic: "进化引擎 Nudge 机制讨论", severity: "major" }
+        - { at: "Nudge 讨论后", topic: "deepdive 流程执行", severity: "minor" }
+      recommendation: "进化引擎讨论属 major 偏移，建议此类系统级讨论在专门对话中进行。但产出有价值（prop-013/014/015），权衡后可接受。"

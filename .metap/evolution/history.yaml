@@ -1,6 +1,39 @@
 # .metap/evolution/history.yaml — 不可变进化日志
 metadata:
-  total_entries: 0
+  total_entries: 3
   last_updated: "2026-03-15"
 
-entries: []
+entries:
+  - id: prop-013
+    date: "2026-03-15"
+    trigger: user_insight
+    level: L3
+    observation: "进化 Nudge 要求用户主动提供经验 → 认知负担高 → observations.yaml 始终为空"
+    proposal: "重构为 Auto-Observation：每次 Gate 通过后 AI 自动检测进化信号 + 静默记录，/evolve 时批量分析"
+    status: applied
+    applied_to:
+      - ".metap/engines/evolution.yaml"
+      - ".agents/workflows/pipeline.md"
+      - ".agents/workflows/s3.md"
+      - ".agents/workflows/s6.md"
+      - ".agents/workflows/evolve.md"
+
+  - id: prop-014
+    date: "2026-03-15"
+    trigger: deepdive_exp-007
+    level: L3
+    observation: "Auto-Observation 跨多 Gate 可能产生同主题重复观察，/evolve 时噪声堆积"
+    proposal: "evolve.md Step 2 增加观察合并预处理（Step 2a），按 dimension+keyword 聚合"
+    status: applied
+    applied_to:
+      - ".agents/workflows/evolve.md"
+
+  - id: prop-015
+    date: "2026-03-15"
+    trigger: deepdive_exp-007
+    level: L3
+    observation: "DevOps post-mortem 主要针对故障，缺少对正常成功流程的经验提取"
+    proposal: "evolution.yaml 新增第 5 维 success 检测：Gate 零修正/耗时低于估计/用户直接确认"
+    status: applied
+    applied_to:
+      - ".metap/engines/evolution.yaml"

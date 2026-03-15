@@ -155,6 +155,25 @@ pipeline_state:
 - 同步 `map.gates.total` / `map.gates.passed` 计数
 - **设计原则**：`_map.yaml` 是低 token 骨架（< 500 tokens），只保留结构和关键 ID，不复制制品详情
 
+#### 5f. Auto-Observation（进化信号自动检测）
+
+> 配置参见 `.metap/engines/evolution.yaml` → `auto_observation`
+
+**AI 执行指引**（自治级别 L3 — 纯记录，无需人确认）：
+
+1. 回顾本阶段执行过程，按 `evolution.yaml` 定义的检测维度检测进化信号：
+   - **异常模式**：Gate 修正次数 ≥ 2、回退事件、执行耗时偏离
+   - **决策模式**：本次产生的 ADR、偏离 Skill 默认建议的选择、新增 constitution 条款
+   - **重复模式**：与 `gate-log.yaml` 历史记录的相似修正原因
+   - **新发现**：执行中遇到的、未被现有 Skill/Pitfalls 覆盖的问题
+   - **成功模式**：Gate 零修正一次通过、执行耗时显著低于估计、用户无修改直接确认
+2. 每个发现生成一条 observation（最多 `max_per_gate` 条），写入 `.metap/evolution/observations.yaml`
+3. **nudge_mode 行为**：
+   - `silent`（默认）→ 静默记录，不展示给用户，不阻塞流程
+   - `inline` → 记录后在 Gate 通过信息末尾追加展示，用户可 `/approve` 或忽略
+   - `off` → 跳过检测
+4. 如无有效信号 → 不写入任何记录，无感通过
+
 ---
 
 ## S4-S6 Slice 循环
@@ -219,15 +238,11 @@ for each slice in prioritized_slices:
 2. 保留用户的修正意见
 3. 回到当前阶段的 Workflow，按修正意见调整制品
 4. 调整后重新触发 Gate 审查
-5. **进化植入（Auto · 修正模式检测）**：
-   - 每次 revision 后，扫描 `gate-log.yaml` 中所有 revision 记录
-   - 如果**同类修正累计 ≥ 2 次**（按 stage 或 修正原因关键词分组），自动提醒：
-     ```
-     ⚡ 进化提醒：{stage_name} 已被修正 N 次，共同原因是 "{pattern}"。
-     建议：将此经验沉淀为 Skill 或更新 Workflow 步骤指引。
-     → /approve 执行沉淀 | /reject 跳过（记录到 observations）
-     ```
-   - 如果无重复模式 → 不触发，无感通过
+5. **进化信号自动检测（Auto-Observation）**：
+   - 每次 revision 后，AI 自动扫描 `gate-log.yaml` 中所有 revision 记录
+   - 检测同类修正模式（按 stage 或修正原因关键词分组）
+   - **所有检测结果静默写入** `observations.yaml`（不阻塞用户）
+   - 下次 `/evolve` 时批量分析这些观察，生成进化提案
 
 ### Gate 拒绝流程
 

@@ -1,0 +1,92 @@
+# exp-007 Scout Logs
+
+## Scout A: AI 工程自动经验提取
+sub_question: "AI/LLM 驱动的软件工程中，现有系统如何实现自动经验提取和过程学习？"
+strategy: industry
+confidence: 0.85
+
+findings:
+  - source: { title: "Reflexion: Language Agents with Verbal Reinforcement Learning", url: "arxiv.org (NeurIPS 2023)", credibility: 0.9 }
+    key_points:
+      - LLM Agent 解决任务 → 识别失败 → 生成文字批评 → 存储反思 → 重试时参考
+      - 在 HumanEval 编码任务上从 80% 提升到 91%
+      - 核心模式: Act → Evaluate → Reflect → Store → Retry
+    relevance: high
+
+  - source: { title: "Self-Improving AI Coding Agents (NeurIPS 2025)", url: "yoheinakajima.com", credibility: 0.8 }
+    key_points:
+      - Agent 可自编辑代码提升 benchmark 表现
+      - 关键: 需要"验证器"确认改进有效（防止退化）
+      - AISEP 类比: /evolve 需要 Gate 机制确认进化有效
+    relevance: high
+
+  - source: { title: "Anthropic Claude Agent Best Practices", url: "anthropic.com", credibility: 0.9 }
+    key_points:
+      - Agent 设计模式: Prompt Chaining → Routing → Orchestrator-Workers
+      - 反思作为独立步骤: 在工具调用链末端加 reflection step
+      - 建议: 反思步骤应轻量、自动、不阻塞主流程
+    relevance: medium
+
+gaps: "缺少 process-level learning（跨任务的模式积累），现有研究多聚焦 task-level self-correction"
+
+---
+
+## Scout B: 认知科学反思性实践
+sub_question: "认知科学中，反思性实践和元认知监控如何实现自动化？"
+strategy: academic
+confidence: 0.8
+
+findings:
+  - source: { title: "Schön - The Reflective Practitioner", url: "routledge.com (经典著作)", credibility: 0.95 }
+    key_points:
+      - 区分 reflection-in-action（即时反思）vs reflection-on-action（事后反思）
+      - AISEP 进化植入 = reflection-on-action（Gate 后触发）
+      - 更高级: reflection-in-action = 在执行过程中实时调整（类比 Agent 的 self-correction）
+    relevance: high
+
+  - source: { title: "AI-Enabled Reflective Practice (ResearchGate 2024)", url: "researchgate.net", credibility: 0.8 }
+    key_points:
+      - AI 作为"认知脚手架"(cognitive scaffold) 辅助反思
+      - 关键发现: AI 不应替代反思，而应"外化"(externalize) 隐性知识让人审视
+      - AISEP 类比: Auto-Observation = 外化，/evolve 审批 = 人类审视
+    relevance: high
+
+  - source: { title: "AI Metacognition in Learning (Arizona)", url: "arizona.edu", credibility: 0.85 }
+    key_points:
+      - AI 的自我监控能力 = 操作层面的元认知
+      - 有效元认知需要: 监控(monitoring) + 控制(control) 两个组件
+      - AISEP 类比: Auto-Observation = monitoring, /evolve 审批 = control
+    relevance: high
+
+gaps: "认知科学强调反思需要'情境触发'(situated triggers)，而非定时触发——AISEP 的 Gate 触发点是否足够丰富？"
+
+---
+
+## Scout C: DevOps 自动化回顾机制
+sub_question: "DevOps/MLOps 中的自动化回顾提取（post-mortem automation）有哪些成熟方案？"
+strategy: case_study
+confidence: 0.85
+
+findings:
+  - source: { title: "Google SRE: Postmortem Culture", url: "sre.google", credibility: 0.95 }
+    key_points:
+      - Blameless postmortem 三原则: 关注系统、不追责个人、可重复
+      - 自动化: 自动收集时间线 + 指标 + 日志，人工分析根因和 action items
+      - 关键经验: "写 postmortem 是成本中心，读 postmortem 才是利润中心"
+    relevance: high
+
+  - source: { title: "Zalando: LLM-Powered Post-Mortem Analysis", url: "zalando.com", credibility: 0.85 }
+    key_points:
+      - 用 LLM 分析大量历史 postmortem，提取趋势和跨事故模式
+      - 从"数据金矿"中发现手动分析无法覆盖的系统性问题
+      - AISEP 类比: /evolve 可以用 LLM 分析 observations.yaml 积累的数据
+    relevance: high
+
+  - source: { title: "Blameless/Rootly/Incident.io: 自动化事故管理平台", url: "rootly.com + blameless.com", credibility: 0.8 }
+    key_points:
+      - 自动生成事故时间线 → 结构化模板 → AI 辅助根因分析
+      - 模式: 自动收集数据 → AI 预处理 → 人类审批 action items
+      - 关键设计: "AI 做分析，人做决策"（与 AISEP prop-013 完全一致）
+    relevance: high
+
+gaps: "DevOps post-mortem 主要针对'故障事件'，缺少对'正常成功流程'的经验提取——AISEP 需要覆盖成功模式的检测"

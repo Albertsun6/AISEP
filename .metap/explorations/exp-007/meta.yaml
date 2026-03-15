@@ -1,0 +1,22 @@
+id: exp-007
+type: deepdive
+direction: "进化引擎自动发现机制——AI 系统如何在软件工程过程中自动检测可沉淀的模式和改进点"
+status: concluded
+started_date: "2026-03-15"
+scout_count: 3
+sub_questions:
+  - id: sq-1
+    priority: core
+    question: "AI/LLM 驱动的软件工程中，现有系统如何实现自动经验提取和过程学习？"
+    strategy: industry
+    scout: A
+  - id: sq-2
+    priority: core
+    question: "认知科学中，反思性实践 (Reflective Practice) 和元认知监控如何实现自动化？"
+    strategy: academic
+    scout: B
+  - id: sq-3
+    priority: core
+    question: "DevOps/MLOps 中的自动化回顾提取机制（post-mortem automation, incident learning）有哪些成熟方案？"
+    strategy: case_study
+    scout: C
