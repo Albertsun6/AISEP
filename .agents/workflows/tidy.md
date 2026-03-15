@@ -195,6 +195,11 @@ description: "收尾整理 — 对话窗口结束前同步所有变更"
 - [ ] 生成推荐加载文件列表（分 `recommended` / `optional` / `excluded`）
 - [ ] 附上推荐理由（`rationale`）
 - [ ] 写入 `projects/{id}/_next_session.yaml`（覆盖式，只保留最新一份）
+- [ ] **生成用户可见的「下轮开场模板」**，必须包含：
+  1. 项目名称 + 上轮停止点
+  2. ⚠️ **文件读取指令**（至少：`AISEP.md` + `project.yaml` + 当前阶段关键输入）
+  3. 本轮目标
+  4. 关键上下文（术语/规则/风险等记忆负担重的信息）
 
 ```yaml
 # projects/{id}/_next_session.yaml
