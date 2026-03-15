@@ -34,8 +34,10 @@ context_fence:
 |------|------|
 | `AISEP.md`（本文件） | 系统导航 + 当前活跃项目 |
 | `MetaP.md` | MetaP 元认知层入口 |
-| `constitution.md` | 全局铁律（§1-16，含 MetaP 扩展） |
+| `constitution.md` | 全局铁律（§1-17，含 MetaP 扩展） |
 | 活跃项目的 `glossary.yaml` | 术语一致性 |
+
+> **交互偏好桥接**：用户的交互偏好（响应结构、快速命令、跨学科规则）由 `~/.gemini/GEMINI.md` 管理（全局级，影响所有对话）。AISEP 的 `/evolve` 命令产出的交互规则如果适用于全局，会同步提示更新 GEMINI.md。
 
 ### 按需加载
 
