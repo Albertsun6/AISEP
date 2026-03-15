@@ -1,0 +1,28 @@
+# concept-007: Context Engineering 上下文工程
+# 来源: exp-003 Scout-A
+
+id: concept-007
+_type: Concept
+
+name: "Context Engineering（上下文工程）"
+definition: "从 Prompt Engineering 演进而来的系统性学科——将 LLM 视为 CPU、Context Window 视为 RAM、Agent Framework 视为操作系统，核心任务是为每个任务加载正确的信息"
+elaboration: |
+  Andrej Karpathy 在 2025 年提出这一范式：不再只是"写好提示词"，
+  而是"架构整个信息流"——包括何时加载什么、如何压缩、何时丢弃。
+  AISEP 的分层加载协议（L0→L1→L2→L3）和 context_fence 机制
+  就是 Context Engineering 的具体实践，比行业多数实现更系统化。
+
+confidence: 0.85
+source_type: observation
+maturity: growing
+tags: [上下文工程, Karpathy, 分层加载, 信息架构, LLM, prompt-engineering]
+created_date: "2026-03-15"
+last_referenced: "2026-03-15"
+
+aisep_note_ref: "learn-009"  # Repo Map 模式 + learn-010 上下文控制成熟度
+
+_links:
+  - type: relates_to
+    target: "concept:concept-002"
+  - type: derived_from
+    target: "exploration:exp-003"

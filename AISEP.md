@@ -94,3 +94,22 @@ context_fence:
 - **L0 常驻层**：< 2K tokens（本文件 + constitution + glossary）
 - **L1 阶段层**：< 5K tokens（当前 Workflow + Skills）
 - **L2 按需层**：单次请求 < 3K tokens
+
+## 反向同步协议（Auto-Sync）
+
+> AISEP 知识库的关键变更应自动反映到本文件和 MetaP.md 中。
+
+| 触发事件 | 同步动作 | 自治级别 |
+|---------|---------|---------|
+| 新 Skill 沉淀 | 更新按需加载表中 `.agents/skills/` 描述 | L2 |
+| 新 Evolution Rule | 更新 `.aisep/evolution/` 引用 | L2 |
+| Ontology Object Type 增减 | 更新本体论计数注释 | L3 |
+| 新 Exploration 完成 | 更新 MetaP.md 知识库描述 | L2 |
+| 新 Concept 达到 validated | 更新 MetaP.md 概念统计 | L2 |
+
+**当前系统状态快照**（/tidy 时自动维护）：
+- 知识库：12 条 cognitive_notes + 8 个 Concepts + 5 个 Episodes
+- 本体论：19 Object Types / 13 Link Types / 9 Action Types
+- 探索记录：3 次（exp-001~003），辩论：1 次
+- 进化规则：6 条（evo-001~006）
+

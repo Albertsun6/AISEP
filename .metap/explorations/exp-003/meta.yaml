@@ -1,0 +1,35 @@
+# exp-003: Coding Agent 进化机制研究
+id: exp-003
+direction: "Antigravity/Cursor/Aider 等 coding agent 如何管理上下文、知识和进化，以及如何将其机制整合到 AISEP/MetaP 体系"
+status: concluded
+started_date: "2026-03-15"
+concluded_date: "2026-03-15"
+conclusion_summary: |
+  6 大发现 + 3 核心洞见 → AISEP 已是"元 coding agent 框架"。
+  行动建议全部执行：反向同步 / KI 桥接 / 上下文审计增强 / 能力矩阵。
+conclusion_confidence: 0.82
+
+sub_questions:
+  - question: "主流 coding agent（Antigravity/Cursor/Aider/Windsurf）的核心架构和上下文管理机制"
+    priority: core
+    search_strategy: technical
+  - question: "coding agent 的知识持久化和跨会话学习机制（记忆、规则文件、进化）"
+    priority: core
+    search_strategy: industry
+  - question: "AISEP 与 coding agent 记忆系统的集成模式——如何将 agent 的运行时进化纳入 AISEP 管理"
+    priority: core
+    search_strategy: technical
+
+scouts:
+  - id: A
+    focus: "架构原理与上下文工程"
+    strategy: technical
+  - id: B
+    focus: "知识持久化与跨会话学习"
+    strategy: industry
+  - id: C
+    focus: "集成模式与 AISEP 整合路径"
+    strategy: technical
+
+meta:
+  concepts_discovered: []

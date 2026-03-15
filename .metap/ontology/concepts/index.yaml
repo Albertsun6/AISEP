@@ -1,6 +1,6 @@
 # 概念索引
 metadata:
-  total_concepts: 6
+  total_concepts: 8
   last_updated: "2026-03-15"
   bridge_protocol: |
     收敛路径 A：MetaP 最终吸收 AISEP 知识库
@@ -32,10 +32,18 @@ concepts:
     name: "多重编码同构性（Multiple Encoding Isomorphism）"
     maturity: seed
     tags: [认知科学, 多重编码, 知识管理, 同构性, 事件记忆, 语义记忆]
+  - id: concept-007
+    name: "Context Engineering（上下文工程）"
+    maturity: growing
+    tags: [上下文工程, Karpathy, 分层加载, 信息架构, LLM, prompt-engineering]
+  - id: concept-008
+    name: "Meta Coding Agent Framework（元 Coding Agent 框架）"
+    maturity: seed
+    tags: [元框架, 知识中枢, coding-agent, 知识管理, 进化, AISEP]
 
 by_maturity:
-  seed: [concept-006]
-  growing: [concept-001, concept-003, concept-005]
+  seed: [concept-006, concept-008]
+  growing: [concept-001, concept-003, concept-005, concept-007]
   validated: [concept-002, concept-004]
   established: []
   deprecated: []
@@ -59,7 +67,7 @@ by_tag:
   semantic-layer: [concept-004]
   dbt: [concept-004]
   企业数据: [concept-004]
-  LLM: [concept-004]
+  LLM: [concept-004, concept-007]
   Gartner: [concept-004]
   SSOT: [concept-005]
   挑战: [concept-005]
@@ -68,12 +76,22 @@ by_tag:
   联邦Ontology: [concept-005]
   认知科学: [concept-006]
   多重编码: [concept-006]
-  知识管理: [concept-006]
+  知识管理: [concept-006, concept-008]
   同构性: [concept-006]
   事件记忆: [concept-006]
   语义记忆: [concept-006]
+  上下文工程: [concept-007]
+  Karpathy: [concept-007]
+  分层加载: [concept-007]
+  信息架构: [concept-007]
+  prompt-engineering: [concept-007]
+  元框架: [concept-008]
+  知识中枢: [concept-008]
+  coding-agent: [concept-008]
+  进化: [concept-008]
+  AISEP: [concept-008]
 
 by_exploration:
   exp-001: [concept-001, concept-002, concept-003, concept-004, concept-005]
   exp-002: [concept-006]
-
+  exp-003: [concept-007, concept-008]

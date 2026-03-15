@@ -1,0 +1,30 @@
+# concept-008: 元 Coding Agent 框架
+# 来源: exp-003 洞见 1
+
+id: concept-008
+_type: Concept
+
+name: "Meta Coding Agent Framework（元 Coding Agent 框架）"
+definition: "一个管理 coding agent 的上下文、知识和进化的更高层框架——不替代 agent，而是管理它们的认知演进"
+elaboration: |
+  主流 coding agent（Cursor/Aider/Windsurf）管理单个 agent 实例的上下文和记忆。
+  AISEP/MetaP 管理的是跨 agent、跨项目、跨对话的知识演进——更高维度的问题。
+  AISEP 的定位应该是 coding agent 的"知识中枢"——
+  提炼它们的产出，管理它们的上下文，驱动它们的进化。
+
+confidence: 0.70
+source_type: hypothesis
+maturity: seed
+tags: [元框架, 知识中枢, coding-agent, 知识管理, 进化, AISEP]
+created_date: "2026-03-15"
+last_referenced: "2026-03-15"
+
+aisep_note_ref: null
+
+_links:
+  - type: relates_to
+    target: "concept:concept-007"
+  - type: relates_to
+    target: "concept:concept-001"
+  - type: derived_from
+    target: "exploration:exp-003"

@@ -1,0 +1,38 @@
+# ep-005: Coding Agent 进化机制探索
+# 来源: exp-003
+
+id: ep-005
+_type: episode
+type: exploration
+date: "2026-03-15"
+
+context: |
+  用户关注 Gemini/Antigravity 进化机制如何整合到 AISEP 体系。
+  发起 exp-003 探索：3 Scout 并行侦察（架构原理/知识持久化/集成模式）。
+
+event: |
+  6 大发现：
+  1. 上下文工程从 Prompt Engineering 进化为独立学科（Karpathy 范式）
+  2. 主流 coding agent 的 9 大上下文管理机制对比
+  3. 四层记忆架构（Working/Episodic/Semantic/Procedural）成为行业共识
+  4. 规则文件的演进谱系（.cursorrules → AGENTS.md → CLAUDE.md → AISEP.md）
+  5. 两种集成模式（吸收 vs 桥接）
+  6. Antigravity KI 系统与 AISEP knowledge 高度同构
+
+outcome: |
+  3 核心洞见：AISEP 已是"元 coding agent 框架" / 从被动文件到知识 API 的演进 / Antigravity KI 是天然桥接点。
+  注册 2 个新概念（concept-007 上下文工程, concept-008 元 coding agent 框架）。
+  生成 4 个 ActionProposal（prop-007~010）。
+  置信度 0.82。
+
+significance: 0.85
+linked_concepts: [concept-007, concept-008]
+linked_exploration: exp-003
+
+_links:
+  - type: extracted_from
+    target: "exploration:exp-003"
+  - type: produces
+    target: "concept:concept-007"
+  - type: produces
+    target: "concept:concept-008"
