@@ -2,32 +2,44 @@
 # 通过"进化"协议产出，经用户确认后生效
 
 evolution:
+  _type: "evolution_rule"
   version: 1
   date: "2026-03-12"
   source_conversation: "f617beb0-bf16-4b33-848c-0cbc6626b40c"
+  _links:
+    - type: "triggers"
+      target: "interaction_pattern:user-choice-fatigue"
+    - type: "references"
+      target: "project:proj-001"
 
   rules:
     - id: evo-001
+      _type: "evolution_rule"
       rule: "Next step 选项缩减为 2 个（1 推荐 + 1 替代）"
       reason: "用户选择疲劳，通常选第 1 个"
 
     - id: evo-002
+      _type: "evolution_rule"
       rule: "大批量构建后自动更新 system-guide.md + 给一句话导航总结"
       reason: "用户对 40+ 文件认知超载敏感"
 
     - id: evo-003
+      _type: "evolution_rule"
       rule: "构建模式下完全关闭跨学科发散，仅在设计决策点触发"
       reason: "building 时不需要发散"
 
     - id: evo-004
+      _type: "evolution_rule"
       rule: "'全做'后静默执行，仅在全部完成后报告一次"
       reason: "减少中断，用户信任执行质量"
 
     - id: evo-005
+      _type: "evolution_rule"
       rule: "新增 '状态' 快速命令：展示已建/待建/backlog 统计"
       reason: "用户需要快速定位'我在哪'"
 
     - id: evo-006
+      _type: "evolution_rule"
       rule: "对话窗口结束前自动执行 /tidy：同步 system-guide + backlog + 一致性检查"
       trigger: "用户说 /tidy 或 '开新对话' 时"
       reason: "防止信息散落在对话中，确保系统文件始终一致"

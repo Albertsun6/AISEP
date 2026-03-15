@@ -1,0 +1,18 @@
+id: concept-001
+name: "Ontology-Driven Information System (ODIS)"
+definition: "以本体论（Ontology）为核心驱动力的信息系统方法论——用形式化的领域知识表示来指导系统的设计、集成和运行"
+elaboration: |
+  ODIS 的核心主张是：Ontology 不仅是数据模型，更是横跨需求分析→架构设计→运行时的
+  "语义骨架"。与传统 MDD（Model-Driven Development）的关键区别在于：
+  - Ontology 是**描述性**的（描述世界"是什么"）
+  - MDD 模型是**规定性**的（规定系统"怎么建"）
+  两者互补：Ontology 定义问题域的共识理解，MDD 将其转化为可执行的代码/配置。
+confidence: 0.82
+source_type: paper
+maturity: growing
+tags: [ontology, ODIS, MDD, 中间层, 方法论]
+created_date: "2026-03-15"
+last_referenced: "2026-03-15"
+links:
+  derived_from: [src-001, src-003]
+  relates_to: [concept-002, concept-003]

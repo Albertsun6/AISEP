@@ -1,0 +1,38 @@
+# concept-006: 多重编码同构性
+# 来源：/deliberate --on exp-002（远见者洞察）
+
+id: concept-006
+_type: Concept
+
+name: "多重编码同构性（Multiple Encoding Isomorphism）"
+definition: "AI 辅助知识系统的双轨知识管理与大脑的多重编码机制（海马体事件记忆 + 新皮层语义记忆）存在结构性同构"
+elaboration: |
+  在认知科学中，大脑不是将知识存储在单一数据库中，而是通过多重编码实现：
+  - 海马体（hippocampus）管理事件记忆（episodic memory）——具体的经验和情境
+  - 新皮层（neocortex）管理语义记忆（semantic memory）——抽象的概念和规则
+  - 两者通过"巩固过程"（consolidation）自动同步——睡眠期间海马体的事件记忆逐渐转化为新皮层的语义记忆
+
+  AISEP 系统的知识架构与此高度同构：
+  - .aisep/knowledge/ ≈ 事件记忆（具体项目中学到的经验，如 learn-006 TransientModel 向导模式）
+  - .metap/ontology/concepts/ ≈ 语义记忆（抽象的概念，如 concept-002 三层 Ontology 架构）
+  - maturity_mapping + /tidy 结晶评估 ≈ 巩固过程（定期同步和提升）
+
+  这意味着双轨知识管理不是设计缺陷，而是认知架构的自然延伸。
+  关键区别在于：AISEP 的"巩固过程"（maturity_mapping）需要显式定义和自动化执行。
+
+confidence: 0.75
+source_type: discussion
+maturity: seed
+tags: [认知科学, 多重编码, 知识管理, 同构性, 事件记忆, 语义记忆, 巩固过程]
+created_date: "2026-03-15"
+last_referenced: "2026-03-15"
+
+aisep_note_ref: null  # 尚未在 AISEP knowledge 中有对应条目
+
+_links:
+  - type: relates_to
+    target: "concept:concept-002"
+  - type: extracted_from
+    target: "episode:ep-004"
+  - type: derived_from
+    target: "exploration:exp-002"

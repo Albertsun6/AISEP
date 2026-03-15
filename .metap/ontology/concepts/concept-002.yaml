@@ -1,0 +1,19 @@
+id: concept-002
+name: "三层 Ontology 架构（Semantic-Kinetic-Dynamic）"
+definition: "Palantir 提出的 Ontology 中间层三层架构：语义层（名词）→ 动能层（动词）→ 动态层（智能），实现从数据到操作到 AI 的全栈语义化"
+elaboration: |
+  三层的职责清晰分离：
+  - **Semantic Layer**：定义"世界由什么构成"（Object Type, Property, Link）
+  - **Kinetic Layer**：定义"能做什么"（Action, Function, ETL Pipeline, Writeback）
+  - **Dynamic Layer**：定义"如何智能化"（AI 推理, 自动化决策, 应用构建）
+  这个分层对 MetaP 的启示：我们的 Ontology Engine 目前主要在 Semantic 层，
+  需要向 Kinetic（Action）和 Dynamic（AI Agent 集成）扩展。
+confidence: 0.88
+source_type: documentation
+maturity: validated
+tags: [Palantir, 架构, 三层模型, 语义层, 动能层]
+created_date: "2026-03-15"
+last_referenced: "2026-03-15"
+links:
+  derived_from: [src-002]
+  relates_to: [concept-001, concept-004]

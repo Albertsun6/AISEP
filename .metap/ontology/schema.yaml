@@ -1,0 +1,263 @@
+# .metap/ontology/schema.yaml — MetaP 本体论 Schema 定义
+# 三层架构：Semantic（名词）→ Kinetic（动词）→ Dynamic（智能）
+# 灵感来源：Palantir Foundry Ontology + ODIS 方法论
+# 探索来源：exp-001 (concept-002: 三层 Ontology 架构)
+
+metadata:
+  version: "0.2.0"
+  description: "MetaP 三层 Ontology — 从语义描述到操作执行到智能自治"
+  last_updated: "2026-03-15"
+  architecture:
+    layers:
+      - id: semantic
+        name: "语义层 (Semantic Layer)"
+        icon: "📐"
+        purpose: "定义世界由什么构成——实体、属性、关系"
+        nature: "描述性 (Descriptive)"
+      - id: kinetic
+        name: "动能层 (Kinetic Layer)"
+        icon: "⚡"
+        purpose: "定义能做什么——操作、管道、写回、状态转换"
+        nature: "规定性 (Prescriptive)"
+      - id: dynamic
+        name: "动态层 (Dynamic Layer)"
+        icon: "🧠"
+        purpose: "定义如何智能化——AI Agent 接口、自动化规则、推理"
+        nature: "自适应 (Adaptive)"
+
+# ╔══════════════════════════════════════════════════════════════╗
+# ║              L1: SEMANTIC LAYER — 语义层（名词）              ║
+# ╚══════════════════════════════════════════════════════════════╝
+
+object_types:
+
+  Concept:
+    layer: semantic
+    description: "可学习、可关联的知识概念"
+    icon: "💡"
+    properties:
+      id: { type: string, required: true, pattern: "concept-{NNN}" }
+      name: { type: string, required: true }
+      definition: { type: text, description: "一句话定义" }
+      elaboration: { type: text, description: "详细说明（可包含 Markdown）" }
+      confidence: { type: float, range: [0, 1] }
+      source_type: { type: enum, values: [paper, experience, discussion, hypothesis, observation] }
+      maturity: { type: enum, values: [seed, growing, validated, established, deprecated] }
+      tags: { type: list, items: string }
+      created_date: { type: date }
+      last_referenced: { type: date }
+    links:
+      relates_to: { target: Concept, cardinality: many }
+      derived_from: { target: Source, cardinality: many }
+      applied_in: { target: Project, cardinality: many }
+      contradicts: { target: Concept, cardinality: many }
+      supersedes: { target: Concept, cardinality: many }
+
+  Source:
+    layer: semantic
+    description: "信息来源——论文、文档、URL、对话、实验"
+    icon: "📄"
+    properties:
+      id: { type: string, required: true, pattern: "src-{NNN}" }
+      title: { type: string, required: true }
+      type: { type: enum, values: [paper, documentation, url, conversation, experiment, book] }
+      url: { type: string }
+      doi: { type: string }
+      authors: { type: list, items: string }
+      credibility: { type: float, range: [0, 1] }
+      accessed_date: { type: date }
+      key_findings: { type: text }
+    links:
+      supports: { target: Concept, cardinality: many }
+
+  Exploration:
+    layer: semantic
+    description: "一次探索任务"
+    icon: "🔭"
+    properties:
+      id: { type: string, required: true, pattern: "exp-{NNN}" }
+      direction: { type: text, required: true }
+      status: { type: enum, values: [active, deliberating, concluded, archived] }
+      started_date: { type: date }
+      concluded_date: { type: date }
+      conclusion_summary: { type: text }
+      conclusion_confidence: { type: float, range: [0, 1] }
+    links:
+      discovers: { target: Concept, cardinality: many }
+      produces: { target: ActionProposal, cardinality: many }
+      uses: { target: Source, cardinality: many }
+      follows_up: { target: Exploration, cardinality: one }
+
+  ActionProposal:
+    layer: semantic
+    description: "探索产出的行动建议——需人类审批后通过 AISEP 执行"
+    icon: "🎯"
+    properties:
+      id: { type: string, required: true, pattern: "prop-{NNN}" }
+      title: { type: string, required: true }
+      rationale: { type: text }
+      effort_estimate: { type: string }
+      risk_assessment: { type: text }
+      priority: { type: enum, values: [P0, P1, P2, P3] }
+      approval_status: { type: enum, values: [pending, approved, rejected, deferred, executed] }
+      rejection_reason: { type: text }
+    links:
+      addresses: { target: Concept, cardinality: many }
+      from_exploration: { target: Exploration, cardinality: one }
+      executes_via: { target: Project, cardinality: one }
+
+  Project:
+    layer: semantic
+    description: "AISEP 项目引用（桥接实体，实际管理在 .aisep/）"
+    icon: "📦"
+    properties:
+      project_id: { type: string, required: true }
+      name: { type: string }
+      status: { type: enum, values: [active, archived, planned] }
+    links:
+      originated_from: { target: ActionProposal, cardinality: one }
+      validated: { target: Concept, cardinality: many }
+
+# ╔══════════════════════════════════════════════════════════════╗
+# ║              L2: KINETIC LAYER — 动能层（动词）               ║
+# ╚══════════════════════════════════════════════════════════════╝
+
+actions:
+  concept.refine:
+    layer: kinetic
+    target: Concept
+    description: "深挖概念细节"
+    autonomy: L1
+    writes_to: [".metap/ontology/concepts/{id}.yaml"]
+
+  concept.validate:
+    layer: kinetic
+    target: Concept
+    description: "通过项目或实验验证概念"
+    autonomy: L1
+    writes_to: [".metap/ontology/concepts/{id}.yaml", ".metap/ontology/concepts/index.yaml"]
+
+  concept.deprecate:
+    layer: kinetic
+    target: Concept
+    description: "废弃概念——被新认知取代"
+    autonomy: L0
+
+  exploration.launch:
+    layer: kinetic
+    target: Exploration
+    description: "发起新探索任务"
+    autonomy: L2
+    triggers_workflow: ".agents/workflows/explore.md"
+    writes_to: [".metap/explorations/exp-{NNN}/meta.yaml"]
+
+  exploration.conclude:
+    layer: kinetic
+    target: Exploration
+    description: "结束探索，生成结论报告"
+    autonomy: L1
+    writes_to: [".metap/explorations/{id}/meta.yaml", ".metap/explorations/{id}/report.md"]
+
+  proposal.approve:
+    layer: kinetic
+    target: ActionProposal
+    description: "批准行动建议"
+    autonomy: L0
+    writes_to: [".metap/state/trust.yaml"]
+
+  proposal.reject:
+    layer: kinetic
+    target: ActionProposal
+    description: "拒绝行动建议（需理由）"
+    autonomy: L0
+
+  source.verify:
+    layer: kinetic
+    target: Source
+    description: "验证来源的可达性和有效性"
+    autonomy: L3
+
+  aisep.create_project:
+    layer: kinetic
+    target: Project
+    description: "从批准的 ActionProposal 创建 AISEP 项目"
+    autonomy: L1
+    triggers_workflow: ".agents/workflows/s0-init.md"
+    writes_to: [".aisep/registry.yaml", "projects/{project_id}/"]
+
+  aisep.feed_ontology:
+    layer: kinetic
+    target: Project
+    description: "从 AISEP 项目的 artifacts 反向提炼 Ontology 概念"
+    autonomy: L1
+    writes_to: [".metap/ontology/concepts/"]
+
+# ╔══════════════════════════════════════════════════════════════╗
+# ║              L3: DYNAMIC LAYER — 动态层（智能）               ║
+# ╚══════════════════════════════════════════════════════════════╝
+
+intelligence:
+  inference_rules:
+    - id: rule-001
+      name: "传递性关联推导"
+      when: ["(A) relates_to (B)", "(B) relates_to (C)", "A ≠ C"]
+      then: ["suggest_link: (A) relates_to (C)"]
+      confidence_modifier: 0.7
+      autonomy: L1
+
+    - id: rule-002
+      name: "来源交叉验证"
+      when: ["count(Concept.derived_from) >= 3", "all(Source.credibility >= 0.6)", "maturity == seed"]
+      then: ["suggest_transition: maturity seed → growing"]
+      autonomy: L1
+
+    - id: rule-003
+      name: "矛盾检测"
+      when: ["(A) contradicts (B)", "A.confidence >= 0.7", "B.confidence >= 0.7"]
+      then: ["suggest: /deliberate --on 'A vs B'"]
+      autonomy: L2
+
+    - id: rule-004
+      name: "知识衰退预警"
+      when: ["days_since(last_referenced) > 180", "maturity in [growing, validated]"]
+      then: ["flag: dormant_candidate"]
+      autonomy: L3
+
+  agent_interfaces:
+    ontology_query:
+      operations: [get_concepts, get_related, search_concepts, get_sources]
+    ontology_mutate:
+      operations: [register_concept, create_link, update_maturity]
+
+  automation_triggers:
+    - { event: "Exploration.status → concluded", action: "memory.promote_working_to_episodic", autonomy: L2 }
+    - { event: "ActionProposal.approval_status → approved", action: "trust.update_score", autonomy: L3 }
+    - { event: "Concept.maturity → validated", action: "evolution.record_observation", autonomy: L3 }
+    - { event: "count(episodic_memory.same_pattern) >= 3", action: "memory.suggest_semantic_promotion", autonomy: L1 }
+    - { event: "trust.score crosses threshold", action: "autonomy.evaluate_level_upgrade", autonomy: L1 }
+    - { event: "Deliberation.round_3 → completed", action: "memory.create_deliberation_episode", autonomy: L2 }
+    - { event: "Deliberation.dissent_points.count > 0", action: "ontology.create_contradicts_link", autonomy: L1 }
+
+  scaffold:
+    description: "从 Ontology 定义生成 AISEP 项目骨架的接口"
+    status: planned
+    capabilities:
+      - { from: "Concept (domain entity)", generate: "glossary.yaml" }
+      - { from: "Concept.links", generate: "domain-model.yaml" }
+      - { from: "Action (kinetic layer)", generate: "user-stories.yaml" }
+      - { from: "inference_rules", generate: "business-rules.yaml" }
+
+# ─── 共享辅助定义 ───
+
+credibility_guide:
+  "1.0": "Peer-reviewed 论文 / 官方规范文档"
+  "0.8": "知名机构技术博客 / 官方 documentation"
+  "0.6": "行业报告 / 高质量技术博客"
+  "0.4": "社区讨论 / Stack Overflow / 个人经验"
+  "0.2": "未经验证的假设 / 二手传闻"
+
+maturity_transitions:
+  seed_to_growing: "找到至少 1 个 credibility >= 0.6 的 Source 支撑"
+  growing_to_validated: "在至少 1 个 Project 中成功应用"
+  validated_to_established: "在 3+ 个不同场景中验证一致"
+  any_to_deprecated: "被新 Concept supersedes，经人确认"

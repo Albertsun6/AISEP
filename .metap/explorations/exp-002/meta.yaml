@@ -1,0 +1,30 @@
+# exp-002: AISEP 目录结构合理性探索
+id: exp-002
+direction: "现在目录结构的合理性 — .aisep / .metap / .agents / projects 四层分离是否合理，有无冗余/缺失"
+status: deliberated
+started_date: "2026-03-15"
+concluded_date: "2026-03-15"
+deliberated_date: "2026-03-15"
+conclusion_summary: |
+  当前四层分离（.agents / .aisep / .metap / projects）整体合理，
+  但存在 3 个关键问题：知识体系双轨重叠、本体论分裂、evolution 分散。
+  提出 4 个 ActionProposal。
+  辩论后修正：桥接策略正确（4/4共识），需激活 maturity_mapping + 明确化退出标准。
+conclusion_confidence: 0.85
+
+scouts:
+  - id: A
+    focus: "内部重叠性分析"
+    strategy: technical
+  - id: B
+    focus: "层次感和职责清晰度"
+    strategy: technical
+  - id: C
+    focus: "行业最佳实践对比"
+    strategy: industry
+
+meta:
+  concepts_discovered: [concept-006]
+  deliberation: true
+  deliberation_consensus: "桥接策略正确，需两项增强"
+  episodes_created: [ep-004]

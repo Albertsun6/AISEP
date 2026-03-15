@@ -1,0 +1,106 @@
+# Decision Log Schema
+# 验证目标: history/decision-log.yaml 或 artifacts/global/decision-log.yaml
+
+_meta:
+  schema_id: decision-log
+  version: "1.0"
+  description: |
+    设计决策记录。填补本体论映射中的最大缺口——
+    将散布在对话、ADR、Gate 记录中的决策统一索引。
+  ontology_type: "decision"
+
+schema:
+  root: decision_log
+  fields:
+    entries:
+      type: list
+      required: true
+      items:
+        type: map
+        fields:
+          id:
+            type: string
+            required: true
+            validation: "格式：dec-NNN（全局唯一）"
+            examples: ["dec-001", "dec-002"]
+
+          _type:
+            type: string
+            required: true
+            validation: "固定值 'decision'"
+
+          title:
+            type: string
+            required: true
+            validation: "决策标题，一句话描述"
+
+          decision:
+            type: string
+            required: true
+            validation: "实际做出的选择"
+
+          rationale:
+            type: string
+            required: true
+            validation: "选择这个方案的理由"
+
+          alternatives:
+            type: list
+            required: false
+            items:
+              type: map
+              fields:
+                option:
+                  type: string
+                  required: true
+                reason_rejected:
+                  type: string
+                  required: true
+
+          date:
+            type: string
+            required: true
+            validation: "ISO 8601 日期"
+
+          status:
+            type: string
+            required: true
+            validation: "enum: proposed | accepted | superseded | deprecated"
+            examples: ["accepted"]
+
+          source_research:
+            type: string
+            required: false
+            validation: "research ID 引用"
+
+          applied_to:
+            type: list
+            required: false
+            items:
+              type: string
+            validation: "决策影响的制品或流程"
+
+          _links:
+            type: list
+            required: false
+            items:
+              type: map
+              fields:
+                type:
+                  type: string
+                  required: true
+                  validation: "必须是 ontology-conventions.yaml 中定义的 link_type"
+                target:
+                  type: string
+                  required: true
+                  validation: "格式：{object_type}:{id}"
+
+gate_validations:
+  - rule: "每条 decision 必须有 id, title, decision, rationale, date, status"
+    severity: error
+  - rule: "id 格式为 dec-NNN"
+    severity: error
+  - rule: "status 必须是 proposed/accepted/superseded/deprecated"
+    severity: error
+  - rule: "如有 source_research，须对应 research/index.yaml 中的条目"
+    severity: warning

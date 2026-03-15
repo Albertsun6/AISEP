@@ -14,6 +14,23 @@
 模板是不是可以根据项目类型按需加载
 在做的过程中要提升认知，AI给学习笔记
 每次项目结束，整理经验，进化 分层
-
 探讨给使用aisep用户的呈现形式
 随着完善和项目越来越多，如何控制文件体积，为了节省上下文，不关注的项目不要加载
+Aider, Continue  allure-report、coverage-report、test-report、htmlcov
+
+增加github 代码管理
+
+有趣的融合可能：如果未来 AISEP 做了 VS Code Extension（方案 C 第三步），完全可以把 Continue 的 Context Provider 架构作为技术底座——让 AISEP 的 Workflow 和 Skills 通过 Continue 的插件机制暴露给 LLM。
+
+研究 Continue 的 Context Provider 源码 — 看看它的声明式上下文注册怎么实现的
+
+AI 自主判断 + 事后审计            → 🤖 全自动（远期） 这个好，结合进化机制
+遇到简写要给个全称，比如NLP(Natural Language Processing)
+写一个关于这个系统的论文，整个过程，实现方式，探索发现
+短期、中期、长期 记忆管理
+
+标准的工作方法，流程，在每次做的时候都遵循，比如探索
+如何把runtime 沉淀成静态文件
+是否可以借鉴使用plentier公司 的本体论方式 组织信息
+不会做，先思考学习，从做中整理方法，方法论，沉淀成skill，完善
+A2A 自进化，多个agent针对一个话题探讨，人审核

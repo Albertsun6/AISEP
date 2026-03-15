@@ -1,0 +1,38 @@
+# ep-004: 知识收敛策略辩论——首次 /deliberate 实战
+# 来源：/deliberate --on exp-002
+
+id: ep-004
+_type: episode
+type: deliberation
+date: "2026-03-15"
+
+context: |
+  exp-002 发现三大问题（知识双轨重叠/本体论分裂/evolution 分散），
+  需要评估"桥接而非合并"策略是否最优。
+  Phase 3 首次使用 /deliberate 进行 4 角色 3 轮结构化辩论。
+
+event: |
+  辩论过程：
+  - 🟢 倡导者：桥接策略是最优解（演进安全 + 成本可控 + 有退出标准）
+  - 🔴 质疑者：三个隐患（成熟度双轨 / 退出标准乐观 / evolution 无收敛路径）
+  - 🟡 务实者：ROI 分析选项 A（桥接+mapping）15m / B（全合并）4h / C（evolution 合并）30m
+  - 🔵 远见者：多重编码同构性——双轨是认知架构的自然延伸
+  质量守护 #3 触发虚假共识检测→ devil's advocate 补充紧急迁移条件。
+
+outcome: |
+  4/4 共识：桥接策略正确，需两项增强。
+  4 项修正建议：激活 maturity_mapping / 明确化退出标准 / evolution 合并列为 Phase 4 / 增加紧急迁移触发。
+  2 项元认知洞察：多重编码同构性（→ concept-006）、渐进式架构决策模式。
+  首次实战验证了完整的 deliberation workflow。
+
+significance: 0.90
+linked_concepts: [concept-001, concept-002, concept-005, concept-006]
+linked_exploration: exp-002
+
+_links:
+  - type: debates
+    target: "exploration:exp-002"
+  - type: produces
+    target: "concept:concept-006"
+  - type: references
+    target: "episode:ep-002"

@@ -1,0 +1,64 @@
+# exp-001 来源清单
+sources:
+  - id: src-001
+    title: "Ontology-driven software development middleware requirements"
+    type: paper
+    url: "https://www.e3s-conferences.org"
+    credibility: 0.7
+    key_findings: "Ontology 中间层需要语义互操作性、推理能力、动态自适应、知识共享、演化追溯六大能力"
+
+  - id: src-002
+    title: "Palantir Foundry Ontology Architecture"
+    type: documentation
+    url: "https://www.palantir.com/docs/foundry/ontology"
+    credibility: 0.9
+    key_findings: "三层架构：Semantic Layer (名词) → Kinetic Layer (动词) → Dynamic Layer (智能)。Ontology 作为组织的数字孪生，连接语义元素和动能元素"
+
+  - id: src-003
+    title: "ODIS vs MDD: Ontology-Driven vs Model-Driven Development"
+    type: paper
+    url: "https://www.academia.edu"
+    credibility: 0.8
+    key_findings: "Ontology 是描述性的（描述世界），MDD 是规定性的（规定如何构建）。两者互补：Ontology 定义问题域，MDD 驱动代码生成"
+
+  - id: src-004
+    title: "TypeDB: Ontology-native database"
+    type: documentation
+    url: "https://typedb.com"
+    credibility: 0.8
+    key_findings: "TypeDB 支持 Entity-Relation-Attribute 建模、规则推理、多态继承。局限：Schema-first 要求、生态不成熟、单线程查询"
+
+  - id: src-005
+    title: "Generating Low-Code Applications from Enterprise Ontology"
+    type: paper
+    url: "https://www.researchgate.net"
+    credibility: 0.8
+    key_findings: "已有研究成功从本体论模型自动生成 Mendix low-code 应用。验证了 Ontology → 应用生成路径的可行性"
+
+  - id: src-006
+    title: "dbt Semantic Layer GA 2024"
+    type: documentation
+    url: "https://www.getdbt.com/blog/semantic-layer"
+    credibility: 0.8
+    key_findings: "dbt Semantic Layer 作为企业级语义中间层，集中定义 metrics。2025 年趋势：Semantic Layer 成为 LLM 与结构化数据的桥梁"
+
+  - id: src-007
+    title: "Ontology as SSOT: Challenges in deployment"
+    type: paper
+    url: "https://arxiv.org"
+    credibility: 0.9
+    key_findings: "三大挑战：知识获取瓶颈（劳动密集）、遗留系统集成（最终一致性）、Schema 演化（持续维护成本）。中心化 SSOT 在大规模微服务中可能成为单点故障"
+
+  - id: src-008
+    title: "Gartner: Semantic Technologies Center Stage 2025"
+    type: url
+    url: "https://www.ontoforce.com"
+    credibility: 0.7
+    key_findings: "Gartner 将语义技术列为 2025 年 AI/元数据/决策智能的核心。知识图谱构建成熟度显著提升，LLM 使原本数月的专家工作可在数天完成"
+
+  - id: src-009
+    title: "Modelshop: Model-first no-code ontology platform"
+    type: url
+    url: "https://modelshop.com"
+    credibility: 0.6
+    key_findings: "通过建模本体（数据关系、计算规则、业务规则）来构建应用，适合计算密集型业务应用"

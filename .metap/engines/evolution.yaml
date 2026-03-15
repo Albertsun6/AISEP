@@ -1,0 +1,69 @@
+# .metap/engines/evolution.yaml — 进化引擎配置
+# 职责：从项目执行和探索中提炼模式，驱动系统自我进化
+
+engine:
+  name: evolution
+  version: "0.1.0"
+  description: "自进化引擎——从经验中学习，渐进提升系统能力"
+
+# ─── 进化触发器 ───
+
+triggers:
+  - id: project_retro
+    event: "AISEP S8 复盘完成"
+    action: "提取项目经验，评估是否有可泛化的模式"
+  - id: exploration_concluded
+    event: "MetaP 探索任务结束"
+    action: "评估探索过程效率，是否有新的方法论沉淀"
+  - id: pattern_detected
+    event: "同类事件累计达到 memory.promotion_threshold"
+    action: "提议将重复模式抽象为规则或 Skill"
+  - id: user_command
+    event: "用户执行 /evolve"
+    action: "全面自进化分析"
+  - id: trust_milestone
+    event: "信任积分达到升级阈值"
+    action: "评估是否可提升某些操作的自治级别"
+
+# ─── 进化层级（继承 AISEP constitution §10-12）───
+
+levels:
+  L1_record:
+    name: "观察记录"
+    autonomy: L3
+    output: ".metap/evolution/observations.yaml"
+  L2_knowledge:
+    name: "知识提炼"
+    autonomy: L1
+    output: "新的 Concept（maturity: seed）"
+  L3_rule:
+    name: "规则优化"
+    autonomy: L0
+    output: "修改建议（diff 格式呈现）"
+  L4_capability:
+    name: "能力生成"
+    autonomy: L0
+    output: "新 Skill 文件 / Engine 配置"
+
+# ─── 进化日志 ───
+
+log:
+  storage: ".metap/evolution/history.yaml"
+  retention: immutable  # 只追加不删除（constitution §12）
+
+# ─── 进化度量 ───
+
+metrics:
+  tracked:
+    - name: "探索效率"
+      formula: "有效来源数 / 总检索来源数"
+      target: "> 0.6"
+    - name: "行动建议采纳率"
+      formula: "approved / (approved + rejected)"
+      target: "> 0.7"
+    - name: "概念验证率"
+      formula: "validated concepts / total concepts"
+      target: "持续增长"
+    - name: "自治级别分布"
+      formula: "各级别操作数占比"
+      target: "L2+ 占比随信任增长"

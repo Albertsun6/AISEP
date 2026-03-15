@@ -4,6 +4,10 @@ aisep_registry:
   active_project: "proj-002"
   projects:
     - id: "proj-002"
+      _type: "project"
+      _links:
+        - type: "references"
+          target: "idea:idea-002"
       name: "拍卖模块"
       status: "active"
       current_stage: "s0-init"

@@ -1,34 +1,64 @@
-# 会话交接清单 — proj-001
-# 由 /tidy Step 13 自动生成
+# 上下文审计 + 会话交接清单
+# /tidy 自动生成
 
 next_session:
-  generated_at: "2026-03-13T17:54"
-  predicted_task: "proj-002 拍卖模块开发 或 系统论文 v0.2 迭代"
-  predicted_stage: "s0-init (proj-002) 或 paper-writing (续)"
+  generated_at: "2026-03-15T17:24+08:00"
+  predicted_task: "proj-002 拍卖模块 S0→S1 或 Phase 3 多视角讨论"
+  predicted_stage: "s0-init / exploration"
 
   recommended:
-    - path: "projects/proj-001/_map.yaml"
-      reason: "proj-001 全局概览，论文数据参考"
-    - path: ".aisep/docs/system-design-paper-v0.1.md"
-      reason: "论文 v0.1 内容，如需迭代"
-    - path: ".aisep/docs/system-guide.md"
-      reason: "系统全局入口"
+    - path: "AISEP.md"
+      reason: "系统导航入口"
+    - path: "MetaP.md"
+      reason: "MetaP 元认知层入口"
+    - path: ".aisep/conventions/ontology-conventions.yaml"
+      reason: "本体论规范（含 MetaP 映射表），本轮核心产出"
+    - path: ".aisep/knowledge/index.yaml"
+      reason: "知识库索引（含 bridge_protocol + maturity 追踪）"
+    - path: ".metap/ontology/schema.yaml"
+      reason: "MetaP 三层 Ontology 定义"
+    - path: "projects/proj-001/history/decision-log.yaml"
+      reason: "7 条决策记录，系统演进的关键上下文"
 
   optional:
-    - path: ".aisep/backlog.md"
-      reason: "查看待做项，选择下一个工作方向"
-    - path: "projects/proj-001/history/gate-log.yaml"
-      reason: "proj-001 完整 Gate 数据，论文验证数据源"
+    - path: ".metap/explorations/exp-002/report.md"
+      reason: "目录结构探索报告，了解知识双轨问题"
+    - path: ".aisep/docs/research/2026-03-15-ontology-architecture/report.md"
+      reason: "本体论架构原始调研"
 
   excluded:
     - pattern: "projects/proj-001/addons/**"
-      reason: "proj-001 代码已完成，除非修 bug 否则无需加载"
-    - pattern: ".aisep/schemas/**"
-      reason: "本轮未涉及 Schema 变更"
+      reason: "proj-001 Odoo 模块代码，已归档"
+    - pattern: "projects/proj-001/artifacts/**"
+      reason: "proj-001 工程制品，已归档"
 
   rationale: |
-    本轮完成了系统设计论文 v0.1 的撰写、架构图生成和 PDF 导出。
-    下一步有两个自然方向：
-    1. 继续迭代论文（v0.2），根据合作方反馈调整
-    2. 启动 proj-002（拍卖模块），进入新项目的 S0
-    active_project 已切换为 proj-002。
+    本轮核心工作是 AISEP 本体论落地（Phase 0-2）+ 目录结构探索（exp-002）+ 知识桥接（prop-003/005）。
+    下一步最可能方向：用新建的本体论体系实战 proj-002，或继续 Phase 3 多视角讨论模式。
+
+# 上下文审计
+context_audit:
+  session_date: "2026-03-15"
+  stage: "system-evolution"
+  topic: "Phase 0-2 本体论落地 + exp-002 目录探索 + 知识桥接"
+  files:
+    - { path: "ontology-conventions.yaml", times: 4, verdict: "essential" }
+    - { path: "knowledge/index.yaml", times: 5, verdict: "essential" }
+    - { path: "report.md (ontology-architecture)", times: 1, verdict: "referenced" }
+    - { path: "gate-log.yaml", times: 2, verdict: "essential" }
+    - { path: "decision-log.yaml", times: 3, verdict: "essential" }
+    - { path: "tidy.md", times: 3, verdict: "essential" }
+    - { path: "MetaP.md", times: 1, verdict: "referenced" }
+    - { path: "schema.yaml (metap ontology)", times: 1, verdict: "referenced" }
+    - { path: ".metap/config.yaml", times: 1, verdict: "referenced" }
+    - { path: "AISEP.md", times: 1, verdict: "referenced" }
+    - { path: "entry-template.yaml", times: 2, verdict: "essential" }
+    - { path: "system-guide.md", times: 1, verdict: "essential" }
+    - { path: "architecture.md", times: 1, verdict: "referenced" }
+  late_discoveries: []
+  topic_drift:
+    anchor: "Phase 0-1 本体论试点落地"
+    events:
+      - { at: "中段", topic: "Phase 2 知识结晶路径", severity: "minor" }
+      - { at: "后段", topic: "exp-002 目录结构探索 + prop-003/005", severity: "minor" }
+    recommendation: "所有偏移均在本体论大主题内，属于自然演进，不是偏离"

@@ -1,7 +1,7 @@
 # AISEP 系统指南
 
 > **这是你了解、使用和改进 AISEP 的唯一入口。** 每次迭代后更新此文件。
-> 最后更新：2026-03-13 17:54（系统设计论文 v0.1 + 架构图 + PDF 导出）
+> 最后更新：2026-03-15 17:24（Phase 0-2 本体论落地 + exp-002 目录探索 + MetaP 集成）
 
 ---
 
@@ -68,7 +68,8 @@ L2 按需（< 3K tokens）：历史制品摘要、其他 Slice
 ```
 AISEP250311/
 ├── AISEP.md                 ← AI 入口（导航）
-├── constitution.md          ← 全局铁律（12 条）
+├── MetaP.md                 ← MetaP 元认知层入口
+├── constitution.md          ← 全局铁律（16 条）
 │
 ├── .agents/                 ← 「做什么 + 怎么想」
 │   ├── workflows/           ← 14 个流程定义
@@ -76,7 +77,7 @@ AISEP250311/
 │   │   ├── idea-mgmt.md     ← 想法管理
 │   │   ├── project-mgmt.md  ← 项目管理
 │   │   ├── onboard.md       ← 逆向接管
-│   │   ├── tidy.md          ← 收尾整理（15 步检查清单）
+│   ├── tidy.md          ← 收尾整理（22 步检查清单，含 MetaP 5 步）
 │   │   └── s0~s8            ← 9 个阶段 workflow（含 S8 复盘进化）
 │   │   （全部 14 个 Workflow 均已充实为可执行级）
 │   └── skills/              ← 知识面
@@ -87,8 +88,8 @@ AISEP250311/
 │   ├── config.yaml          ← Pipeline 配置 + 上下文预算
 │   ├── ideas.yaml           ← 想法池
 │   ├── registry.yaml        ← 项目注册表
-│   ├── conventions/         ← 命名 + 编码标准
-│   ├── schemas/             ← 制品 Schema（9 个验证定义）
+│   ├── conventions/         ← 命名 + 编码标准 + 本体论规范
+│   ├── schemas/             ← 制品 Schema（10 个验证定义，含 decision-log）
 │   ├── templates/
 │   │   ├── project-scaffold/  ← 项目脚手架（复制用）
 │   │   └── artifacts/         ← 制品格式模板（引用用）
@@ -96,6 +97,15 @@ AISEP250311/
 │   ├── evolution/           ← 自进化引擎数据
 │   ├── backlog.md           ← 待做想法
 │   └── docs/ (12 份)        ← 设计文档 + 系统论文
+│
+├── .metap/                  ← MetaP 元认知层
+│   ├── config.yaml          ← MetaP 全局配置
+│   ├── engines/             ← 五引擎（探索/博弈/自治/进化/记忆）
+│   ├── ontology/            ← 三层 Ontology（Semantic/Kinetic/Dynamic）
+│   ├── memory/              ← 事件记忆
+│   ├── explorations/        ← 探索记录（exp-001, exp-002...）
+│   ├── evolution/           ← 进化观察 + 历史
+│   └── state/               ← 信任积分
 │
 └── projects/                ← 「项目数据」（待创建）
 ```
@@ -157,7 +167,17 @@ AISEP250311/
 | 命令 | 说明 |
 |------|------|
 | `/onboard --source <path>` | 逆向接管现有系统模块 |
-| `/tidy` | 对话窗口结束前收尾整理 |
+| `/tidy` | 对话窗口结束前收尾整理（含 MetaP 记忆流转） |
+| `/evolve` | 触发自进化分析 |
+
+#### MetaP 探索与博弈
+
+| 命令 | 说明 |
+|------|------|
+| `/explore <方向>` | 多 Scout 并行探索 → 报告 + 行动建议 |
+| `/deliberate <议题>` | 4 角色 3 轮结构化辩论 |
+| `/approve prop-XXX` | 批准行动建议 |
+| `/reject prop-XXX: 理由` | 拒绝行动建议 |
 
 #### 交互快捷命令
 
@@ -216,7 +236,7 @@ S7 部署配置                           ← deployment.yaml
 - Gate 通过时自动：记录 gate-log + 生成制品摘要（Compaction）
 - S3 确认技术栈后才加载框架 Skill（Gating）
 - S4-S6 **一次一个 Slice**，其他 Slice 上下文被排除
-- `/tidy` 收尾时自动：上下文审计 + 话题偏移评估 + 生成交接清单（`_next_session.yaml`）
+- `/tidy` 收尾时自动：上下文审计 + 话题偏移评估 + 本体论检查 + 结晶评估 + 生成交接清单（`_next_session.yaml`）+ MetaP 记忆流转
 - 新对话开场：读取交接清单 → 推荐加载文件 → 用户确认 → 精准加载
 - Context Fence：`AISEP.md` 声明排除目录，多项目时硬排除非活跃项目的上下文
 - Project Map：`_map.yaml` Gate 通过时自动生成，低 token 项目全貌（< 500 tokens）

@@ -4,76 +4,147 @@
 
 metadata:
   created: "2026-03-12"
-  last_updated: "2026-03-13"
+  last_updated: "2026-03-15"
   description: "对话中学到的概念、原理、方法论、设计决策"
   purpose: "提升用户认知，不是改进系统"
-  total_entries: 11
+  total_entries: 12
+  crystallization_protocol: |
+    知识结晶路径：cognitive_note → decision → skill_draft → skill
+    触发条件：第 2 次遇到→decision ｜ 第 3+ 次→skill_draft ｜ 跨项目→skill
+    追踪用 evolves_from + crystallized_as Link Types
+  bridge_protocol: |
+    收敛路径 A：MetaP 最终吸收 AISEP 知识库
+    当前阶段：bridge（双向引用，不迁移数据）
+    条目可通过 metap_concept_ref 字段链接到对应的 .metap/ontology/concepts/
 
 entries:
   - id: learn-001
+    _type: "cognitive_note"
     title: "递归问题与元层次思维"
     category: system_design
     tags: [递归, 自指, 元层次, 进化系统, 哥德尔]
     date: "2026-03-12"
+    maturity: { level: "decision", validation_count: 2 }
+    metap_concept_ref: null  # 未进入 MetaP 概念库
   - id: learn-002
+    _type: "cognitive_note"
     title: "摩擦即特性（Friction is a Feature）"
     category: system_design
     tags: [设计原则, 审批机制, 安全性, 人机协作]
     date: "2026-03-12"
+    maturity: { level: "decision", validation_count: 3 }
   - id: learn-003
+    _type: "cognitive_note"
     title: "规则生命周期管理"
     category: methodology
     tags: [生命周期, 规则管理, 进化, 渐进式]
     date: "2026-03-12"
+    maturity: { level: "note", validation_count: 1 }
   - id: learn-004
+    _type: "cognitive_note"
     title: "自进化的四层架构 — 从记忆到能力生成"
     category: system_design
     tags: [自进化, 反馈循环, OpenClaw, AlphaEvolve, 闭环学习]
     date: "2026-03-12"
+    maturity: { level: "note", validation_count: 1 }
   - id: learn-005
+    _type: "cognitive_note"
     title: "Spec-Driven Development — 从 Vibe Coding 到约束生成"
     category: engineering
     tags: [OpenSpec, SpecKit, specification, constitution, 变更隔离]
     date: "2026-03-12"
+    maturity: { level: "note", validation_count: 1 }
   - id: learn-006
+    _type: "cognitive_note"
+    _links:
+      - type: "extracted_from"
+        target: "project:proj-001"
+      - type: "crystallized_as"
+        target: "skill:odoo17"
     title: "TransientModel 向导模式"
     category: framework_pattern
     tags: [odoo, TransientModel, wizard, design-pattern]
     source_project: "proj-001"
     date: "2026-03-13"
+    maturity:
+      level: "skill"
+      validation_count: 2
+      last_validated: "2026-03-13"
+      promoted_to: "skill:odoo17"
   - id: learn-007
+    _type: "cognitive_note"
+    _links:
+      - type: "extracted_from"
+        target: "project:proj-001"
+      - type: "extracted_from"
+        target: "gate_record:s5-slice-05"
+      - type: "crystallized_as"
+        target: "skill:odoo17"
     title: "Odoo 版本间 API 破坏性变更"
     category: framework_gotcha
     tags: [odoo, migration, breaking-change, stock.move]
     source_project: "proj-001"
     date: "2026-03-13"
+    maturity:
+      level: "skill"
+      validation_count: 2
+      last_validated: "2026-03-13"
+      promoted_to: "skill:odoo17"
   - id: learn-008
+    _type: "cognitive_note"
+    _links:
+      - type: "extracted_from"
+        target: "project:proj-001"
     title: "Vertical Slice 架构"
     category: architecture
     tags: [architecture, methodology, delivery, agile]
     source_project: "proj-001"
     date: "2026-03-13"
+    maturity: { level: "decision", validation_count: 2, last_validated: "2026-03-13" }
   - id: learn-009
+    _type: "cognitive_note"
     title: "Repo Map — 代码地图模式"
     category: context_engineering
     tags: [context-engineering, AST, progressive-disclosure, aider]
     date: "2026-03-13"
+    maturity: { level: "note", validation_count: 1 }
   - id: learn-010
+    _type: "cognitive_note"
     title: "上下文控制成熟度模型（Context Control Maturity）"
     category: context_engineering
     tags: [context-engineering, maturity-model, audit, evolution]
     date: "2026-03-13"
+    maturity: { level: "decision", validation_count: 2, last_validated: "2026-03-13" }
   - id: learn-011
+    _type: "cognitive_note"
+    _links:
+      - type: "crystallized_as"
+        target: "evolution_rule:context-fence-mechanism"
     title: "Context Fence — 上下文围栏模式"
     category: context_engineering
     tags: [context-engineering, negative-prompting, multi-project, isolation]
     date: "2026-03-13"
+    maturity:
+      level: "decision"
+      validation_count: 2
+      last_validated: "2026-03-13"
+      promoted_to: "evolution_rule:context-fence-mechanism"
+  - id: learn-012
+    _type: "cognitive_note"
+    _links:
+      - type: "extracted_from"
+        target: "episode:ep-004"
+    title: "结构化辩论中的虚假共识检测（False Consensus Detection）"
+    category: methodology
+    tags: [辩论, 共识, 质量守护, devil-s-advocate, 认知偏差]
+    date: "2026-03-15"
+    maturity: { level: "note", validation_count: 1 }
 
 # ── 倒排索引（自动维护，/tidy 时同步更新）──
 
 by_category:
   system_design: [learn-001, learn-002, learn-004]
-  methodology: [learn-003]
+  methodology: [learn-003, learn-012]
   engineering: [learn-005]
   framework_pattern: [learn-006]
   framework_gotcha: [learn-007]
@@ -113,3 +184,27 @@ by_framework:
 
 by_project:
   proj-001: [learn-006, learn-007, learn-008]
+
+# ── 结晶成熟度倒排索引（/tidy 时同步更新）──
+
+by_maturity:
+  note: [learn-003, learn-004, learn-005, learn-009, learn-012]
+  decision: [learn-001, learn-002, learn-008, learn-010, learn-011]
+  skill_draft: []
+  skill: [learn-006, learn-007]
+
+# ── 结晶路径追踪（记录已发生的晋升）──
+
+crystallization_paths:
+  - source: "learn-006"           # TransientModel 向导模式
+    promoted_to: "skill:odoo17"   # 已沉淀到 Odoo17 SKILL.md
+    link_type: "crystallized_as"
+    date: "2026-03-13"
+  - source: "learn-007"           # Odoo API 破坏性变更
+    promoted_to: "skill:odoo17"   # 已沉淀到 pitfalls.md
+    link_type: "crystallized_as"
+    date: "2026-03-13"
+  - source: "learn-011"           # Context Fence
+    promoted_to: "evolution_rule:context-fence-mechanism"
+    link_type: "crystallized_as"
+    date: "2026-03-13"

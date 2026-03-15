@@ -1,0 +1,52 @@
+# AISEP 研究沉淀索引
+# 记录所有已沉淀的调研报告
+
+research_index:
+  items:
+    - id: "research-001"
+      _type: "research"
+      _links:
+        - type: "informs"
+          target: "decision:dec-001"
+        - type: "informs"
+          target: "decision:dec-002"
+      title: "AI 辅助系统逆向工程行业调研"
+      date: "2026-03-15"
+      path: "2026-03-15-ai-reverse-engineering/"
+      tags: ["onboard", "reverse-engineering", "ai", "knowledge-graph", "palantir-ontology"]
+      status: "completed"
+      applied_to:
+        - "onboard.md V1 → V2 重写"
+        - "onboard-reverse-engineering.md V2 更新"
+        - "research-precipitation-design.md 新建"
+      conversation_id: "0b998d9e-fade-452c-b2c8-9fb78230f897"
+      key_decisions:
+        - "采用 Multi-Pass Progressive Disclosure 架构"
+        - "引入知识图谱中间层（Palantir Ontology 模式）"
+        - "框架适配器接口设计"
+        - "AI+人共建的论述+选择模式"
+
+    - id: "research-002"
+      _type: "research"
+      _links:
+        - type: "informs"
+          target: "decision:dec-003"
+        - type: "informs"
+          target: "decision:dec-004"
+        - type: "evolves_from"
+          target: "research:research-001"
+      title: "本体论作为 AISEP 底层信息架构"
+      date: "2026-03-15"
+      path: "2026-03-15-ontology-architecture/"
+      tags: ["ontology", "palantir", "a2a", "knowledge-crystallization", "multi-agent"]
+      status: "completed"
+      applied_to:
+        - "AISEP 全局信息架构概念设计"
+        - "知识结晶循环机制设计"
+        - "A2A 多 Agent 讨论模式设计"
+      conversation_id: "0b998d9e-fade-452c-b2c8-9fb78230f897"
+      key_decisions:
+        - "采用 Palantir 三要素模型（Object/Link/Action Types）"
+        - "7 层 Object Types 设计"
+        - "知识结晶成熟度路径：note → decision → skill"
+        - "多视角讨论模式（非字面多 Agent，而是多角色推理）"

@@ -1,0 +1,23 @@
+# Decision Log 模板
+# 输出文件：history/decision-log.yaml 或 artifacts/global/decision-log.yaml
+# 本体论类型：decision（知识层 L4）
+
+decision_log:
+  entries:
+    - id: "dec-001"
+      _type: "decision"
+      _links:
+        - type: "informs"           # 被哪个 research 驱动
+          target: "research:"
+        - type: "validated_by"      # 被哪个 gate 验证
+          target: "gate_record:"
+      title: ""                     # 决策标题
+      decision: ""                  # 实际选择
+      rationale: ""                 # 理由
+      alternatives:                 # 被否决的替代方案
+        - option: ""
+          reason_rejected: ""
+      date: ""                      # ISO 8601
+      status: "accepted"            # proposed | accepted | superseded | deprecated
+      source_research: ""           # 可选：research ID
+      applied_to: []                # 决策影响的制品

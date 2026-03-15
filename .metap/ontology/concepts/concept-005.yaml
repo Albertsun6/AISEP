@@ -1,0 +1,28 @@
+id: concept-005
+name: "Ontology-as-SSOT 的三大结构性挑战"
+definition: "将 Ontology 作为 Single Source of Truth 面临知识获取瓶颈、Schema 演化复杂度、中心化单点风险三大结构性挑战"
+elaboration: |
+  1. **知识获取瓶颈（Knowledge Acquisition Bottleneck）**
+     - 传统 Ontology 构建劳动密集，需领域专家 + 本体工程师紧密协作
+     - LLM 正在缓解这一瓶颈（2025 年趋势：原本数月的专家工作可在数天完成）
+     - 但 LLM 生成的 Ontology 质量仍需人工验证
+
+  2. **Schema 演化（Ontology Evolution）**
+     - 领域知识不断变化，Ontology 必须持续演进
+     - 演化必须保持后向兼容（否则依赖 Ontology 的所有下游系统会断裂）
+     - 需要版本化 + 迁移策略（类似数据库 migration）
+
+  3. **中心化单点风险**
+     - 高度中心化的 SSOT 可能成为性能瓶颈和单点故障
+     - 解决方案：Data Mesh 式的联邦 Ontology（各域维护自己的子 Ontology，
+       通过上层映射统一）——BT Group 的 Enterprise Digital Twin 案例
+confidence: 0.85
+source_type: paper
+maturity: growing
+tags: [SSOT, 挑战, Schema演化, 知识获取, 联邦Ontology]
+created_date: "2026-03-15"
+last_referenced: "2026-03-15"
+links:
+  derived_from: [src-007, src-008]
+  contradicts: [concept-003]
+  relates_to: [concept-001]

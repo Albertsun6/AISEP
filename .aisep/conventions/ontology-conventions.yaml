@@ -1,0 +1,323 @@
+# AISEP 本体论标注规范
+# 基于 Palantir Foundry 三要素模型：Object Type + Link Type + Action Type
+# 参考研究：.aisep/docs/research/2026-03-15-ontology-architecture/report.md
+
+_meta:
+  version: "0.1"
+  created: "2026-03-15"
+  status: "pilot"  # pilot → stable → extended
+  description: |
+    本文件定义 AISEP 系统的本体论标注规范。
+    所有 yaml 文件通过 _type 和 _links 字段声明自身在知识图谱中的位置和关系。
+    AI Agent 在创建/修改制品时应自动维护这些标注。
+
+# ═══════════════════════════════════════
+# 第一部分：Object Types（19 种，7 层）
+# ═══════════════════════════════════════
+
+object_types:
+
+  # ─── L1 项目层 ───
+  project:
+    description: "AISEP 管理的项目"
+    properties: [id, name, status, source, created_at]
+    carriers: ["registry.yaml", "project.yaml"]
+
+  slice:
+    description: "项目内的功能切片"
+    properties: [id, name, stage, priority, crud_coverage]
+    carriers: ["slice-plan.yaml", "slices/*/design.yaml"]
+
+  change:
+    description: "Brownfield 项目的变更单元"
+    properties: [id, title, type, risk, status]
+    carriers: ["changes/*.yaml"]
+
+  # ─── L2 领域层 ───
+  domain_entity:
+    description: "DDD 实体/聚合（来自 domain-model.yaml）"
+    properties: [name, technical_name, bounded_context, confidence]
+    carriers: ["domain-model.yaml"]
+
+  business_rule:
+    description: "业务规则（约束、计算逻辑等）"
+    properties: [id, description, rationale, confidence]
+    carriers: ["domain-model.yaml (embedded)", "business-rules.yaml"]
+
+  glossary_term:
+    description: "术语表条目"
+    properties: [term, definition, synonyms, source]
+    carriers: ["glossary.yaml"]
+
+  # ─── L3 架构层 ───
+  architecture_component:
+    description: "视图/安全规则/API/报表等架构元素"
+    properties: [name, type, framework, source_file]
+    carriers: ["architecture.yaml"]
+
+  # ─── L4 知识层 ───
+  research:
+    description: "调研报告（已沉淀）"
+    properties: [id, title, date, tags, status]
+    carriers: [".aisep/docs/research/index.yaml"]
+
+  cognitive_note:
+    description: "认知笔记（学习产出）"
+    properties: [id, concept, one_liner, analogy]
+    carriers: [".aisep/knowledge/entries/*.yaml"]
+
+  skill:
+    description: "方法论/框架知识 SKILL.md"
+    properties: [name, category, maturity, trigger_condition]
+    carriers: [".agents/skills/*/SKILL.md"]
+
+  decision:
+    description: "设计决策记录"
+    properties: [id, title, decision, rationale, date, status, source_research]
+    carriers: ["decision-log.yaml", "adr/*.md"]
+
+  # ─── L5 过程层 ───
+  gate_record:
+    description: "Gate 通过记录"
+    properties: [stage, slice, passed, date, evidence]
+    carriers: ["gate-log.yaml"]
+
+  deliberation_record:
+    description: "多角色辩论记录"
+    properties: [id, topic, roles, rounds, consensus_points, dissent_points, date]
+    carriers: [".metap/explorations/*/deliberation.md"]
+
+  episode:
+    description: "事件记忆（MetaP 记忆引擎）"
+    properties: [id, type, date, context, event, outcome, significance, linked_concepts]
+    carriers: [".metap/memory/episodes/*.yaml"]
+
+  reasoning_trace:
+    description: "AI 推理链记录（远期）"
+    properties: [id, stage, module, hypotheses]
+    carriers: ["reasoning-traces/*.yaml"]
+    status: "planned"
+
+  # ─── L6 进化层 ───
+  evolution_rule:
+    description: "系统进化规则"
+    properties: [id, category, trigger, content, approved_by]
+    carriers: [".aisep/evolution/interaction-rules.yaml"]
+
+  interaction_pattern:
+    description: "交互模式识别（远期）"
+    properties: [id, pattern, frequency, effectiveness]
+    carriers: [".aisep/evolution/patterns.yaml"]
+    status: "planned"
+
+  # ─── L7 Agent 层（A2A 预留）───
+  agent_card:
+    description: "Agent 能力描述（A2A Agent Card）"
+    properties: [name, role, capabilities, preferred_context]
+    carriers: [".agents/cards/*.yaml"]
+    status: "future"
+
+  agent_session:
+    description: "Agent 执行会话记录（A2A）"
+    properties: [id, agent, task, start_time, status]
+    carriers: ["sessions/*.yaml"]
+    status: "future"
+
+# ═══════════════════════════════════════
+# 第二部分：Link Types（12 种）
+# ═══════════════════════════════════════
+
+link_types:
+
+  # 项目关系
+  contains:
+    description: "包含关系"
+    examples: ["project → slice", "project → change"]
+    direction: "parent → child"
+
+  depends_on:
+    description: "依赖关系"
+    examples: ["slice → slice", "module → module"]
+    direction: "dependent → dependency"
+
+  # 知识关系
+  informs:
+    description: "调研→决策的知识传导"
+    examples: ["research → decision"]
+    direction: "source → target"
+
+  produces:
+    description: "过程→产出的生产关系"
+    examples: ["project → domain_entity", "gate_record → cognitive_note"]
+    direction: "producer → product"
+
+  extracted_from:
+    description: "从过程中提取知识"
+    examples: ["cognitive_note → gate_record", "cognitive_note → research"]
+    direction: "extract → source"
+
+  crystallized_as:
+    description: "知识结晶（推理链→技能）"
+    examples: ["reasoning_trace → skill"]
+    direction: "raw → refined"
+
+  # 演进关系
+  evolves_from:
+    description: "版本演进"
+    examples: ["v2 → v1"]
+    direction: "new → old"
+
+  supersedes:
+    description: "替代关系"
+    examples: ["new_decision → old_decision"]
+    direction: "new → old"
+
+  triggers:
+    description: "触发关系"
+    examples: ["interaction_pattern → evolution_rule"]
+    direction: "cause → effect"
+
+  # 追溯关系
+  references:
+    description: "通用引用"
+    examples: ["any → any"]
+    direction: "referrer → referent"
+
+  validated_by:
+    description: "决策被验证"
+    examples: ["decision → gate_record"]
+    direction: "claim → evidence"
+
+  delegated_to:
+    description: "任务委托（A2A）"
+    examples: ["agent_session → agent_card"]
+    direction: "task → agent"
+    status: "future"
+
+  debates:
+    description: "辩论中的对抗关系"
+    examples: ["deliberation_record → concept", "deliberation_record → exploration"]
+    direction: "deliberation → subject"
+
+# ═══════════════════════════════════════
+# 第三部分：Action Types（8 种）
+# ═══════════════════════════════════════
+
+action_types:
+  onboard:
+    description: "逆向接管 → 创建 project + entities"
+    trigger: "/onboard"
+  pass_gate:
+    description: "Gate 通过 → 更新 stage + 创建 gate_record"
+    trigger: "/pipeline gate"
+  crystallize:
+    description: "知识结晶 → reasoning_trace → skill / cognitive_note"
+    trigger: "S8 复盘 / /tidy"
+  evolve:
+    description: "系统进化 → 创建 evolution_rule"
+    trigger: "进化 命令"
+  precipitate:
+    description: "沉淀 → 对话产物 → research / cognitive_note"
+    trigger: "/tidy 研究沉淀检查"
+  delegate:
+    description: "委托 → 分配任务给另一个 Agent（A2A）"
+    trigger: "未来"
+    status: "future"
+  review:
+    description: "审核 → 人审核 Agent 产出"
+    trigger: "Gate / 进化审批"
+  promote:
+    description: "提升 → idea → project / draft → approved"
+    trigger: "/idea promote"
+  deliberate:
+    description: "多视角辩论 → 共识/分歧结构化输出 → 行动建议修正"
+    trigger: "/deliberate"
+
+# ═══════════════════════════════════════
+# 第四部分：标注规范
+# ═══════════════════════════════════════
+
+annotation_spec:
+
+  # _type 字段
+  _type:
+    placement: "索引文件中的每个条目（entry/item）"
+    format: "string，必须是 object_types 中定义的 key"
+    example: '_type: "gate_record"'
+
+  # _links 字段
+  _links:
+    placement: "与 _type 同级"
+    format: "list of {type, target}"
+    target_format: "{object_type}:{id}"
+    example: |
+      _links:
+        - type: "informs"
+          target: "decision:dec-001"
+        - type: "extracted_from"
+          target: "gate_record:s8-retrospective"
+
+  # 标注原则
+  principles:
+    - "只加不改：_type 和 _links 是附加字段，不影响已有字段的语义"
+    - "索引优先：关系标注放在索引文件中，独立文件保持轻量"
+    - "渐进标注：不要求一次标注所有关系，随着使用逐步补全"
+    - "AI 自维护：Agent 在 /tidy 和 Gate 时自动检查和补全标注"
+    - "孤立 Object 是 red flag：每个 Object 至少应有一个 Link"
+
+# ═══════════════════════════════════════
+# 第五部分：MetaP 本体论映射 + 收敛路线图
+# ═══════════════════════════════════════
+# 决策：路径 A — MetaP 概念库最终吸收 AISEP 知识库
+# 来源：exp-002（目录结构合理性分析）→ prop-005
+
+metap_convergence:
+
+  # ── AISEP ↔ MetaP Object Type 映射 ──
+  type_mapping:
+    # AISEP Object Type      →  MetaP Object Type     | 关系
+    cognitive_note:            { metap_type: "Concept",      relation: "absorb",   note: "learn-XXX → concept-XXX（成熟后迁移）" }
+    research:                  { metap_type: "Source",        relation: "bridge",   note: "research 保留完整上下文，Source 只存元数据" }
+    decision:                  { metap_type: "ActionProposal", relation: "bridge",  note: "decision 更重（有 alternatives），ActionProposal 偏轻" }
+    project:                   { metap_type: "Project",       relation: "share",    note: "同一实体，MetaP 只引用" }
+    skill:                     { metap_type: null,            relation: "aisep_only", note: "技能定义只在 .agents/ 中" }
+    gate_record:               { metap_type: null,            relation: "aisep_only", note: "工程过程记录，MetaP 不管" }
+    evolution_rule:            { metap_type: null,            relation: "aisep_only", note: "当前 .aisep/ 管理，远期可迁移到 .metap/" }
+    # MetaP 专有（AISEP 无对应）
+    Exploration:               { aisep_type: null,            relation: "metap_only", note: "探索过程只在 .metap/ 中" }
+
+  # ── 成熟度模型映射 ──
+  maturity_mapping:
+    # AISEP maturity     →  MetaP maturity
+    note:                  "seed"
+    decision:              "growing"
+    skill_draft:           "validated"
+    skill:                 "established"
+
+  # ── 收敛路线图 ──
+  convergence_roadmap:
+    current_phase: "bridge"  # bridge → migrate → unify
+    phases:
+      bridge:
+        description: "短期——双向引用，不迁移数据"
+        criterion: |
+          以下任一条件满足 → 进入 migrate：
+          - MetaP Object Types 定义连续 3 次 explore 不增 + 新概念可被现有 schema 完整描述
+          - 单次 onboard 产生 cognitive_note > 20 条（紧急迁移触发）
+        actions:
+          - "knowledge/index.yaml 条目增加 metap_concept_ref 字段"
+          - "metap/concepts/*.yaml 增加 aisep_note_ref 字段"
+          - "/tidy 时检查双向一致性"
+          - "maturity_mapping 自动同步：AISEP skill → MetaP established"
+      migrate:
+        description: "中期——新知识直接写 .metap/，旧知识按需迁移"
+        criterion: "90% 的知识条目已有 MetaP 对应 → 进入 unify"
+        actions:
+          - "entry-template.yaml 默认生成 .metap/ontology/concepts/"
+          - ".aisep/knowledge/ 标记为 legacy 但不删除"
+      unify:
+        description: "远期——单一知识层，.aisep/knowledge/ 完全废弃"
+        criterion: "所有知识引用已迁移到 .metap/"
+        actions:
+          - ".aisep/knowledge/ 移至 archive/"
+          - "ontology-conventions.yaml 中 cognitive_note 标记为 deprecated"

@@ -33,7 +33,8 @@ context_fence:
 | 文件 | 职责 |
 |------|------|
 | `AISEP.md`（本文件） | 系统导航 + 当前活跃项目 |
-| `constitution.md` | 全局铁律（不可违反） |
+| `MetaP.md` | MetaP 元认知层入口 |
+| `constitution.md` | 全局铁律（§1-16，含 MetaP 扩展） |
 | 活跃项目的 `glossary.yaml` | 术语一致性 |
 
 ### 按需加载
@@ -45,6 +46,9 @@ context_fence:
 | `.aisep/registry.yaml` | 项目注册表 | `/project` 命令时 |
 | `.agents/workflows/` | 工作流定义 | 进入具体阶段时 |
 | `.agents/skills/` | 方法论 + 框架知识 | 经 Gating 过滤后加载 |
+| `.metap/config.yaml` | MetaP 全局配置 | `/explore` `/deliberate` 时 |
+| `.metap/ontology/schema.yaml` | 三层 Ontology | 探索/知识管理时 |
+| `.metap/engines/` | MetaP 引擎配置 | 按需加载对应引擎 |
 
 ### 设计文档
 
@@ -73,8 +77,15 @@ context_fence:
 /onboard --source <path>  逆向接管现有模块
 
 # 系统维护
-/tidy                     对话窗口收尾整理
+/tidy                     对话窗口收尾整理（含 MetaP 记忆流转）
 /evolve                   触发自进化分析
+
+# MetaP 探索与博弈
+/explore <方向>            多 Scout 并行探索 → 报告 + 行动建议
+/deliberate <议题>         4 角色 3 轮结构化辩论
+/deliberate --on exp-XXX  对探索发现发起辩论
+/approve prop-XXX         批准行动建议
+/reject prop-XXX: 理由    拒绝行动建议
 ```
 
 ## 上下文加载协议

@@ -23,6 +23,8 @@
 - [x] **registry 冷热分区** — 归档项目迁移到 `registry-archive.yaml`，保持主注册表轻量（已完成：冷热分区结构 + archive/ 目录）
 - [x] **Skills `_summary.yaml`** — 框架知识 auto-generated 摘要索引，避免知识库膨胀（已完成：odoo17/_summary.yaml）
 - [x] **知识库倒排索引** — `.aisep/knowledge/index.yaml` 增加 `by_tag` / `by_framework` 倒排索引（已完成：4 个维度）
+- [x] **Phase 2: 知识结晶路径形式化** — cognitive_note → decision → skill 演进追踪（已完成：maturity 级别 + crystallization_paths + /tidy 结晶评估）
+- [x] **Phase 3: 多视角讨论模式** — 4角色3轮辩论实战（/deliberate --on exp-002）+ MetaP Episodes 初始化 + ontology 补齐
 
 ## 🟢 低优先级 / 远期
 
@@ -36,6 +38,11 @@
 - [ ] **VS Code Extension** — 侧栏展示项目列表/Gate 时间线/一键 pipeline 按钮
 - [ ] **Continue Context Provider 融合** — 研究其声明式上下文注册架构，作为 AISEP VS Code Extension 技术底座
 - [x] **GitHub 代码管理集成** — 项目代码的版本控制（已完成：Git 初始化 + GitHub private 仓库 + /tidy Git 同步步骤）
+- [ ] **Phase 4: 进化层统一 + A2A 多 Agent 预研**
+  - [ ] evolution 目录统一迁移到 `.metap/evolution/`（~30m · 8 引用处更新）
+  - [ ] A2A agent_card + delegate 预研（等工具链成熟）
+  - [ ] 研究 Gemini/Antigravity 等 coding agent 进化机制整合到 AISEP 体系
+  - [ ] Coding agent 原理研究（Antigravity/Cursor）
 
 ## Changelog
 
@@ -75,3 +82,10 @@
 | 2026-03-13 | Git 版本管理建立：.gitignore + Git 初始化 + GitHub 远程仓库(Albertsun6/AISEP) + /tidy Step 15 版本同步 |
 | 2026-03-13 | 系统设计论文 v0.1：11 章 + 2 附录（含 6 大演进维度路线图）+ 4 张正式架构图 + PDF 导出 |
 | 2026-03-13 | implementation_plan.md 文档索引 11→12 份，新增论文注册 |
+| 2026-03-15 | Onboard V2 重写：R0-R6 Multi-Pass + 知识图谱 + 论述+选择模式 |
+| 2026-03-15 | 本体论架构研究：Palantir 三要素 + 7层 Object Types + 知识结晶循环 |
+| 2026-03-15 | 研究沉淀机制建立：research/index.yaml + /tidy Step 11 |
+| 2026-03-15 | **Phase 0 落地**：`ontology-conventions.yaml`（18 Object Types + 12 Link Types + 8 Action Types）+ 5 个现有 yaml 文件标注（registry + knowledge + evolution + research + gate-log） |
+| 2026-03-15 | **Phase 1 落地**：`decision-log.schema.yaml` + `decision-log.tmpl.yaml` + proj-001 首份 `decision-log.yaml`（6 条决策）+ /tidy Step 12 本体论一致性检查 |
+| 2026-03-15 | **Phase 3 落地**：MetaP Episodes 初始化（4 episodes）+ ontology 补齐（19 OT/13 LT/9 AT）+ `/deliberate --on exp-002` 首次实战（4 修正建议 + concept-006 多重编码同构性）|
+| 2026-03-15 | **辩论修正落地**：/tidy Step 12 增加 maturity_mapping 成熟度同步检查 + 收敛路线图退出标准增强 + Phase 4 规划更新 |

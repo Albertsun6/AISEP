@@ -1,0 +1,23 @@
+id: concept-003
+name: "Ontology→Application 自动生成"
+definition: "从 Ontology 定义自动生成应用代码/界面/API 的技术路径——将本体论从'分析工具'升级为'生产力工具'"
+elaboration: |
+  已验证的实现路径：
+  1. Ontology → Low-code App（研究已验证：从 Enterprise Ontology 自动生成 Mendix 应用）
+  2. Ontology → CRUD API（工具如 AINIRO.IO 可从 schema 秒级生成 REST API）
+  3. Ontology → UI Forms（从 Ontology class/property 自动生成表单）
+  4. Ontology → Database Schema（OntoRelα 工具可从 Ontology 生成 SQL DDL）
+
+  关键张力：自动生成的代码/界面通常只能覆盖 60-70% 的需求。
+  剩余 30-40% 的定制化工作往往涉及业务逻辑的边界条件和 UX 优化，
+  这些难以在 Ontology 中完整表达。
+confidence: 0.72
+source_type: paper
+maturity: growing
+tags: [代码生成, low-code, CRUD, 自动化, 可行性]
+created_date: "2026-03-15"
+last_referenced: "2026-03-15"
+links:
+  derived_from: [src-005, src-009]
+  relates_to: [concept-001]
+  contradicts: [concept-005]

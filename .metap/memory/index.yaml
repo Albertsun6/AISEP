@@ -1,0 +1,29 @@
+# .metap/memory/index.yaml — 记忆索引
+# 自动维护，/tidy 时同步更新
+metadata:
+  total_episodes: 4
+  last_updated: "2026-03-15"
+
+by_type:
+  exploration: [ep-001, ep-002]
+  decision: [ep-003]
+  deliberation: [ep-004]
+  error: []
+  insight: []
+
+by_concept:
+  concept-001: [ep-001, ep-002, ep-003, ep-004]
+  concept-002: [ep-001, ep-002, ep-003, ep-004]
+  concept-003: [ep-001]
+  concept-004: [ep-001]
+  concept-005: [ep-001, ep-002, ep-004]
+  concept-006: [ep-004]
+
+by_exploration:
+  exp-001: [ep-001]
+  exp-002: [ep-002, ep-004]
+
+by_date:
+  "2026-03-15": [ep-001, ep-002, ep-003, ep-004]
+
+recent: [ep-004, ep-003, ep-002, ep-001]

@@ -1,0 +1,25 @@
+# sources.yaml — exp-002 来源
+sources:
+  - id: src-006
+    title: "AI-Assisted Monorepo Best Practices 2025 — Context-Centric Design"
+    type: url
+    url: "https://propelcode.ai"
+    credibility: 0.7
+    key_findings: "AI 工具在可预测、常规化的目录结构中表现最好；推荐 AGENTS.md 模式"
+  - id: src-007
+    title: "Feature-Based Monorepo Organization — Leapcell"
+    type: url
+    url: "https://leapcell.io"
+    credibility: 0.6
+    key_findings: "按业务特性组织优于按技术分层；共享组件集中到 libs/packages"
+  - id: src-008
+    title: "AISEP 内部目录树全量扫描"
+    type: experiment
+    credibility: 1.0
+    key_findings: "160+ 文件/目录，四层分离（.agents/.aisep/.metap/projects），存在知识体系双轨和本体论分裂"
+  - id: src-009
+    title: "AI Documentation Structure — AI DevKit"
+    type: url
+    url: "https://ai-devkit.com"
+    credibility: 0.6
+    key_findings: "推荐 docs/ai/ 专用目录；AI 长期记忆需要结构化模板"

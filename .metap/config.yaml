@@ -1,0 +1,52 @@
+# .metap/config.yaml — MetaP 元平台全局配置
+metap:
+  version: "0.2.0"
+  description: "AISEP 之上的元认知协作层"
+
+  # 引擎启用状态
+  engines:
+    ontology: true
+    exploration: true
+    deliberation: true
+    autonomy: true
+    evolution: true
+    memory: true
+
+  # 探索引擎默认参数
+  exploration:
+    max_scouts: 3                   # Phase 2: 启用并行多 Scout
+    max_sources_per_scout: 5         # 每 Scout 5 个，总量 = scouts × 5
+    source_language_priority: [en, zh]
+    prefer_primary_sources: true
+    output_format: markdown
+
+  # 博弈引擎默认参数
+  deliberation:
+    default_roles: [advocate, critic, pragmatist, visionary]  # Phase 2: 4 角色
+    max_rounds: 3                      # Phase 2: 3 轮
+    convergence_method: structured_consensus
+
+  # 自治级别全局默认
+  autonomy:
+    default_level: L1
+    trust_score_initial: 0.0
+    trust_events:
+      exploration_accepted: 0.3
+      action_executed_successfully: 0.5
+      action_rejected: -0.1
+      action_caused_issue: -0.8
+      rule_proposal_accepted: 0.2
+
+  # 记忆引擎参数
+  memory:
+    working_memory_budget_tokens: 10000
+    episodic_decay_months: 6
+    semantic_review_months: 12
+    promotion_threshold: 3  # 同类事件出现 N 次触发提升建议
+
+  # 上下文预算（与 AISEP 对齐）
+  context:
+    budget:
+      l0_max_tokens: 2000   # MetaP.md + constitution
+      l1_max_tokens: 5000   # 当前探索/引擎配置
+      l2_per_request_tokens: 3000

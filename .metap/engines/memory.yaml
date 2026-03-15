@@ -1,0 +1,70 @@
+# .metap/engines/memory.yaml — 记忆引擎配置
+# 职责：三级记忆管理（工作记忆 → 事件记忆 → 语义记忆）
+
+engine:
+  name: memory
+  version: "0.1.0"
+  description: "三级记忆引擎——从短期对话到长期知识的渐进固化"
+
+# ─── 三级记忆层 ───
+
+layers:
+  working_memory:
+    name: "工作记忆"
+    storage: "in-context (LLM context window)"
+    capacity: 10000
+    lifecycle: conversation_scoped
+
+  episodic_memory:
+    name: "事件记忆"
+    storage: ".metap/memory/episodes/"
+    format: yaml
+    lifecycle: exploration_scoped
+    schema:
+      episode:
+        id: "ep-{NNN}"
+        type: "exploration | deliberation | decision | error | insight"
+        date: date
+        context: text
+        event: text
+        outcome: text
+        significance: float
+        linked_concepts: list
+        linked_exploration: string
+
+  semantic_memory:
+    name: "语义记忆"
+    storage: ".metap/ontology/concepts/"
+    format: yaml
+    lifecycle: permanent
+    relation_to_ontology: "语义记忆 = Ontology 中的 Concept 对象。直接复用 Ontology schema。"
+
+# ─── 记忆流转协议 ───
+
+promotion:
+  working_to_episodic:
+    trigger: "对话结束 / 探索结束 / /tidy 命令"
+    autonomy: L2
+  episodic_to_semantic:
+    trigger: "同类 episode 累计 >= promotion_threshold (默认 3)"
+    autonomy: L1
+
+# ─── 遗忘机制 ───
+
+forgetting:
+  episodic_decay:
+    after_months: 6
+    action: "压缩为 1 行摘要"
+  semantic_review:
+    after_months: 12
+    action: "标记未引用的 Concept 为 dormant"
+  never_forget:
+    - "constitution 条款"
+    - "进化日志 (evolution history)"
+    - "被标记为 established 的 Concept"
+
+# ─── 记忆索引 ───
+
+index:
+  storage: ".metap/memory/index.yaml"
+  auto_update: true

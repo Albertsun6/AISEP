@@ -1,0 +1,171 @@
+# .metap/engines/deliberation.yaml — 博弈引擎配置
+# 职责：多角色结构化辩论 → 共识/分歧结构化输出 → 行动建议
+
+engine:
+  name: deliberation
+  version: "0.2.0"
+  description: "多角色结构化辩论引擎——4 角色 3 轮完整版"
+
+# ─── 角色定义 ───
+
+roles:
+
+  - id: advocate
+    name: "倡导者"
+    icon: "🟢"
+    stance: "为提案/发现辩护，强调价值和机会"
+    personality: |
+      乐观但不盲目。聚焦于：
+      - 核心价值主张（为什么值得做）
+      - 可行的实施路径
+      - 成功案例和正面证据
+      - 竞争优势和时机窗口
+    constraints:
+      - 必须引用具体证据，不可空谈价值
+      - 面对 Critic 的质疑必须正面回应，不可回避
+
+  - id: critic
+    name: "质疑者"
+    icon: "🔴"
+    stance: "寻找漏洞、风险和未考虑的边界条件"
+    personality: |
+      严谨但不消极。聚焦于：
+      - 逻辑漏洞和推理跳跃
+      - 技术风险和性能隐患
+      - 未考虑的边界条件和极端场景
+      - 隐藏的成本和二阶效应
+    constraints:
+      - 每个质疑必须具体且可回应（不可泛泛说"可能有风险"）
+      - 必须区分"致命缺陷"和"可管理的风险"
+
+  - id: pragmatist
+    name: "务实者"
+    icon: "🟡"
+    stance: "评估现实约束，聚焦 ROI 和优先级"
+    personality: |
+      务实且面向执行。聚焦于：
+      - 资源约束（时间、人力、技术能力）
+      - ROI 分析和优先级排序
+      - MVP 策略和渐进式路径
+      - 与现有系统/流程的兼容性
+    constraints:
+      - 必须给出具体的工作量估算
+      - 当方案过于理想化时必须提出简化建议
+
+  - id: visionary
+    name: "远见者"
+    icon: "🔵"
+    stance: "扩展视野，关注长期影响和跨领域启示"
+    personality: |
+      前瞻且跨学科。聚焦于：
+      - 长期影响和战略价值
+      - 跨领域的类比和启示
+      - 二阶效应和涌现可能
+      - 未来技术趋势对当前决策的影响
+    constraints:
+      - 远见必须锚定在当前议题上，不可天马行空
+      - 必须说明"为什么在这里引入这个视角"
+
+# ─── 辩论协议 ───
+
+protocol:
+  active_roles: [advocate, critic, pragmatist, visionary]
+  rounds:
+    round_1:
+      - role: advocate
+        task: "基于探索发现，陈述核心价值主张和建议方案"
+        max_tokens: 800
+      - role: critic
+        task: "针对倡导者的陈述，提出具体质疑和风险点"
+        max_tokens: 800
+    round_2:
+      - role: advocate
+        task: "逐条回应质疑，修正方案"
+        max_tokens: 600
+      - role: pragmatist
+        task: "评估可行性、给出工作量估算、提出 MVP 建议"
+        max_tokens: 800
+      - role: visionary
+        task: "补充长远视角、跨学科启示、二阶效应"
+        max_tokens: 600
+    round_3:
+      - role: advocate
+        task: "修正最终立场：坚持/让步/修正方案"
+        max_tokens: 400
+      - role: critic
+        task: "最终评估：已解决/仍存在/致命风险分类"
+        max_tokens: 400
+      - role: pragmatist
+        task: "最终建议：推荐路径 + 工作量 + MVP vs Full"
+        max_tokens: 400
+      - role: visionary
+        task: "最终洞察：长期价值判断 + 二阶效应"
+        max_tokens: 400
+
+# ─── 共识形成规则 ───
+
+convergence:
+  method: structured_consensus
+  rules:
+    consensus_threshold: 0.7
+    output_structure:
+      consensus_points:
+        description: "各方同意的结论"
+        format: "结论 + 支撑理由 + confidence"
+      dissent_points:
+        description: "仍有分歧的点"
+        format: "争议点 + 各方观点 + 各方 confidence"
+      action_proposals:
+        description: "基于辩论产出的修正行动建议"
+        format: "ActionProposal schema"
+      meta_insight:
+        description: "辩论过程中涌现的元认知洞察"
+        format: "如果辩论揭示了新的概念或方法论，在此记录"
+
+# ─── 辩论记录模板 ───
+
+record_template: |
+  ## 辩论记录：{topic}
+
+  **探索 ID**: {exp_id} | **日期**: {date} | **角色**: 🟢🔴🟡🔵
+
+  ### Round 1: 陈述与质疑
+  {round_1_content}
+
+  ### Round 2: 回应、约束与视野
+  {round_2_content}
+
+  ### Round 3: 立场修正与共识
+  {round_3_content}
+
+  ---
+
+  ### 共识结论
+  {consensus_points}
+
+  ### 分歧点
+  {dissent_points}
+
+  ### 行动建议（辩论后修正版）
+  {revised_proposals}
+
+  ### 元认知洞察
+  {meta_insights}
+
+# ─── 辩论质量守护 ───
+
+quality_guards:
+  - name: "立场锁定检查"
+    description: "检测角色是否偏离其 stance 约束"
+    trigger: "每个角色发言后"
+    action: "如果偏离，在下一轮提示角色回归立场"
+
+  - name: "证据要求"
+    description: "每个论点必须引用至少 1 个来源或逻辑推理链"
+    trigger: "每个角色发言后"
+    action: "无证据的论点标注为 [unsubstantiated]"
+
+  - name: "虚假共识检测"
+    description: "防止所有角色趋同导致失去辩论价值"
+    trigger: "最终轮"
+    action: "如果所有角色完全一致，critic 强制提出 devil's advocate 观点"

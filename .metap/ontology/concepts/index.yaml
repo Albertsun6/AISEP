@@ -1,0 +1,79 @@
+# 概念索引
+metadata:
+  total_concepts: 6
+  last_updated: "2026-03-15"
+  bridge_protocol: |
+    收敛路径 A：MetaP 最终吸收 AISEP 知识库
+    当前阶段：bridge（双向引用，不迁移数据）
+    条目可通过 aisep_note_ref 字段链接到对应的 .aisep/knowledge/entries/
+
+concepts:
+  - id: concept-001
+    name: "Ontology-Driven Information System (ODIS)"
+    maturity: growing
+    tags: [ontology, ODIS, MDD, 中间层, 方法论]
+  - id: concept-002
+    name: "三层 Ontology 架构（Semantic-Kinetic-Dynamic）"
+    maturity: validated
+    tags: [Palantir, 架构, 三层模型, 语义层, 动能层]
+  - id: concept-003
+    name: "Ontology→Application 自动生成"
+    maturity: growing
+    tags: [代码生成, low-code, CRUD, 自动化, 可行性]
+  - id: concept-004
+    name: "Semantic Layer 即 Ontology 的工程化落地形态"
+    maturity: validated
+    tags: [semantic-layer, dbt, 企业数据, LLM, Gartner]
+  - id: concept-005
+    name: "Ontology-as-SSOT 的三大结构性挑战"
+    maturity: growing
+    tags: [SSOT, 挑战, Schema演化, 知识获取, 联邦Ontology]
+  - id: concept-006
+    name: "多重编码同构性（Multiple Encoding Isomorphism）"
+    maturity: seed
+    tags: [认知科学, 多重编码, 知识管理, 同构性, 事件记忆, 语义记忆]
+
+by_maturity:
+  seed: [concept-006]
+  growing: [concept-001, concept-003, concept-005]
+  validated: [concept-002, concept-004]
+  established: []
+  deprecated: []
+
+by_tag:
+  ontology: [concept-001]
+  ODIS: [concept-001]
+  MDD: [concept-001]
+  中间层: [concept-001]
+  方法论: [concept-001]
+  Palantir: [concept-002]
+  架构: [concept-002]
+  三层模型: [concept-002]
+  语义层: [concept-002]
+  动能层: [concept-002]
+  代码生成: [concept-003]
+  low-code: [concept-003]
+  CRUD: [concept-003]
+  自动化: [concept-003]
+  可行性: [concept-003]
+  semantic-layer: [concept-004]
+  dbt: [concept-004]
+  企业数据: [concept-004]
+  LLM: [concept-004]
+  Gartner: [concept-004]
+  SSOT: [concept-005]
+  挑战: [concept-005]
+  Schema演化: [concept-005]
+  知识获取: [concept-005]
+  联邦Ontology: [concept-005]
+  认知科学: [concept-006]
+  多重编码: [concept-006]
+  知识管理: [concept-006]
+  同构性: [concept-006]
+  事件记忆: [concept-006]
+  语义记忆: [concept-006]
+
+by_exploration:
+  exp-001: [concept-001, concept-002, concept-003, concept-004, concept-005]
+  exp-002: [concept-006]
+

@@ -1,0 +1,21 @@
+id: concept-004
+name: "Semantic Layer 即 Ontology 的工程化落地形态"
+definition: "企业数据管理中的 Semantic Layer（如 dbt Semantic Layer）是 Ontology 思想在数据工程领域的实用化产物——统一指标定义、业务语义、权限控制"
+elaboration: |
+  Ontology（学术概念）和 Semantic Layer（工程实践）的关系：
+  - Semantic Layer 是 Ontology 的一个子集应用——聚焦在"指标/维度/度量"的语义统一
+  - Ontology 更广泛——还包括实体关系、业务规则、操作语义（Action）
+  
+  2024-2025 趋势：
+  - dbt Semantic Layer GA（2024.10），成为企业级标准
+  - Semantic Layer 成为 LLM 与结构化数据的桥梁（grounding）
+  - Gartner 将语义技术列为 2025 年 AI / 元数据 / 决策智能核心
+confidence: 0.85
+source_type: documentation
+maturity: validated
+tags: [semantic-layer, dbt, 企业数据, LLM, Gartner]
+created_date: "2026-03-15"
+last_referenced: "2026-03-15"
+links:
+  derived_from: [src-006, src-008]
+  relates_to: [concept-001, concept-002]

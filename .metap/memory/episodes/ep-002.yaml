@@ -1,0 +1,35 @@
+# ep-002: 目录结构合理性探索——发现知识双轨问题
+# 来源：exp-002 回溯提炼
+
+id: ep-002
+_type: episode
+type: exploration
+date: "2026-03-15"
+
+context: |
+  系统积累到 ~150 文件后，用户关注目录结构合理性。
+  升级到多 Scout（3 Scout 并行）模式首次实战。
+
+event: |
+  三个 Scout 分别从内部重叠性、层次清晰度、行业实践三个角度分析。
+  发现三大问题：
+  1. 🔴 知识体系双轨重叠（.aisep/knowledge vs .metap/concepts）
+  2. 🟡 进化机制分散（evolution 文件分布在两处）
+  3. 🔴 本体论分裂（两套 ontology 并行）
+  核心洞见：问题只集中在"知识管理"这一个关注点上。
+
+outcome: |
+  结论：当前结构 80% 合理。策略决定"桥接而非合并"。
+  生成 4 个 ActionProposal（prop-003~006）。
+  prop-003（知识桥接层）和 prop-005（本体论收敛路线图）已在同日落地。
+  置信度 0.85——多 Scout 交叉验证增强了可靠性。
+
+significance: 0.85
+linked_concepts: [concept-001, concept-002, concept-005]
+linked_exploration: exp-002
+
+_links:
+  - type: extracted_from
+    target: "exploration:exp-002"
+  - type: informs
+    target: "decision:bridge-not-merge"

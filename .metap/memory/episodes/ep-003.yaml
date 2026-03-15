@@ -1,0 +1,36 @@
+# ep-003: Phase 0-2 本体论体系落地决策
+# 来源：跨对话决策回溯
+
+id: ep-003
+_type: episode
+type: decision
+date: "2026-03-15"
+
+context: |
+  exp-001 研究完成后，需要决定如何将 Palantir 三要素模型落地到 AISEP。
+  同时 exp-002 揭示了本体论分裂问题，需要定义收敛路径。
+
+event: |
+  连续完成三个 Phase 的落地：
+  - Phase 0: ontology-conventions.yaml（18 Object Types + 12 Link Types + 8 Action Types）
+  - Phase 1: decision-log 机制（schema + template + proj-001 首份 6 条决策）
+  - Phase 2: 知识结晶路径形式化（maturity 级别 + crystallization_paths + /tidy 结晶评估）
+  关键设计决策：采用"桥接"策略处理 AISEP-MetaP 本体论分裂。
+
+outcome: |
+  本体论从理论研究成功转化为可操作的系统基础设施。
+  建立了 metap_convergence 收敛路线图（bridge → migrate → unify）。
+  5 个现有 yaml 文件完成了 _type 和 _links 标注。
+  /tidy 增加了本体论一致性检查步骤。
+
+significance: 0.95
+linked_concepts: [concept-001, concept-002]
+linked_exploration: null
+
+_links:
+  - type: references
+    target: "exploration:exp-001"
+  - type: references
+    target: "exploration:exp-002"
+  - type: produces
+    target: "decision:ontology-bridge-strategy"

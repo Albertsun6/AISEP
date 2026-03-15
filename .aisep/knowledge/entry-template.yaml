@@ -1,10 +1,22 @@
 # 知识条目模板
 # /tidy 时 AI 按此格式生成条目，用户确认后写入 entries/
+# 本体论类型：cognitive_note（知识层 L4）
 
 id: "learn-XXX"                    # 自增编号
+_type: "cognitive_note"            # 本体论标注
 title: ""                          # 一行标题
 date: ""                           # 提取日期
 source_conversation: ""            # 来源对话 ID（可选）
+
+# 本体论链接（可选，渐进补全）
+_links: []
+# 常用 link types:
+#   - type: "extracted_from"       # 从哪个过程/项目中提取
+#     target: "project:proj-001"
+#   - type: "evolves_from"         # 从哪个更早的笔记演进而来
+#     target: "cognitive_note:learn-XXX"
+#   - type: "crystallized_as"      # 结晶为更成熟的形式
+#     target: "decision:dec-XXX"   # 或 "skill:skill-name"
 
 # 分类
 category: ""                       # system_design | methodology | framework | engineering | concept
@@ -16,6 +28,18 @@ analogy: ""                        # 类比（帮助直觉理解）
 key_insights:                      # 关键洞见（2-5 条）
   - ""
 related_concepts: []               # 关联概念（可链接到其他条目）
+
+# ─── 结晶成熟度追踪 ───
+# 知识结晶路径：cognitive_note → decision → skill_draft → skill
+maturity:
+  level: "note"                    # note | decision | skill_draft | skill
+  # note:        单次经验/洞察
+  # decision:    第 2+ 次验证，已形成有理由的选择
+  # skill_draft: 第 3+ 次验证，提炼出通用模式，SKILL.md 草案
+  # skill:       跨项目验证通过，正式 SKILL.md
+  validation_count: 1              # 被验证/遇到的次数
+  last_validated: ""               # 最近一次被验证的日期
+  promoted_to: ""                  # 如已晋升：目标 ID（如 "decision:dec-003" 或 "skill:ddd"）
 
 # 可选
 action_items: []                   # 后续行动（如有）

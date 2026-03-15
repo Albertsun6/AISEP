@@ -1,0 +1,69 @@
+# .metap/engines/autonomy.yaml — 自治引擎配置
+# 职责：为每个 Action 决定自治级别，管理信任积分，执行 Human-in-the-Loop
+
+engine:
+  name: autonomy
+  version: "0.1.0"
+  description: "渐进式自治引擎——基于三维评估 + 信任积分动态调整 AI 自主权"
+
+# ─── 自治级别定义 ───
+
+levels:
+  L0:
+    name: "纯建议"
+    description: "AI 仅提供建议/分析，人类决策并执行"
+  L1:
+    name: "草案确认"
+    description: "AI 准备完整方案，人类审批后执行"
+  L2:
+    name: "受限执行"
+    description: "AI 在预设边界内自动执行，超界时请求确认"
+  L3:
+    name: "监督执行"
+    description: "AI 自动执行，人类异步审查"
+  L4:
+    name: "完全自治"
+    description: "AI 完全自治，含自我修正（远期目标）"
+    note: "Phase 1-2 不启用"
+
+# ─── MetaP 操作的自治策略 ───
+
+action_policies:
+  exploration.decompose: { base_autonomy: L2, description: "分解探索方向为子问题" }
+  exploration.scout: { base_autonomy: L2, description: "信息检索和来源收集", constraints: { max_sources: 30 } }
+  exploration.synthesize: { base_autonomy: L3, description: "综合分析和报告生成" }
+  exploration.propose: { base_autonomy: L1, description: "生成行动建议", human_checkpoint: always }
+  deliberation.debate: { base_autonomy: L3, description: "多角色辩论过程" }
+  deliberation.conclude: { base_autonomy: L1, description: "辩论结论形成", human_checkpoint: always }
+  ontology.register_concept: { base_autonomy: L2, description: "注册新概念到 Ontology", constraints: { max_batch_size: 10 } }
+  ontology.create_link: { base_autonomy: L2, description: "建立概念间关系" }
+  ontology.deprecate_concept: { base_autonomy: L1, description: "废弃概念", human_checkpoint: always }
+  evolution.record: { base_autonomy: L3, description: "记录观察到的模式", inherits: "constitution §10" }
+  evolution.propose_rule: { base_autonomy: L0, description: "提议新规则或修改", human_checkpoint: always }
+  aisep.create_project: { base_autonomy: L1, description: "批准行动建议后创建 AISEP 项目", human_checkpoint: always }
+
+# ─── 三维评估矩阵 ───
+
+assessment_dimensions:
+  impact:
+    weights: { read: 0.1, write: 0.4, delete: 0.7, irreversible: 1.0 }
+  sensitivity:
+    weights: { public: 0.1, internal: 0.3, confidential: 0.6, secret: 1.0 }
+  confidence:
+    threshold: 0.75
+  resolution: "final_level = min(base_autonomy, impact_adjusted, sensitivity_adjusted, confidence_adjusted)"
+
+# ─── 信任积分系统 ───
+
+trust:
+  initial_score: 0.0
+  events:
+    exploration_accepted: { delta: +0.3 }
+    proposal_approved: { delta: +0.2 }
+    action_executed_ok: { delta: +0.5 }
+    proposal_rejected: { delta: -0.1 }
+    action_failed: { delta: -0.8 }
+    rule_accepted: { delta: +0.2 }
+  thresholds: { L0: 0.0, L1: 1.0, L2: 3.0, L3: 6.0, L4: 10.0 }
+  decay: { rate: 0.05, min_score: 0.0 }
+  storage: ".metap/state/trust.yaml"

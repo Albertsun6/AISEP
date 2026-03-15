@@ -1,0 +1,35 @@
+# ep-001: Ontology 作为系统中间层的探索发现
+# 来源：exp-001 回溯提炼 | 记忆引擎首次激活
+
+id: ep-001
+_type: episode
+type: exploration
+date: "2026-03-15"
+
+context: |
+  用户提出"是否可以借鉴 Palantir 的本体论方式组织信息"。
+  发起 exp-001 探索：Ontology 是否可以作为系统中间层。
+  单 Scout 模式，搜索 42 个来源。
+
+event: |
+  探索发现 5 个核心概念：
+  1. ODIS（Ontology-Driven IS）方法论——Ontology 作为 MDD 的语义中间层
+  2. Palantir 三层架构（Semantic-Kinetic-Dynamic）——从描述到执行到智能
+  3. Ontology→Application 自动生成的可行性与局限
+  4. Semantic Layer 即 Ontology 的工程化落地形态（dbt/Gartner）
+  5. Ontology-as-SSOT 的三大结构性挑战
+
+outcome: |
+  注册 5 个 Concept（concept-001~005），生成 3 个 ActionProposal（prop-001~003）。
+  置信度 0.78——理论基础充分但工程落地案例不够多。
+  直接触发了 Phase 0 本体论落地（ontology-conventions.yaml 创建）。
+
+significance: 0.9
+linked_concepts: [concept-001, concept-002, concept-003, concept-004, concept-005]
+linked_exploration: exp-001
+
+_links:
+  - type: extracted_from
+    target: "exploration:exp-001"
+  - type: references
+    target: "concept:concept-002"

@@ -1,6 +1,9 @@
 # Gate 日志 — proj-001
+# 本体论标注：每条记录 _type: gate_record
+# _links: references → project:proj-001
 gate_log:
-  - stage: "s0-init"
+  - _type: "gate_record"
+    stage: "s0-init"
     action: "passed"
     timestamp: "2026-03-12T18:29:00+08:00"
     artifacts_produced:
@@ -11,7 +14,8 @@ gate_log:
       failed: 0
     notes: "budget/timeline 未设定（warning），其余全部通过"
 
-  - stage: "s1-domain"
+  - _type: "gate_record"
+    stage: "s1-domain"
     action: "passed"
     timestamp: "2026-03-12T19:37:00+08:00"
     artifacts_produced:
@@ -24,7 +28,11 @@ gate_log:
       failed: 0
     notes: "9/9 全部通过。4 上下文、10 聚合根、5 Context Map 关系、Gap 分析完整"
 
-  - stage: "s2-requirements"
+  - _type: "gate_record"
+    _links:
+      - type: "produces"
+        target: "cognitive_note:learn-008"
+    stage: "s2-requirements"
     action: "passed"
     timestamp: "2026-03-12T21:20:00+08:00"
     artifacts_produced:
@@ -51,7 +59,13 @@ gate_log:
       failed: 0
     notes: "12/12 全部通过。40 stories, 7 slices, MVP=Slice 1-5 (28 stories)"
 
-  - stage: "s3-architecture"
+  - _type: "gate_record"
+    _links:
+      - type: "produces"
+        target: "decision:adr-001"
+      - type: "produces"
+        target: "decision:adr-002"
+    stage: "s3-architecture"
     action: "passed"
     timestamp: "2026-03-12T21:36:00+08:00"
     artifacts_produced:
@@ -81,7 +95,8 @@ gate_log:
       failed: 0
     notes: "14/14 全部通过。4 自定义模块（全量类继承），12 Models 字段级设计，Docker 部署。进入 S4 Slice 循环。"
 
-  - stage: "s4-design"
+  - _type: "gate_record"
+    stage: "s4-design"
     slice_id: "SLICE-01"
     slice_name: "销售基础流程"
     action: "passed"
@@ -100,7 +115,8 @@ gate_log:
       failed: 0
     notes: "8/8 通过。标准复用 ~90%，自定义仅 1 compute 字段 + 1 constraint。"
 
-  - stage: "s5-implementation"
+  - _type: "gate_record"
+    stage: "s5-implementation"
     slice_id: "SLICE-01"
     slice_name: "销售基础流程"
     action: "passed"
@@ -118,7 +134,8 @@ gate_log:
       failed: 0
     notes: "11/11 通过。Walking Skeleton 完成。sale_mfg 模块可安装。"
 
-  - stage: "s4-design + s5-implementation"
+  - _type: "gate_record"
+    stage: "s4-design + s5-implementation"
     slice_id: "SLICE-02"
     slice_name: "库存基础 + 出入库"
     action: "passed"
@@ -136,7 +153,8 @@ gate_log:
       failed: 0
     notes: "全量标准复用。stock_mfg 仅提供 ACL + Record Rules + 菜单。"
 
-  - stage: "s4-design + s5-implementation"
+  - _type: "gate_record"
+    stage: "s4-design + s5-implementation"
     slice_id: "SLICE-03"
     slice_name: "采购全流程"
     action: "passed"
@@ -160,7 +178,8 @@ gate_log:
       failed: 0
     notes: "与 Slice 1 对称设计。receipt_status ↔ delivery_status。purchase_mfg 10 文件可安装。"
 
-  - stage: "s4-design + s5-implementation"
+  - _type: "gate_record"
+    stage: "s4-design + s5-implementation"
     slice_id: "SLICE-04"
     slice_name: "BOM + 生产计划"
     action: "passed"
@@ -182,7 +201,11 @@ gate_log:
       failed: 0
     notes: "BOM 生命周期（draft→active→archived）+ 生产工单确认前置检查。mrp_mfg 可安装。"
 
-  - stage: "s4-design + s5-implementation + s6-testing"
+  - _type: "gate_record"
+    _links:
+      - type: "produces"
+        target: "cognitive_note:learn-007"
+    stage: "s4-design + s5-implementation + s6-testing"
     slice_id: "SLICE-05"
     slice_name: "生产执行与报工"
     action: "passed"
@@ -204,7 +227,11 @@ gate_log:
       failed: 0
     notes: "领料→报工→成品入库完整闭环。浏览器自动验收全部通过。修复 Odoo 17 字段兼容性。"
 
-  - stage: "s4-design + s5-implementation"
+  - _type: "gate_record"
+    _links:
+      - type: "produces"
+        target: "cognitive_note:learn-006"
+    stage: "s4-design + s5-implementation"
     slice_id: "SLICE-06"
     slice_name: "工艺路线 + 生产建议"
     action: "passed"
@@ -223,7 +250,8 @@ gate_log:
       failed: 0
     notes: "工艺路线利用标准 Odoo 功能。MRP 建议通过 TransientModel 向导实现。"
 
-  - stage: "s4-design + s5-implementation"
+  - _type: "gate_record"
+    stage: "s4-design + s5-implementation"
     slice_id: "SLICE-07"
     slice_name: "高级功能"
     action: "passed"
@@ -242,7 +270,15 @@ gate_log:
       failed: 0
     notes: "全部利用标准 Odoo 功能，仅添加中文菜单快捷入口。7/7 Slices 完成，项目交付。"
 
-  - stage: "s8-retrospective"
+  - _type: "gate_record"
+    _links:
+      - type: "produces"
+        target: "cognitive_note:learn-006"
+      - type: "produces"
+        target: "cognitive_note:learn-007"
+      - type: "produces"
+        target: "cognitive_note:learn-008"
+    stage: "s8-retrospective"
     slice_id: null
     slice_name: null
     action: "passed"

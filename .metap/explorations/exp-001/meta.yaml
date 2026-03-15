@@ -1,0 +1,22 @@
+# exp-001 探索元数据
+id: exp-001
+direction: "Ontology 是否可以作为系统中间层，所有需求沉淀到 Ontology，使用 Ontology 来构建管理系统"
+status: concluded
+started_date: "2026-03-15"
+concluded_date: "2026-03-15"
+conclusion_confidence: 0.78
+sub_questions:
+  - question: "Ontology 作为软件中间层的理论基础和已有实践"
+    priority: core
+  - question: "Palantir Foundry Ontology 的三层架构如何实现中间层功能"
+    priority: core
+  - question: "Ontology-Driven IS (ODIS) 与 Model-Driven Development (MDD) 的关系"
+    priority: core
+  - question: "从 Ontology 自动生成应用（CRUD/Low-code）的技术可行性"
+    priority: supplementary
+  - question: "Ontology 作为 SSOT 的部署挑战和局限性"
+    priority: core
+scouts_used: 1
+sources_found: 42
+concepts_registered: [concept-001, concept-002, concept-003, concept-004, concept-005]
+proposals_generated: [prop-001, prop-002, prop-003]

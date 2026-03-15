@@ -1,0 +1,18 @@
+# .metap/state/trust.yaml — 信任积分状态
+
+trust:
+  current_score: 0.5
+  current_level: L0
+  last_updated: "2026-03-15"
+
+  history:
+    - date: "2026-03-15"
+      event: exploration_accepted
+      delta: 0.3
+      new_score: 0.3
+      context: "exp-001 探索报告被接受"
+    - date: "2026-03-15"
+      event: proposal_approved
+      delta: 0.2
+      new_score: 0.5
+      context: "exp-001 的 prop-001/002/003 全部批准"

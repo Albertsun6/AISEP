@@ -1,0 +1,147 @@
+# .metap/engines/exploration.yaml — 探索引擎配置
+# 职责：用户给出方向 → 分解子问题 → 多Agent信息检索 → 汇总结构化报告
+
+engine:
+  name: exploration
+  version: "0.1.0"
+  description: "多 Agent 协作探索引擎——从方向到结构化发现"
+
+# ─── 探索协议 ───
+
+protocol:
+  phases:
+
+    - id: receive
+      name: "接收方向"
+      agent: Director
+      description: |
+        接收用户的探索方向描述，确认理解后进入分解阶段。
+        如果方向过于模糊，向用户提问澄清。
+      input: user_direction (text)
+      output: confirmed_direction
+
+    - id: decompose
+      name: "分解子方向"
+      agent: Director
+      description: |
+        将用户方向分解为 3-5 个可独立搜索的子问题。
+        分解原则：
+        - MECE（互斥且完整）
+        - 每个子问题应可通过 2-3 次搜索获得初步答案
+        - 标注每个子问题的优先级（核心 / 补充 / 拓展）
+      output:
+        sub_questions:
+          - question: string
+          - priority: enum [core, supplementary, extended]
+          - search_hints: list[string]
+
+    - id: scout
+      name: "信息侦察"
+      agent: Scout
+      description: |
+        对每个子问题进行信息检索。
+        Phase 1: 单 Agent 串行搜索（后续升级为多 Agent 并行）。
+        工具：web_search, read_url, paper_search (如可用)
+      constraints:
+        max_sources_per_question: 5
+        language_priority: [en, zh]
+        prefer_primary_sources: true
+        source_types_priority: [paper, documentation, official_blog, industry_report, community]
+      output:
+        findings:
+          - sub_question_id: int
+          - sources: list[Source]
+          - key_points: list[string]
+          - confidence: float
+
+    - id: synthesize
+      name: "综合分析"
+      agent: Synthesizer
+      description: |
+        汇总所有 Scout 发现，执行：
+        1. 去重和交叉验证（同一结论多源佐证 → 提升 confidence）
+        2. 识别矛盾点（不同来源的冲突信息）
+        3. 提炼核心发现（3-5 个关键洞察）
+        4. 标注知识空白（搜索未能覆盖的盲区）
+      output:
+        exploration_report:
+          core_findings: list
+          contradictions: list
+          knowledge_gaps: list
+          source_registry: list[Source]
+
+    - id: register
+      name: "知识注册"
+      agent: Registrar
+      description: |
+        将发现注册为 Ontology 中的对象：
+        - 新发现 → 创建 Concept（maturity: seed）
+        - 新来源 → 创建 Source（含 credibility 评分）
+        - 建立 Concept-Source 的 derived_from Link
+        - 如果发现与现有 Concept 相关，建立 relates_to Link
+      output:
+        new_concepts: list[Concept.id]
+        new_sources: list[Source.id]
+        new_links: list
+
+    - id: propose
+      name: "行动建议"
+      agent: Director
+      description: |
+        基于探索报告生成行动建议（ActionProposal）。
+        每个建议需包含：
+        - 标题和理由
+        - 工作量估算
+        - 风险评估
+        - 优先级（P0-P3）
+        - 执行路径（是否需要创建 AISEP 项目）
+      output:
+        proposals: list[ActionProposal]
+
+    - id: present
+      name: "呈现报告"
+      agent: Director
+      description: |
+        将探索报告和行动建议以结构化 Markdown 呈现给用户。
+      autonomy: L1
+      human_checkpoint: true
+
+# ─── 探索报告模板 ───
+
+report_template: |
+  ## 探索报告：{direction}
+
+  **探索 ID**: {exp_id} | **日期**: {date} | **状态**: {status}
+
+  ### 核心发现
+  {core_findings}
+
+  ### 矛盾与不确定性
+  {contradictions}
+
+  ### 知识空白
+  {knowledge_gaps}
+
+  ### 新注册概念
+  {new_concepts_table}
+
+  ### 行动建议
+  | # | 建议 | 优先级 | 工作量 | 风险 | 执行路径 |
+  |---|------|--------|--------|------|----------|
+  {proposals_table}
+
+  > 📋 回复 `/approve prop-XXX` 批准单个 | `/approve all` 批准全部 | `/reject prop-XXX: 理由`
+
+# ─── 来源可信度自动评分规则 ───
+
+auto_credibility:
+  rules:
+    - if_domain_contains: [".gov", ".edu", "arxiv.org", "nature.com", "science.org"]
+      score: 0.9
+    - if_domain_contains: [".org", "github.com"]
+      score: 0.7
+    - if_domain_contains: ["medium.com", "dev.to", "hackernoon.com"]
+      score: 0.5
+    - if_type: conversation
+      score: 0.4
+    - default: 0.3
