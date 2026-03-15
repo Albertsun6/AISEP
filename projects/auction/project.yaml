@@ -1,0 +1,48 @@
+# 项目元数据
+project:
+  id: "auction"
+  name: "线上拍卖系统"
+  tech_stack: "odoo17"
+
+  _meta:
+    template_version: "1.1"
+    created_at: "2026-03-13T09:40:00+08:00"
+    updated_at: "2026-03-15T22:40:00+08:00"
+
+  problem:
+    target_users: "拍卖行运营人员"
+    pain_points:
+      - "线下拍卖地域限制，覆盖范围小"
+      - "人工管理拍品和竞价记录效率低"
+    success_metrics:
+      - "拍品上架到可竞价 < 15 分钟"
+
+  pipeline_state:
+    current_stage: "s3-architecture"
+    stages:
+      s0: { status: "completed", gate_passed: true }
+      s1: { status: "completed", gate_passed: true }
+      s2: { status: "completed", gate_passed: true }
+      s3: { status: "in_progress", gate_passed: false }
+      s4: { status: "pending", gate_passed: false }
+      s5: { status: "pending", gate_passed: false }
+      s6: { status: "pending", gate_passed: false }
+      s7: { status: "pending", gate_passed: false }
+
+  constraints:
+    budget: null
+    timeline: null
+    team_size: "AI 辅助开发"
+    notes: "核心域优先，支撑域/通用域后期迭代"
+
+  existing_system: ""
+
+  known_risks:
+    - id: risk-001
+      description: "线上竞价的实时性需要 WebSocket/长连接，Odoo 原生不支持"
+      severity: high
+      mitigation: "S3 时评估是否引入独立前端 + API"
+    - id: risk-002
+      description: "并发竞价的数据一致性（乐观锁 vs 悲观锁）"
+      severity: medium
+      mitigation: "S4 详细设计时处理"

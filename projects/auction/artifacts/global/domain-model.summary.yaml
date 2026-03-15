@@ -1,0 +1,9 @@
+# domain-model 摘要 | S1 Compaction
+contexts: 3
+  - 拍品管理 (core): Lot 聚合 · 4 不变量 · 2 BR
+  - 拍卖会管理 (core): AuctionSession 聚合 · 3 不变量 · 1 BR
+  - 竞价引擎 (core): BiddingRound 聚合 · 3 不变量 · 4 BR
+context_map: Conformist + OpenHost + ACL + PubSub
+processes: 4 (征集上架 · 会场运营 · 在线竞价 · 成交结算)
+glossary_terms: 17
+key_rules: [无底价拍卖, 底价隐藏, 有条件成交(用户定义阈值), 拍品不可同时多场]

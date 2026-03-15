@@ -20,7 +20,7 @@ context_fence:
     - "projects/proj-001/**"    # 已归档
   cross_project_allowed:
     - ".aisep/knowledge/**"       # 认知知识库始终可访问
-    - ".aisep/evolution/**"       # 进化数据始终可访问
+    - ".metap/evolution/**"       # 进化数据始终可访问
     - ".aisep/docs/**"            # 系统文档始终可访问
 ```
 
@@ -75,7 +75,8 @@ context_fence:
 
 # Pipeline 执行
 /pipeline                 执行当前项目 pipeline
-/s0-init ~ /s8-retrospective 直接进入指定阶段
+/s0 ~ /s8                 直接进入指定阶段
+/back                     回退一步（或 /back s0 回退到指定阶段）
 /onboard --source <path>  逆向接管现有模块
 
 # 系统维护
@@ -85,7 +86,7 @@ context_fence:
 # MetaP 探索与博弈
 /explore <方向>            多 Scout 并行探索 → 报告 + 行动建议
 /deliberate <议题>         4 角色 3 轮结构化辩论
-/deliberate --on exp-XXX  对探索发现发起辩论
+/deepdive <方向>           explore + deliberate 一步到位
 /approve prop-XXX         批准行动建议
 /reject prop-XXX: 理由    拒绝行动建议
 ```
@@ -104,7 +105,7 @@ context_fence:
 | 触发事件 | 同步动作 | 自治级别 |
 |---------|---------|---------|
 | 新 Skill 沉淀 | 更新按需加载表中 `.agents/skills/` 描述 | L2 |
-| 新 Evolution Rule | 更新 `.aisep/evolution/` 引用 | L2 |
+| 新 Evolution Rule | 更新 `.metap/evolution/` 引用 | L2 |
 | Ontology Object Type 增减 | 更新本体论计数注释 | L3 |
 | 新 Exploration 完成 | 更新 MetaP.md 知识库描述 | L2 |
 | 新 Concept 达到 validated | 更新 MetaP.md 概念统计 | L2 |

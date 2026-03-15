@@ -1,0 +1,89 @@
+# 线上拍卖系统 — 统一语言
+# proj-002 | S1 更新
+
+terms:
+  - cn: 拍品
+    en: Lot
+    tech: auction.lot
+    definition: 被拍卖的单个物品或一组物品
+
+  - cn: 拍卖会
+    en: Auction Session
+    tech: auction.session
+    definition: 一场完整的拍卖活动（含多个拍品）
+
+  - cn: 底价
+    en: Reserve Price
+    tech: reserve_price
+    definition: 卖方设定的最低成交价，不对买家展示
+    alias: [保留价]
+
+  - cn: 起拍价
+    en: Starting Price
+    tech: starting_price
+    definition: 竞价开始的初始价格
+
+  - cn: 竞价
+    en: Bid
+    tech: auction.bid
+    definition: 买家对拍品出的价格
+
+  - cn: 加价幅度
+    en: Increment
+    tech: bid_increment
+    definition: 每次出价的最小加价单位
+
+  - cn: 落槌
+    en: Hammer / Sold
+    tech: hammer_fall
+    definition: 拍卖师宣布成交的动作
+
+  - cn: 流拍
+    en: Unsold / Passed
+    tech: lot_unsold
+    definition: 竞价未达底价且不在协商范围内，拍品未成交
+
+  - cn: 委托方
+    en: Consignor
+    tech: consignor
+    definition: 委托拍卖行出售物品的所有者
+
+  - cn: 买受人
+    en: Buyer / Winning Bidder
+    tech: winning_bidder
+    definition: 最终中标的竞拍者
+
+  - cn: 佣金
+    en: Commission
+    tech: commission
+    definition: 拍卖行向买卖双方收取的服务费（按成交价百分比）
+
+  - cn: 拍品编号
+    en: Lot Number
+    tech: lot_number
+    definition: 拍品在拍卖会中的排序编号，决定上拍顺序
+
+  - cn: 估价
+    en: Estimate
+    tech: estimate
+    definition: 拍卖行对拍品的预估成交价格区间（低估/高估）
+
+  - cn: 保证金
+    en: Deposit
+    tech: deposit
+    definition: 竞拍者需预先缴纳的参拍资格担保金
+
+  - cn: 图录
+    en: Catalogue
+    tech: catalogue
+    definition: 拍卖会的拍品清单及详细描述，供买家预览
+
+  - cn: 有条件成交
+    en: Conditional Sale
+    tech: conditional_sale
+    definition: 最高价低于底价但在可协商范围内，需联系委托方确认是否同意出售
+
+  - cn: 无底价拍卖
+    en: No Reserve Auction
+    tech: no_reserve
+    definition: 不设底价的拍卖，有最高价即成交

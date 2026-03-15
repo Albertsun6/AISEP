@@ -1,0 +1,150 @@
+# 线上拍卖系统 — 功能需求规格
+# S2 输出 | auction
+
+version: "1.0"
+generated_at: "2026-03-15T22:40:00+08:00"
+moscow_distribution:
+  must: 9
+  should: 4
+  could: 0
+  wont: 1
+  must_ratio: "64%"
+
+stories:
+
+  # ── 拍品管理 ──
+  - id: US-01
+    module: 拍品管理
+    story: "作为拍卖行运营，我要录入拍品（名称、描述、分类），以便建立拍品档案"
+    priority: Must
+    acceptance_criteria:
+      - "Given 运营在拍品管理页面, When 填写名称+描述+分类并保存, Then 拍品创建成功且状态为'草稿'"
+      - "Given 分类列表, When 选择分类, Then 可从预定义分类中选择"
+    invest: { I: true, N: true, V: true, E: "~80行", S: true, T: true }
+
+  - id: US-02
+    module: 拍品管理
+    story: "作为运营，我要上传拍品图片（≥1张），以便买家预览"
+    priority: Must
+    acceptance_criteria:
+      - "Given 拍品详情页, When 上传图片, Then 图片关联到该拍品"
+      - "Given 拍品无图片, When 尝试上架, Then 系统阻止并提示'至少上传1张图片'"
+    invest: { I: true, N: true, V: true, E: "~60行", S: true, T: true }
+
+  - id: US-03
+    module: 拍品管理
+    story: "作为运营，我要设定底价和起拍价，以便控制成交底线"
+    priority: Must
+    acceptance_criteria:
+      - "Given 拍品编辑页, When 设定底价和起拍价, Then 起拍价 ≤ 底价"
+      - "Given 无底价拍卖, When 勾选'无底价', Then reserve_price=0, is_no_reserve=true"
+      - "Given 买家查看拍品, When 尝试看底价, Then 底价字段不可见"
+    invest: { I: true, N: true, V: true, E: "~60行", S: true, T: true }
+
+  - id: US-04
+    module: 拍品管理
+    story: "作为运营，我要填写估价区间（低估/高估），以便买家参考"
+    priority: Should
+    acceptance_criteria:
+      - "Given 拍品编辑页, When 填写估价, Then 低估 ≤ 高估"
+    invest: { I: true, N: true, V: true, E: "~20行", S: true, T: true }
+
+  - id: US-05
+    module: 拍品管理
+    story: "作为运营，我要查看和搜索拍品列表，以便快速找到目标拍品"
+    priority: Must
+    acceptance_criteria:
+      - "Given 拍品列表, When 按分类/状态筛选, Then 结果正确过滤"
+      - "Given 拍品列表, When 输入关键字, Then 搜索名称和描述"
+    invest: { I: true, N: true, V: true, E: "~40行", S: true, T: true }
+
+  # ── 拍卖会管理 ──
+  - id: US-06
+    module: 拍卖会管理
+    story: "作为运营，我要创建拍卖会（名称、时间、规则），以便组织拍卖活动"
+    priority: Must
+    acceptance_criteria:
+      - "Given 创建拍卖会, When 填写名称+时间+加价幅度, Then 场次创建成功"
+      - "Given 时间设置, When 开始时间 ≥ 结束时间, Then 报错"
+    invest: { I: true, N: true, V: true, E: "~80行", S: true, T: true }
+
+  - id: US-07
+    module: 拍卖会管理
+    story: "作为运营，我要将拍品编入拍卖会并排序，以便确定上拍顺序"
+    priority: Must
+    acceptance_criteria:
+      - "Given 拍品已在另一场活跃拍卖会中, When 尝试编入, Then 系统阻止并提示"
+      - "Given 拍品编入后, When 调整顺序, Then 拍品编号自动重排"
+    invest: { I: true, N: true, V: true, E: "~100行", S: true, T: true }
+
+  - id: US-08
+    module: 拍卖会管理
+    story: "作为运营，我要配置有条件成交阈值，以便灵活处理未达底价的情况"
+    priority: Should  # 首版用固定 80% 阈值
+    acceptance_criteria:
+      - "Given 拍卖会设置, When 配置阈值, Then 可设百分比或固定金额"
+    invest: { I: true, N: true, V: true, E: "~30行", S: true, T: true }
+    note: "首版硬编码 80% 阈值，此 Story 在后续迭代实现"
+
+  - id: US-09
+    module: 拍卖会管理
+    story: "作为运营，我要查看拍卖会列表和详情，以便管理所有场次"
+    priority: Should
+    acceptance_criteria:
+      - "Given 列表页, When 按状态筛选(草稿/进行中/已结束), Then 正确过滤"
+    invest: { I: true, N: true, V: true, E: "~40行", S: true, T: true }
+
+  # ── 竞价引擎 ──
+  - id: US-10
+    module: 竞价引擎
+    story: "作为竞拍者，我要对拍品出价，以便参与竞拍"
+    priority: Must
+    acceptance_criteria:
+      - "Given 拍品竞价中, When 出价 ≥ 当前价+加价幅度, Then 出价成功"
+      - "Given 出价 < 当前价+加价幅度, When 提交, Then 拒绝并提示"
+    invest: { I: true, N: true, V: true, E: "~100行", S: true, T: true }
+
+  - id: US-11
+    module: 竞价引擎
+    story: "作为系统，当最高价 ≥ 底价时自动落槌成交"
+    priority: Must
+    acceptance_criteria:
+      - "Given 竞价结束, When 最高价 ≥ 底价, Then 状态→sold, 记录买受人+成交价"
+    invest: { I: true, N: true, V: true, E: "~60行", S: true, T: true }
+
+  - id: US-12
+    module: 竞价引擎
+    story: "作为系统，当最高价 < 底价但在阈值内，标记为有条件成交"
+    priority: Must
+    acceptance_criteria:
+      - "Given 竞价结束, When 最高价 < 底价 且 ≥ 底价×80%, Then 状态→conditional_pending"
+      - "Given 有条件成交, When 委托方同意, Then 状态→sold"
+      - "Given 有条件成交, When 委托方拒绝, Then 状态→unsold"
+    invest: { I: true, N: true, V: true, E: "~80行", S: true, T: true }
+
+  - id: US-13
+    module: 竞价引擎
+    story: "作为系统，当最高价 < 底价且超出阈值，标记为流拍"
+    priority: Must
+    acceptance_criteria:
+      - "Given 竞价结束, When 最高价 < 底价×80%, Then 状态→unsold"
+      - "Given 流拍拍品, When 编入新场次, Then 允许"
+    invest: { I: true, N: true, V: true, E: "~40行", S: true, T: true }
+
+  - id: US-14
+    module: 竞价引擎
+    story: "作为运营，我要查看竞价记录和成交结果"
+    priority: Should
+    acceptance_criteria:
+      - "Given 拍品详情, When 查看竞价历史, Then 显示每次出价(竞拍者+金额+时间)"
+      - "Given 拍卖会详情, When 查看统计, Then 显示成交/流拍/有条件数量"
+    invest: { I: true, N: true, V: true, E: "~60行", S: true, T: true }
+
+# ── CRUD 覆盖矩阵 ──
+crud_matrix:
+  Lot:         { C: US-01, R: US-05, U: US-03, D: "⚠️ Won't(拍品不删除，只标记下架)" }
+  LotImage:    { C: US-02, R: US-02, U: US-02, D: US-02 }
+  AuctionSession: { C: US-06, R: US-09, U: US-06, D: "⚠️ Won't(场次不删除)" }
+  SessionLot:  { C: US-07, R: US-07, U: US-07, D: US-07 }
+  BiddingRound: { C: "auto(拍品上线)", R: US-14, U: "auto(出价时)", D: "N/A" }
+  Bid:         { C: US-10, R: US-14, U: "N/A(不可修改)", D: "N/A(不可删除)" }

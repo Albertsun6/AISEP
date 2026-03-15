@@ -94,7 +94,7 @@ AISEP250311/
 │   │   ├── project-scaffold/  ← 项目脚手架（复制用）
 │   │   └── artifacts/         ← 制品格式模板（引用用）
 │   ├── knowledge/           ← 认知知识库（学习笔记）
-│   ├── evolution/           ← 自进化引擎数据
+│   │   # evolution/ 已迁移到 .metap/evolution/
 │   ├── backlog.md           ← 待做想法
 │   └── docs/ (12 份)        ← 设计文档 + 系统论文
 │
@@ -104,7 +104,7 @@ AISEP250311/
 │   ├── ontology/            ← 三层 Ontology（Semantic/Kinetic/Dynamic）
 │   ├── memory/              ← 事件记忆
 │   ├── explorations/        ← 探索记录（exp-001, exp-002...）
-│   ├── evolution/           ← 进化观察 + 历史
+│   ├── evolution/           ← 进化观察 + 历史 + 交互规则（统一进化层）
 │   └── state/               ← 信任积分
 │
 └── projects/                ← 「项目数据」（待创建）
@@ -176,6 +176,7 @@ AISEP250311/
 |------|------|
 | `/explore <方向>` | 多 Scout 并行探索 → 报告 + 行动建议 |
 | `/deliberate <议题>` | 4 角色 3 轮结构化辩论 |
+| `/deepdive <方向>` | explore + deliberate 一步到位（发散→收敛循环） |
 | `/approve prop-XXX` | 批准行动建议 |
 | `/reject prop-XXX: 理由` | 拒绝行动建议 |
 

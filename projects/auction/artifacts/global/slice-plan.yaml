@@ -1,0 +1,38 @@
+# 线上拍卖系统 — Slice 规划
+# S2 输出 | auction
+
+version: "1.0"
+generated_at: "2026-03-15T22:40:00+08:00"
+total_slices: 3
+
+# 拓扑序: slice-1 → slice-2 → slice-3
+
+slices:
+  - id: slice-1
+    name: 拍品管理
+    description: "拍品的 CRUD + 图片管理 + 定价设置"
+    models: [Lot, LotImage]
+    stories: [US-01, US-02, US-03, US-04, US-05]
+    estimated_lines: 500
+    dependencies: []
+    rationale: "核心实体，无外部依赖，可独立运行验证技术栈"
+
+  - id: slice-2
+    name: 拍卖会编排
+    description: "拍卖会 CRUD + 拍品编入 + 排序 + 规则配置"
+    models: [AuctionSession, SessionLot]
+    stories: [US-06, US-07, US-08, US-09]
+    estimated_lines: 500
+    dependencies: [slice-1]
+    rationale: "依赖拍品实体，组织拍卖场次"
+
+  - id: slice-3
+    name: 竞价引擎
+    description: "出价 + 成交判定（含有条件成交）+ 竞价记录"
+    models: [BiddingRound, Bid]
+    stories: [US-10, US-11, US-12, US-13, US-14]
+    estimated_lines: 600
+    dependencies: [slice-1, slice-2]
+    rationale: "核心竞价逻辑，依赖拍品和场次信息"
+
+topology_order: [slice-1, slice-2, slice-3]

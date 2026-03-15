@@ -1,0 +1,33 @@
+# S0 项目定义制品
+project:
+  id: "proj-002"
+  name: "线上拍卖系统"
+  description: "面向拍卖行的线上拍卖业务管理系统，覆盖拍品征集→线上拍卖会组织→竞价→落槌成交的核心流程，基于 Odoo 17 模块化架构"
+  tech_stack: "odoo17"
+
+  _meta:
+    template_version: "1.0"
+    created_at: "2026-03-15T20:42:00+08:00"
+    source_idea: "idea-002"
+
+  target_modules:
+    core:
+      - name: "拍品管理"
+        english: "Lot Management"
+        scope: "拍品征集、登记、鉴定估价、图录信息编制、状态生命周期管理"
+      - name: "拍卖会管理"
+        english: "Auction Session Management"
+        scope: "线上场次创建、拍品编组、出价规则配置、拍卖会状态流转（筹备→预展→竞拍→结束）"
+      - name: "竞价引擎"
+        english: "Bidding Engine"
+        scope: "线上出价记录、递增规则执行、倒计时/延时策略、最高价追踪、落槌判定"
+    supporting: []  # 后期迭代：结算财务、客户管理
+    generic: []     # 后期迭代：交付物流
+
+  constraints:
+    budget: null
+    timeline: null
+    team_size: "AI 辅助开发"
+    notes: "核心域优先，支撑域/通用域后期迭代"
+
+  existing_system: ""

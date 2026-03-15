@@ -219,6 +219,15 @@ for each slice in prioritized_slices:
 2. 保留用户的修正意见
 3. 回到当前阶段的 Workflow，按修正意见调整制品
 4. 调整后重新触发 Gate 审查
+5. **进化植入（Auto · 修正模式检测）**：
+   - 每次 revision 后，扫描 `gate-log.yaml` 中所有 revision 记录
+   - 如果**同类修正累计 ≥ 2 次**（按 stage 或 修正原因关键词分组），自动提醒：
+     ```
+     ⚡ 进化提醒：{stage_name} 已被修正 N 次，共同原因是 "{pattern}"。
+     建议：将此经验沉淀为 Skill 或更新 Workflow 步骤指引。
+     → /approve 执行沉淀 | /reject 跳过（记录到 observations）
+     ```
+   - 如果无重复模式 → 不触发，无感通过
 
 ### Gate 拒绝流程
 
@@ -235,6 +244,66 @@ for each slice in prioritized_slices:
 ```
 
 4. 执行用户选择的动作
+
+---
+
+## 主动回退：`/back`
+
+> 用于**已通过 Gate 后**主动回退到之前的阶段重做。
+> 独立命令入口：`.agents/workflows/back.md`
+
+### 语法
+
+```
+/back          → 回退一步（如 S1 → S0）
+/back <stage>  → 回退到指定阶段（如 /back s0）
+```
+
+### 执行流程
+
+**AI 执行指引**：
+
+1. **确定目标阶段**：
+   - 无参数 → `target = previous_stage(current_stage)`
+   - 有参数 → `target = <stage>`
+   - 如果 target 阶段 status ≠ `"completed"` → 拒绝：「该阶段还未完成过，无法回退」
+
+2. **确认回退**（⚠️ 人类检查点）：
+   ```
+   ⚠️ 回退确认
+   当前: {current_stage}
+   目标: {target_stage}
+   影响: {target} 到 {current} 之间的制品将保留但标记为 stale
+   
+   确认回退？(y/n)
+   ```
+
+3. **执行回退**：
+   ```yaml
+   # 更新 project.yaml
+   pipeline_state:
+     current_stage: "{target_stage}"
+     stages:
+       {target_stage}: { status: "in_progress", gate_passed: false }
+       # target 之后的阶段状态不变（保留 completed，方便对比）
+   ```
+
+4. **gate-log 记录**：
+   ```yaml
+   - stage: "{target_stage}"
+     action: "rollback"
+     timestamp: "{timestamp}"
+     from_stage: "{original_current_stage}"
+     reason: "{用户说明}"
+   ```
+
+5. **registry 同步**：更新 `current_stage`
+
+### 制品处理
+
+- **不删除**任何制品——回退后可参考旧版本
+- 重做阶段时生成的新制品会**覆盖**旧制品
+- 旧版本可通过 git 历史回溯（如已提交）
 
 ---
 

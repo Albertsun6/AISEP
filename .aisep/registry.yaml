@@ -1,18 +1,25 @@
 # .aisep/registry.yaml
 # 项目注册表 — 只保留活跃项目，归档项目迁移到 registry-archive.yaml
 aisep_registry:
-  active_project: "proj-002"
+  active_project: "auction"
   projects:
-    - id: "proj-002"
+    - id: "auction"
       _type: "project"
       _links:
-        - type: "references"
+        - type: "promoted_from"
           target: "idea:idea-002"
-      name: "拍卖模块"
+      name: "线上拍卖系统"
       status: "active"
-      current_stage: "s0-init"
+      current_stage: "s3-architecture"
       created_at: "2026-03-13T09:40:00+08:00"
       source_idea: "idea-002"
 
   # 归档项目另存（保持主注册表轻量）
   archive_ref: ".aisep/archive/registry-archive.yaml"
+
+  # 项目命名规则（evo-008）
+  naming_convention:
+    rule: "项目 ID 使用有意义的英文短词（1-2 词），全小写，无连字符"
+    examples: ["auction", "erp", "crm", "chatbot"]
+    anti_patterns: ["proj-001", "proj-002", "project1"]
+    rationale: "便于记忆和查找，目录名即项目标识"

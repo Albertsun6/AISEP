@@ -1,0 +1,214 @@
+# 线上拍卖系统 — 领域模型
+# S1 业务领域分析输出 | proj-002
+
+version: "1.0"
+generated_at: "2026-03-15T22:17:00+08:00"
+
+# ─── 限界上下文 ───
+
+bounded_contexts:
+
+  - name: 拍品管理
+    english: Lot Management
+    type: core
+    description: 拍品的全生命周期管理，从征集到上架
+    aggregates:
+
+      - name: Lot
+        root: true
+        description: 单个拍品，拍卖的基本单元
+        entities:
+          - name: LotImage
+            description: 拍品图片（至少 1 张）
+          - name: LotDocument
+            description: 拍品附件（鉴定证书等）
+        value_objects:
+          - name: Estimate
+            fields: [low_estimate, high_estimate]
+            description: 拍品估价区间
+          - name: Category
+            description: 拍品分类（书画、瓷器、珠宝等）
+        invariants:
+          - "底价 ≥ 0（无底价拍卖时 reserve_price = 0）"
+          - "起拍价 ≤ 底价（无底价拍卖时起拍价可自由设定）"
+          - "必须有 ≥ 1 张图片才能上架"
+          - "底价不对买家展示（系统级约束）"
+        domain_events:
+          - LotCreated
+          - LotApproved
+          - LotAssignedToSession
+          - LotWithdrawn
+        business_rules:
+          - id: BR-LOT-001
+            rule: "无底价拍卖：reserve_price = 0，is_no_reserve = true"
+          - id: BR-LOT-002
+            rule: "底价对买家隐藏，仅拍卖行和委托方可见"
+
+  - name: 拍卖会管理
+    english: Auction Session
+    type: core
+    description: 拍卖场次的创建、编排和运营
+    aggregates:
+
+      - name: AuctionSession
+        root: true
+        description: 一场完整的拍卖活动
+        entities:
+          - name: SessionLot
+            description: "拍品在本场的编排信息（排序号、状态）"
+        value_objects:
+          - name: TimeWindow
+            fields: [start_time, end_time]
+          - name: AuctionRules
+            fields: [default_increment, countdown_seconds, extension_seconds, conditional_sale_threshold]
+            description: "拍卖规则配置，含有条件成交阈值"
+        invariants:
+          - "开始时间 < 结束时间"
+          - "至少 1 个拍品"
+          - "同一拍品不可同时存在于多场拍卖会（流拍后可编入下一场）"
+        domain_events:
+          - SessionCreated
+          - SessionPublished
+          - SessionStarted
+          - SessionClosed
+        business_rules:
+          - id: BR-SES-001
+            rule: "conditional_sale_threshold 由用户自定义（百分比或固定金额）"
+
+  - name: 竞价引擎
+    english: Bidding Engine
+    type: core
+    description: 实时竞价的核心逻辑，含出价验证、落槌判定
+    aggregates:
+
+      - name: BiddingRound
+        root: true
+        description: 单个拍品的竞价轮次
+        entities:
+          - name: Bid
+            description: 一次出价记录（竞拍者、金额、时间）
+        value_objects:
+          - name: Money
+            fields: [amount, currency]
+          - name: BidResult
+            enum: [sold, unsold, conditional_pending, conditional_accepted, conditional_rejected]
+        invariants:
+          - "新出价 ≥ 当前最高价 + 加价幅度"
+          - "竞拍者必须已缴保证金"
+          - "有条件成交需委托方确认后才能最终判定"
+        domain_events:
+          - BidPlaced
+          - NewHighBid
+          - HammerFall             # 落槌成交
+          - LotUnsold              # 流拍
+          - ConditionalSalePending # 有条件成交待确认
+          - ConditionalSaleAccepted
+          - ConditionalSaleRejected
+        business_rules:
+          - id: BR-BID-001
+            rule: "最高价 ≥ 底价 → 直接落槌成交"
+          - id: BR-BID-002
+            rule: "最高价 < 底价 且 差距在 conditional_sale_threshold 内 → 有条件成交，联系委托方"
+          - id: BR-BID-003
+            rule: "最高价 < 底价 且 差距超出 threshold → 流拍"
+          - id: BR-BID-004
+            rule: "无底价拍卖 → 有最高价即成交，无需条件确认"
+
+# ─── Context Map ───
+
+context_map:
+  relationships:
+    - upstream: 拍品管理
+      downstream: 拍卖会管理
+      pattern: Conformist
+      description: 拍品适配拍卖会的编排需求
+
+    - upstream: 拍卖会管理
+      downstream: 竞价引擎
+      pattern: Open Host Service
+      description: 拍卖会提供当前拍品信息和规则给竞价引擎
+
+    - upstream: 拍品管理
+      downstream: 竞价引擎
+      pattern: ACL
+      description: 竞价引擎通过防腐层获取底价（不直接暴露委托方信息）
+
+    - upstream: 竞价引擎
+      downstream: 结算中心
+      pattern: Published Language (Event)
+      description: "落槌事件触发结算流程（后期对接）"
+
+# ─── 端到端流程 ───
+
+business_processes:
+  - id: BP-001
+    name: 拍品征集与上架
+    steps:
+      - 委托方提交拍品
+      - 拍卖行审核
+      - 拍摄照片+撰写描述
+      - 设定底价(或无底价)+起拍价+加价幅度
+      - 分配到拍卖会
+      - 生成图录
+
+  - id: BP-002
+    name: 拍卖会运营
+    steps:
+      - 创建拍卖会
+      - 设定时间+规则(含有条件成交阈值)
+      - 编排拍品顺序
+      - 发布公告(图录)
+      - 竞拍者注册+缴保证金
+      - 开拍
+
+  - id: BP-003
+    name: 在线竞价
+    steps:
+      - 拍品上线
+      - 竞拍者出价
+      - 系统验证(≥当前价+加价幅度)
+      - 广播新最高价
+      - 倒计时/延时
+      - "判定: ≥底价→落槌 | <底价(小范围)→有条件成交→委托方确认 | <底价(大)→流拍"
+
+  - id: BP-004
+    name: 成交结算
+    priority: P3-后期
+    steps:
+      - 落槌
+      - 生成结算单(含佣金)
+      - 买受人付款
+      - 拍品交割
+      - 向委托方结算(扣除佣金)
+
+# ─── 能力图谱 ───
+
+capability_map:
+  - level: L1
+    name: 线上拍卖能力
+    children:
+      - level: L2
+        name: 拍品运营能力
+        children:
+          - { level: L3, name: 拍品录入与审核, priority: P1/核心 }
+          - { level: L3, name: 估价与定价, priority: P1/核心 }
+          - { level: L3, name: 图录生成, priority: P2/后期 }
+      - level: L2
+        name: 拍卖会运营能力
+        children:
+          - { level: L3, name: 场次创建与编排, priority: P1/核心 }
+          - { level: L3, name: 拍卖规则配置, priority: P1/核心 }
+          - { level: L3, name: 公告与预展, priority: P2/后期 }
+      - level: L2
+        name: 在线竞价能力
+        children:
+          - { level: L3, name: 实时出价与验证, priority: P1/核心 }
+          - { level: L3, name: 有条件成交审批, priority: P1/核心 }
+          - { level: L3, name: 竞价状态广播, priority: P1/核心 }
+      - level: L2
+        name: 结算交割能力
+        priority: P3/后期
+        children:
+          - { level: L3, name: 佣金计算, priority: P3 }
+          - { level: L3, name: 买受人付款, priority: P3 }
+          - { level: L3, name: 委托方结款, priority: P3 }

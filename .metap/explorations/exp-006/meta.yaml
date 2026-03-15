@@ -1,0 +1,37 @@
+id: exp-006
+type: deepdive
+direction: "项目执行中和执行后应在哪里增加进化植入点"
+status: concluded
+started_date: "2026-03-15"
+concluded_date: "2026-03-15"
+scouts: 3
+deliberation_triggered: true
+deliberation_trigger_reasons:
+  - "修改 S0-S8 全部 workflow（risk > medium）"
+  - "6+ 方案需优先级排序"
+proposals:
+  - id: prop-014
+    title: "Gate 修正模式检测（Auto 层）"
+    priority: P1
+    effort: "~15m · 2 files"
+    status: pending
+  - id: prop-015
+    title: "S3 Gate 架构经验追问（Nudge 层）"
+    priority: P2
+    effort: "~5m · 1 file"
+    status: pending
+  - id: prop-016
+    title: "S6 首 Slice 质量回顾追问（Nudge 层）"
+    priority: P2
+    effort: "~5m · 1 file"
+    status: pending
+  - id: prop-017
+    title: "self-evolution.md 增加进化植入点图"
+    priority: P2
+    effort: "~10m · 1 file"
+    status: pending
+_links:
+  - type: "relates_to"
+    target: "exploration:exp-004"
+  - type: "relates_to"
+    target: "exploration:exp-005"

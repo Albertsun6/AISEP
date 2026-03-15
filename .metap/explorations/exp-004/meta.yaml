@@ -1,0 +1,39 @@
+# exp-004 元数据
+id: exp-004
+direction: "explore 和 deliberate 是否应该结合使用"
+status: concluded
+started_date: "2026-03-15"
+concluded_date: "2026-03-15"
+scouts:
+  - id: A
+    sub_question: "认知科学中发散-收敛思维的组合模式"
+    strategy: academic
+    confidence: 0.9
+  - id: B
+    sub_question: "AI multi-agent 领域 explore+debate 的实现和效果"
+    strategy: industry
+    confidence: 0.85
+  - id: C
+    sub_question: "AISEP 当前 explore/deliberate 的组合现状和差距"
+    strategy: technical
+    confidence: 1.0
+proposals:
+  - id: prop-007
+    title: "新增 /deep-dive 组合命令"
+    priority: P1
+    effort: "~20m · 2 files · mid"
+    status: pending
+  - id: prop-008
+    title: "增强 explore↔deliberate 双向触发"
+    priority: P2
+    effort: "~10m · 2 files · low"
+    status: pending
+  - id: prop-009
+    title: "记到 backlog 暂不实现"
+    priority: P3
+    status: pending
+_links:
+  - type: "references"
+    target: "exploration:exp-002"
+  - type: "references"
+    target: "exploration:exp-003"

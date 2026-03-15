@@ -102,12 +102,12 @@ object_types:
   evolution_rule:
     description: "系统进化规则"
     properties: [id, category, trigger, content, approved_by]
-    carriers: [".aisep/evolution/interaction-rules.yaml"]
+    carriers: [".metap/evolution/interaction-rules.yaml"]
 
   interaction_pattern:
     description: "交互模式识别（远期）"
     properties: [id, pattern, frequency, effectiveness]
-    carriers: [".aisep/evolution/patterns.yaml"]
+    carriers: [".metap/evolution/patterns.yaml"]
     status: "planned"
 
   # ─── L7 Agent 层（A2A 预留）───
@@ -282,7 +282,7 @@ metap_convergence:
     project:                   { metap_type: "Project",       relation: "share",    note: "同一实体，MetaP 只引用" }
     skill:                     { metap_type: null,            relation: "aisep_only", note: "技能定义只在 .agents/ 中" }
     gate_record:               { metap_type: null,            relation: "aisep_only", note: "工程过程记录，MetaP 不管" }
-    evolution_rule:            { metap_type: null,            relation: "aisep_only", note: "当前 .aisep/ 管理，远期可迁移到 .metap/" }
+    evolution_rule:            { metap_type: null,            relation: "metap_managed", note: "已迁移到 .metap/evolution/（Phase 4）" }
     # MetaP 专有（AISEP 无对应）
     Exploration:               { aisep_type: null,            relation: "metap_only", note: "探索过程只在 .metap/ 中" }
 

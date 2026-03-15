@@ -1,0 +1,39 @@
+# exp-005 元数据
+id: exp-005
+type: deepdive
+direction: "S0 项目初始化内容是否合理"
+status: concluded
+started_date: "2026-03-15"
+concluded_date: "2026-03-15"
+scouts: 3
+deliberation_triggered: true
+deliberation_trigger_reasons:
+  - "proposals > 3 且优先级无明显差异"
+  - "改动影响后续所有项目（risk > medium）"
+proposals:
+  - id: prop-010
+    title: "S0 Step 1 增加 AI 引导追问"
+    type: behavior_improvement
+    priority: P1
+    effort: "~10m · 1 file"
+    status: pending
+  - id: prop-011
+    title: "project.yaml 增加 problem + known_risks 可选字段"
+    type: structural_improvement
+    priority: P1
+    effort: "~10m · 2 files"
+    status: pending
+  - id: prop-012
+    title: "S3 Gate 清单增加 constitution 检查"
+    type: structural_improvement
+    priority: P2
+    effort: "~5m · 1 file"
+    status: pending
+  - id: prop-013
+    title: "Stakeholder 分析步骤"
+    priority: skip
+    reason: "辩论共识：对 AI 辅助个人开发场景过度"
+    status: rejected
+_links:
+  - type: "follows_up"
+    target: "exploration:exp-004"

@@ -1,0 +1,46 @@
+# Gate 审批日志
+gates:
+  - stage: s0
+    timestamp: "2026-03-15T21:37:00+08:00"
+    result: passed
+    gate_checklist:
+      completeness:
+        name_non_empty: true
+        description_non_empty: true
+        target_modules_gte_1: true  # 3 个核心域模块
+        constraints_at_least_1: true  # team_size 已填
+      reasonableness:
+        module_count_lte_15: true  # 3 个
+        constraints_reasonable: true
+        tech_stack_matches_skills: true  # odoo17 ✓
+      traceability:
+        existing_system_confirmed: true  # 确认为空
+      user_confirmation: true
+    notes: "经 /deepdive 验证后增强了 problem + known_risks 字段。S0 workflow 同步改进（prop-010/011/012）。"
+
+  - stage: s0
+    action: rollback
+    timestamp: "2026-03-15T22:00:00+08:00"
+    from_stage: s1-domain
+    reason: "体验改进后的 S0 flow（含痛点追问 + KPI + risk 引导）"
+
+  - stage: s0
+    action: passed
+    timestamp: "2026-03-15T22:11:00+08:00"
+    notes: "改进版 S0 flow 第二次通过。验证了 Step 1 痛点追问、KPI 引导、Step 3 风险追问的体验流畅性。"
+
+  - stage: s1
+    action: passed
+    timestamp: "2026-03-15T22:21:00+08:00"
+    artifacts_produced:
+      - "artifacts/global/domain-model.yaml"
+      - "glossary.yaml"
+    notes: "3 BC · 3 Aggregate · 17 术语 · 4 端到端流程。关键规则：无底价拍卖、底价隐藏、有条件成交、拍品不可同时多场。"
+
+  - stage: s2
+    action: passed
+    timestamp: "2026-03-15T22:40:00+08:00"
+    artifacts_produced:
+      - "artifacts/global/functional.yaml"
+      - "artifacts/global/slice-plan.yaml"
+    notes: "14 Stories (Must 9/Should 4/Won't 1, Must=64%)。3 Slices 按拓扑序。US-08 经 /deepdive 降为 Should。CRUD 矩阵完整。"

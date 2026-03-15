@@ -43,3 +43,9 @@ evolution:
       rule: "对话窗口结束前自动执行 /tidy：同步 system-guide + backlog + 一致性检查"
       trigger: "用户说 /tidy 或 '开新对话' 时"
       reason: "防止信息散落在对话中，确保系统文件始终一致"
+
+    - id: evo-007
+      _type: "evolution_rule"
+      rule: "命令命名优先输入便捷性：全小写、无连字符、无下划线、尽量短"
+      reason: "用户反馈连字符命令输入不便（/deep-dive → /deepdive）"
+      examples: ["/deepdive 而非 /deep-dive", "/tidy 而非 /clean-up"]

@@ -298,7 +298,7 @@ context_fence:
     - "projects/proj-002/**"     # 暂停中
   cross_project_allowed:
     - ".aisep/knowledge/**"      # 认知知识库始终可访问
-    - ".aisep/evolution/**"      # 进化数据始终可访问
+    - ".metap/evolution/**"      # 进化数据始终可访问
     - ".aisep/docs/**"           # 系统文档始终可访问
 ```
 
