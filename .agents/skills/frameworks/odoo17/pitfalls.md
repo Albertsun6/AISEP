@@ -68,6 +68,27 @@
 - **规则**：要么定义 `name` 字段，要么设置 `_rec_name`
 - **自检**：检查所有 Model 是否有 `name` 字段或 `_rec_name` 属性
 
+### P2-05: TransactionCase 中 SQL 约束破坏 savepoint
+- **问题**：在 `TransactionCase` 测试中触发 SQL 约束后，savepoint 被破坏
+- **后果**：同一测试方法内后续 ORM 操作均报 `InternalError: current transaction is aborted`
+- **规则**：期望 SQL 约束的测试用 `with self.assertRaises(IntegrityError)` 包裹，或拆分为独立测试方法
+- **自检**：检查测试中是否有故意触发 SQL 约束的 case，确认是否正确捕获异常
+- **发现时间**：Auction 项目 Slice-1（2026-03-16）
+
+### P2-06: One2many 缓存刷新：create 后 compute 不更新
+- **问题**：在同一事务中 create One2many 子记录后，父记录的 compute 字段值未刷新
+- **后果**：测试中断言失败（count 为旧值），或前端显示不一致
+- **规则**：create 子记录后调用 `parent.invalidate_recordset()` 强制刷新 ORM 缓存
+- **自检**：检查测试中是否在 create 后立即读取关联的 compute 字段
+- **发现时间**：Auction 项目 Slice-2（2026-03-16）
+
+### P2-07: 自定义安全组对 admin 不自动可见
+- **问题**：自定义 `groups` 的菜单项 admin 用户看不到
+- **后果**：安装模块后管理员看不到菜单，误以为安装失败
+- **规则**：自定义组需通过 `implied_ids` 链到 `base.group_user`，确保 admin（属于 base.group_user）自动获取该组权限
+- **自检**：检查自定义 group 的 `implied_ids` 是否包含 `base.group_user`
+- **发现时间**：Auction 项目 S7 部署验证（2026-03-16）
+
 ---
 
 ## P3: 中等级（影响维护性或特定场景）
@@ -134,6 +155,9 @@
 [ ] P2-02: 所有 CRUD override 都调了 super()?
 [ ] P2-03: 所有 Many2one 有 ondelete?
 [ ] P2-04: 所有 Model 有 name 字段或 _rec_name?
+[ ] P2-05: 测试中 SQL 约束用 assertRaises 包裹?
+[ ] P2-06: create 子记录后需要 invalidate_recordset()?
+[ ] P2-07: 自定义 group 的 implied_ids 包含 base.group_user?
 [ ] P3-01: 初始数据有 noupdate="1"?
 [ ] P3-02: XML ID 无冲突?
 [ ] P3-03: sudo() 仅用于系统级操作?

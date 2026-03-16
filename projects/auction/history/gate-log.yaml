@@ -155,3 +155,22 @@ gates:
       - "deploy/nginx/default.conf"
       - "deploy/prepare.sh"
     notes: "Docker Compose 生产配置。Odoo 17(4 workers) + PostgreSQL 15(healthcheck) + Nginx(WebSocket proxy for Bus)。prepare.sh 自动复制 3 Slice 模块。"
+
+  - stage: s8
+    action: passed
+    timestamp: "2026-03-16T07:30:00+08:00"
+    artifacts_produced:
+      - "artifacts/global/retrospective.yaml"
+    notes: |
+      S8 复盘进化完成。6 步全部执行：
+      度量(10h/74tests) + 踩坑(3个P2新增到pitfalls.md) + 模式(6个候选) +
+      决策回顾(2 ADR validated) + 认知笔记(learn-013/014/015) +
+      系统进化(pitfalls.md/index.yaml 已更新)。
+      跨项目对比：P1 踩坑从 1→0，测试迭代 7→2→1 收敛。
+    gate_checklist:
+      metrics_collected: true
+      pitfalls_documented: true
+      patterns_evaluated_gte_3: true  # 6 个模式
+      knowledge_entries_shown: true
+      retrospective_generated: true
+      backlog_updated: false  # 本项目无 backlog.md

@@ -1,25 +1,29 @@
 # 下一轮交接清单
-# 更新时间: 2026-03-16T07:24:00+08:00
+# 更新时间: 2026-03-16T08:19:00+08:00
 
 session:
   completed:
-    - "Slice-1 S4→S6 全部完成（33 tests）"
-    - "Slice-2 S4→S6 全部完成（20 tests）"
-    - "Slice-3 S4→S6 全部完成（21 tests）"
-    - "S7 部署配置完成（Docker Compose + Nginx + prepare.sh）"
-    - "菜单 groups 修复（admin 自动加入 group_auction_manager）"
-    - "Walkthrough 永久保存到 history/"
+    - "S0→S8 全部通过（含 1 次 S0 rollback）"
+    - "Slice-1/2/3 S4→S6 完成（74 tests / 0 failures）"
+    - "S7 部署完成（Docker Compose + Nginx + prepare.sh）"
+    - "S8 复盘（retrospective.yaml + 3 pitfall + 3 cognitive notes）"
+    - "生产部署验证（三模块集成 + 浏览器 CRUD 通过）"
+    - "前端竞价直播页面（深色主题 + 出价功能通过）"
+    - "Bus 端点修复（/longpolling/poll → /websocket/peek_notifications）"
 
   next_actions:
-    - "S8 复盘进化 — 项目经验提取 + 知识沉淀"
-    - "前端竞价页面 — WebSocket 连接 Bus 实时出价 UI"
-    - "生产部署验证 — docker compose up 并验证三模块集成"
+    - "Nginx longpolling 代理验证 — 生产环境跨浏览器实时同步"
+    - "竞价流程端到端测试 — Session 发布→出价→落槌→成交"
+    - "移动端竞价页面适配优化"
+    - "新项目启动（利用 S8 沉淀的知识打底）"
 
   recommended_load_files:
     - "project.yaml"
-    - "history/gate-log.yaml"
     - "history/walkthrough-final.md"
+    - "artifacts/global/retrospective.yaml"
     - "artifacts/global/architecture.yaml"
+    - "deploy/docker-compose.yml"
+    - "deploy/nginx/default.conf"
 
   docker_env:
     container: "auction-odoo17"
@@ -27,9 +31,16 @@ session:
     db_container: "odoo-db"
     port: 8169
     test_db: "auction_full"
+    admin_login: "admin@test.com"
+    admin_password: "admin"
+
+  known_issues:
+    - "Bus /websocket/peek_notifications 在开发容器单进程模式下需 Odoo workers 配置"
+    - "PIT-AUC-004 候选：避免使用 Python 内置函数名作为模板变量"
 
   stats:
     total_tests: 74
-    total_files: 36
-    total_lines: "~2418"
+    total_files: 42
+    total_lines: "~3200"
     modules: ["auction_lot", "auction_session", "auction_bidding"]
+    frontend_files: 5

@@ -7,7 +7,7 @@ metadata:
   last_updated: "2026-03-15"
   description: "对话中学到的概念、原理、方法论、设计决策"
   purpose: "提升用户认知，不是改进系统"
-  total_entries: 12
+  total_entries: 15
   crystallization_protocol: |
     知识结晶路径：cognitive_note → decision → skill_draft → skill
     触发条件：第 2 次遇到→decision ｜ 第 3+ 次→skill_draft ｜ 跨项目→skill
@@ -100,7 +100,7 @@ entries:
     tags: [architecture, methodology, delivery, agile]
     source_project: "proj-001"
     date: "2026-03-13"
-    maturity: { level: "decision", validation_count: 2, last_validated: "2026-03-13" }
+    maturity: { level: "decision", validation_count: 3, last_validated: "2026-03-16" }
   - id: learn-009
     _type: "cognitive_note"
     title: "Repo Map — 代码地图模式"
@@ -139,6 +139,43 @@ entries:
     tags: [辩论, 共识, 质量守护, devil-s-advocate, 认知偏差]
     date: "2026-03-15"
     maturity: { level: "note", validation_count: 1 }
+  - id: learn-013
+    _type: "cognitive_note"
+    _links:
+      - type: "extracted_from"
+        target: "project:auction"
+      - type: "extracted_from"
+        target: "adr:auction/002-concurrency-locking"
+    title: "FOR UPDATE 行级锁在 ORM 中的应用"
+    category: framework_pattern
+    tags: [odoo, postgresql, concurrency, locking, FOR-UPDATE]
+    source_project: "auction"
+    date: "2026-03-16"
+    maturity: { level: "note", validation_count: 1 }
+  - id: learn-014
+    _type: "cognitive_note"
+    _links:
+      - type: "extracted_from"
+        target: "project:auction"
+    title: "Immutable Record 设计模式"
+    category: framework_pattern
+    tags: [odoo, design-pattern, data-integrity, audit, immutable]
+    source_project: "auction"
+    date: "2026-03-16"
+    maturity: { level: "note", validation_count: 1 }
+  - id: learn-015
+    _type: "cognitive_note"
+    _links:
+      - type: "extracted_from"
+        target: "project:auction"
+      - type: "extracted_from"
+        target: "adr:auction/001-realtime-bidding"
+    title: "Odoo Bus 实时推送机制"
+    category: framework_pattern
+    tags: [odoo, bus, realtime, websocket, long-polling]
+    source_project: "auction"
+    date: "2026-03-16"
+    maturity: { level: "note", validation_count: 1 }
 
 # ── 倒排索引（自动维护，/tidy 时同步更新）──
 
@@ -146,7 +183,7 @@ by_category:
   system_design: [learn-001, learn-002, learn-004]
   methodology: [learn-003, learn-012]
   engineering: [learn-005]
-  framework_pattern: [learn-006]
+  framework_pattern: [learn-006, learn-013, learn-014, learn-015]
   framework_gotcha: [learn-007]
   architecture: [learn-008]
   context_engineering: [learn-009, learn-010]
@@ -165,9 +202,19 @@ by_tag:
   specification: [learn-005]
   变更隔离: [learn-005]
   # 框架
-  odoo: [learn-006, learn-007]
-  design-pattern: [learn-006]
+  odoo: [learn-006, learn-007, learn-013, learn-014, learn-015]
+  design-pattern: [learn-006, learn-014]
   breaking-change: [learn-007]
+  concurrency: [learn-013]
+  locking: [learn-013]
+  FOR-UPDATE: [learn-013]
+  data-integrity: [learn-014]
+  audit: [learn-014]
+  immutable: [learn-014]
+  bus: [learn-015]
+  realtime: [learn-015]
+  websocket: [learn-015]
+  long-polling: [learn-015]
   # 架构
   architecture: [learn-008]
   agile: [learn-008]
@@ -180,15 +227,16 @@ by_tag:
   isolation: [learn-011]
 
 by_framework:
-  odoo17: [learn-006, learn-007]
+  odoo17: [learn-006, learn-007, learn-013, learn-014, learn-015]
 
 by_project:
   proj-001: [learn-006, learn-007, learn-008]
+  auction: [learn-013, learn-014, learn-015]
 
 # ── 结晶成熟度倒排索引（/tidy 时同步更新）──
 
 by_maturity:
-  note: [learn-003, learn-004, learn-005, learn-009, learn-012]
+  note: [learn-003, learn-004, learn-005, learn-009, learn-012, learn-013, learn-014, learn-015]
   decision: [learn-001, learn-002, learn-008, learn-010, learn-011]
   skill_draft: []
   skill: [learn-006, learn-007]

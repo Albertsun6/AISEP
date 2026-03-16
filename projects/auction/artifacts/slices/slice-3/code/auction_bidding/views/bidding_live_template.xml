@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- 竞价直播页面模板 -->
+    <template id="bidding_live_page" name="竞价直播">
+        <html>
+        <head>
+            <meta charset="utf-8"/>
+            <meta name="viewport" content="width=device-width, initial-scale=1"/>
+            <title><t t-esc="lot.name"/> — 竞价直播</title>
+            <link rel="preconnect" href="https://fonts.googleapis.com"/>
+            <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/>
+            <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+            <link rel="stylesheet" href="/auction_bidding/static/src/css/bidding_live.css"/>
+        </head>
+        <body>
+            <!-- 数据载荷 -->
+            <script type="application/json" id="auction-data">
+                {
+                    "round_id": <t t-esc="bidding_round.id"/>,
+                    "db_name": "<t t-esc="db_name"/>",
+                    "state": "<t t-esc="bidding_round.state"/>",
+                    "current_price": <t t-esc="bidding_round.current_price or 0"/>,
+                    "starting_price": <t t-esc="bidding_round.starting_price"/>,
+                    "bid_increment": <t t-esc="bidding_round.bid_increment"/>,
+                    "min_bid": <t t-esc="min_bid"/>,
+                    "bid_count": <t t-esc="bidding_round.bid_count"/>,
+                    "lot_name": "<t t-esc="lot.name"/>",
+                    "session_name": "<t t-esc="session.name"/>",
+                    "user_id": <t t-esc="user.id"/>
+                }
+            </script>
+
+            <div class="auction-container">
+                <!-- 顶栏 -->
+                <header class="auction-header">
+                    <div class="header-left">
+                        <span class="live-badge" id="live-badge">
+                            <span class="live-dot"></span>
+                            LIVE
+                        </span>
+                        <h1 class="lot-name"><t t-esc="lot.name"/></h1>
+                    </div>
+                    <div class="header-right">
+                        <span class="session-name"><t t-esc="session.name"/></span>
+                    </div>
+                </header>
+
+                <!-- 主内容区 -->
+                <main class="auction-main">
+                    <!-- 左侧：拍品信息 -->
+                    <section class="lot-info">
+                        <div class="lot-image-wrapper">
+                            <div class="lot-image-placeholder">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="icon-gavel">
+                                    <path d="M14.5 2.5L17.5 5.5M6.5 10.5L9.5 13.5M2 22L13 11M15.5 4.5L19.5 8.5L16 12L12 8L15.5 4.5Z"/>
+                                </svg>
+                                <span>拍品</span>
+                            </div>
+                        </div>
+                        <div class="lot-details">
+                            <div class="lot-category">
+                                <t t-if="lot.category_id">
+                                    <span class="category-tag"><t t-esc="lot.category_id.name"/></span>
+                                </t>
+                            </div>
+                            <p class="lot-description-text" t-if="lot.description" t-raw="lot.description"/>
+                        </div>
+                    </section>
+
+                    <!-- 右侧：竞价面板 -->
+                    <section class="bidding-panel">
+                        <!-- 价格显示 -->
+                        <div class="price-display">
+                            <div class="price-label">当前最高价</div>
+                            <div class="price-value" id="current-price">
+                                <span class="currency">¥</span>
+                                <span class="amount" id="price-amount">
+                                    <t t-esc="'{:,.2f}'.format(bidding_round.current_price or bidding_round.starting_price)"/>
+                                </span>
+                            </div>
+                            <div class="price-meta">
+                                <div class="meta-item">
+                                    <span class="meta-label">起拍价</span>
+                                    <span class="meta-value">¥ <t t-esc="'{:,.2f}'.format(bidding_round.starting_price)"/></span>
+                                </div>
+                                <div class="meta-item">
+                                    <span class="meta-label">加价幅度</span>
+                                    <span class="meta-value">¥ <t t-esc="'{:,.2f}'.format(bidding_round.bid_increment)"/></span>
+                                </div>
+                                <div class="meta-item">
+                                    <span class="meta-label">出价次数</span>
+                                    <span class="meta-value" id="bid-count"><t t-esc="bidding_round.bid_count"/></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 出价表单 -->
+                        <div class="bid-form" id="bid-form">
+                            <div class="bid-input-group">
+                                <span class="input-prefix">¥</span>
+                                <input type="number"
+                                       id="bid-amount"
+                                       class="bid-input"
+                                       step="1"
+                                       placeholder="输入出价金额"/>
+                            </div>
+                            <button class="bid-button" id="bid-button" type="button">
+                                <span class="btn-icon">🔨</span>
+                                <span class="btn-text">出价</span>
+                            </button>
+                            <div class="bid-hint" id="bid-hint">
+                                最低出价：¥ <span id="min-bid-display"><t t-esc="'{:,.2f}'.format(min_bid)"/></span>
+                            </div>
+                        </div>
+
+                        <!-- 状态徽章 -->
+                        <div class="status-bar">
+                            <span class="status-badge" id="status-badge">
+                                <t t-if="bidding_round.state == 'open'">🟢 竞价中</t>
+                                <t t-elif="bidding_round.state == 'hammer'">🏆 已成交</t>
+                                <t t-elif="bidding_round.state == 'unsold'">⚫ 流拍</t>
+                                <t t-elif="bidding_round.state == 'conditional_pending'">🟡 有条件成交-待确认</t>
+                                <t t-elif="bidding_round.state == 'conditional_accepted'">🏆 有条件成交-已接受</t>
+                                <t t-elif="bidding_round.state == 'conditional_rejected'">🔴 有条件成交-已拒绝</t>
+                            </span>
+                        </div>
+                    </section>
+                </main>
+
+                <!-- 出价历史 -->
+                <section class="bid-history">
+                    <h2 class="history-title">
+                        出价记录
+                        <span class="history-count" id="history-count">(<t t-esc="len(bids)"/>)</span>
+                    </h2>
+                    <div class="history-list" id="history-list">
+                        <t t-foreach="bids" t-as="bid">
+                            <div t-attf-class="history-item #{'winning' if bid.is_winning else ''}">
+                                <span class="bid-time">
+                                    <t t-esc="bid.bid_time.strftime('%H:%M:%S') if bid.bid_time else ''"/>
+                                </span>
+                                <span class="bid-bidder"><t t-esc="bid.bidder_id.name"/></span>
+                                <span class="bid-amount">¥ <t t-esc="'{:,.2f}'.format(bid.amount)"/></span>
+                                <span class="bid-winning" t-if="bid.is_winning">👑 最高</span>
+                            </div>
+                        </t>
+                        <div class="history-empty" t-if="not bids">
+                            暂无出价，等待第一位竞拍者...
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 消息提示 -->
+                <div class="toast-container" id="toast-container"></div>
+            </div>
+
+            <script src="/auction_bidding/static/src/js/bidding_live.js"></script>
+        </body>
+        </html>
+    </template>
+
+</odoo>
