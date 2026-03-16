@@ -41,3 +41,40 @@ audits:
         - { at: "Gate 通过后", topic: "进化引擎 Nudge 机制讨论", severity: "major" }
         - { at: "Nudge 讨论后", topic: "deepdive 流程执行", severity: "minor" }
       recommendation: "进化引擎讨论属 major 偏移，建议此类系统级讨论在专门对话中进行。但产出有价值（prop-013/014/015），权衡后可接受。"
+
+  - session_date: "2026-03-16"
+    stage: "post-s8-verification"
+    scope: "竞价端到端验证 + 移动端适配 + Bus 推送修复 + 落槌 E2E"
+
+    files:
+      - { path: "project.yaml", times: 1, verdict: "referenced" }
+      - { path: "_next_session.yaml", times: 3, verdict: "essential" }
+      - { path: "artifacts/global/retrospective.yaml", times: 1, verdict: "essential" }
+      - { path: "artifacts/slices/slice-3/code/auction_bidding/static/src/css/bidding_live.css", times: 2, verdict: "essential" }
+      - { path: "artifacts/slices/slice-3/code/auction_bidding/static/src/js/bidding_live.js", times: 1, verdict: "referenced" }
+      - { path: "artifacts/slices/slice-3/code/auction_bidding/views/bidding_live_template.xml", times: 1, verdict: "referenced" }
+      - { path: "artifacts/slices/slice-3/code/auction_bidding/controllers/bidding_live.py", times: 1, verdict: "referenced" }
+      - { path: "artifacts/slices/slice-3/code/auction_bidding/models/auction_bidding_round.py", times: 1, verdict: "referenced" }
+      - { path: "artifacts/slices/slice-3/code/auction_bidding/tests/test_auction_bidding.py", times: 1, verdict: "referenced" }
+      - { path: "deploy/docker-compose.yml", times: 1, verdict: "referenced" }
+      - { path: "deploy/nginx/default.conf", times: 1, verdict: "referenced" }
+      - { path: "deploy/prepare.sh", times: 1, verdict: "referenced" }
+      - { path: "history/walkthrough-final.md", times: 1, verdict: "referenced" }
+
+    changes_made:
+      - { path: "bidding_live.css", type: "modify", lines: "+213/-0", desc: "移动端 CSS 适配：3 断点 + 触摸 + Safe Area + 横屏" }
+      - { path: "_next_session.yaml", type: "modify", lines: "+24/-7", desc: "更新交接清单含 Bus 修复和落槌 E2E 验证" }
+
+    docker_changes:
+      - "容器 auction-odoo17 重建：--workers=2 + -p 8172:8072（启用 gevent longpolling）"
+
+    verifications:
+      - { type: "browser", desc: "桌面端出价 5500/6000/10500 成功", result: "pass" }
+      - { type: "browser", desc: "Bus 实时推送价格更新", result: "pass (workers=2后)" }
+      - { type: "browser", desc: "落槌判定 → 已成交 + ENDED", result: "pass" }
+      - { type: "css-inject", desc: "移动端 390px 视口布局验证", result: "pass" }
+
+    topic_drift:
+      anchor: "竞价端到端验证 + 移动端适配"
+      events: []
+      recommendation: "无偏移"
