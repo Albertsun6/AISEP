@@ -1,5 +1,5 @@
 # 下一轮交接清单
-# 更新时间: 2026-03-16T08:19:00+08:00
+# 更新时间: 2026-03-16T09:30:00+08:00
 
 session:
   completed:
@@ -10,12 +10,15 @@ session:
     - "生产部署验证（三模块集成 + 浏览器 CRUD 通过）"
     - "前端竞价直播页面（深色主题 + 出价功能通过）"
     - "Bus 端点修复（/longpolling/poll → /websocket/peek_notifications）"
+    - "竞价端到端流程验证（出价 5500/6000/10500 成功 + Toast 反馈）"
+    - "移动端 CSS 适配增强（3 断点 + 触摸优化 + iOS Safe Area + 横屏）"
+    - "Bus 推送修复（--workers=2 + 8172→8072 端口映射 → peek_notifications 生效）"
+    - "落槌 E2E 验证（¥10500 ≥ 底价 ¥10000 → 已落槌 → ENDED + 🏆 已成交）"
 
   next_actions:
-    - "Nginx longpolling 代理验证 — 生产环境跨浏览器实时同步"
-    - "竞价流程端到端测试 — Session 发布→出价→落槌→成交"
-    - "移动端竞价页面适配优化"
-    - "新项目启动（利用 S8 沉淀的知识打底）"
+    - "新项目 S0 启动（方向待定）"
+    - "Auction 增量迭代候选：支付集成 / 用户注册 / 拍品图片轮播 / 压测"
+    - "pitfalls.md 更新（P2-05/P2-06/P2-07 待新增）"
 
   recommended_load_files:
     - "project.yaml"
@@ -23,20 +26,25 @@ session:
     - "artifacts/global/retrospective.yaml"
     - "artifacts/global/architecture.yaml"
     - "deploy/docker-compose.yml"
-    - "deploy/nginx/default.conf"
 
   docker_env:
     container: "auction-odoo17"
     network: "odoodemo_default"
     db_container: "odoo-db"
     port: 8169
+    longpoll_port: 8172
+    workers: 2
     test_db: "auction_full"
     admin_login: "admin@test.com"
     admin_password: "admin"
+    addons_paths:
+      slice1: "/mnt/addons1"
+      slice2: "/mnt/addons2"
+      slice3: "/mnt/addons3"
 
   known_issues:
-    - "Bus /websocket/peek_notifications 在开发容器单进程模式下需 Odoo workers 配置"
     - "PIT-AUC-004 候选：避免使用 Python 内置函数名作为模板变量"
+    - "browser_resize_window 最小宽度 960px — 移动端测试需通过 CSS 注入验证"
 
   stats:
     total_tests: 74
@@ -44,3 +52,6 @@ session:
     total_lines: "~3200"
     modules: ["auction_lot", "auction_session", "auction_bidding"]
     frontend_files: 5
+    css_responsive_breakpoints: ["768px", "480px", "375px", "landscape"]
+    e2e_bids_placed: 4
+    hammer_result: "sold"

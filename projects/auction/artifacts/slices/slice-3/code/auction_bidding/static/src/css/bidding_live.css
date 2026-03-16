@@ -316,6 +316,7 @@ body {
 }
 .bid-input[type=number] {
     -moz-appearance: textfield;
+    appearance: textfield;
 }
 
 .bid-button {
@@ -540,25 +541,44 @@ body {
     to { opacity: 0; transform: translateX(100px); }
 }
 
+/* ── 触摸交互优化（全局） ─────────── */
+
+.bid-button {
+    min-height: 52px;  /* Material Design: 48px+ touch target */
+}
+
+.bid-input {
+    font-size: 16px;  /* 阻止 iOS Safari input auto-zoom */
+}
+
 /* ── 响应式 ──────────────────────── */
 
+/* ── Tablet & Mobile (≤768px) ──── */
 @media (max-width: 768px) {
     .auction-container {
         padding: 0.75rem;
+        padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
     }
 
     .auction-header {
         flex-direction: column;
         gap: 0.75rem;
         text-align: center;
+        padding: 0.75rem 1rem;
+        margin-bottom: 1rem;
     }
 
     .auction-main {
         grid-template-columns: 1fr;
+        gap: 1rem;
     }
 
     .price-value {
         font-size: 2.4rem;
+    }
+
+    .price-display {
+        padding: 1.5rem 1rem;
     }
 
     .price-meta {
@@ -569,5 +589,198 @@ body {
 
     .lot-name {
         font-size: 1.1rem;
+    }
+
+    /* 出价历史适配 — 小屏减少高度占比 */
+    .history-list {
+        max-height: 200px;
+    }
+
+    /* 拍品图片缩小 */
+    .lot-image-wrapper {
+        aspect-ratio: 16/9;
+    }
+
+    /* Toast 移动端 — 底部居中 */
+    .toast-container {
+        right: 1rem;
+        left: 1rem;
+        bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+        align-items: center;
+    }
+
+    .toast {
+        max-width: none;
+        text-align: center;
+    }
+
+    /* 出价表单紧凑化 */
+    .bid-form {
+        padding: 1rem;
+    }
+
+    .bid-input-group {
+        padding: 0.5rem 0.75rem;
+    }
+}
+
+/* ── Small Phone (≤480px) ──────── */
+@media (max-width: 480px) {
+    .auction-container {
+        padding: 0.5rem;
+        padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
+    }
+
+    .auction-header {
+        padding: 0.6rem 0.75rem;
+        border-radius: var(--radius-md);
+    }
+
+    .lot-info,
+    .price-display,
+    .bid-form,
+    .bid-history {
+        border-radius: var(--radius-md);
+    }
+
+    .price-value {
+        font-size: 2rem;
+    }
+
+    .currency {
+        font-size: 1.2rem;
+    }
+
+    .price-meta {
+        gap: 0.5rem;
+        margin-top: 1rem;
+        padding-top: 1rem;
+    }
+
+    .meta-label {
+        font-size: 0.65rem;
+    }
+
+    .meta-value {
+        font-size: 0.85rem;
+    }
+
+    /* 出价历史条目简化 */
+    .history-item {
+        gap: 0.5rem;
+        padding: 0.6rem 0.75rem;
+        font-size: 0.85rem;
+    }
+
+    .bid-time {
+        font-size: 0.7rem;
+        min-width: 50px;
+    }
+
+    .bid-bidder {
+        font-size: 0.8rem;
+    }
+
+    .bid-amount {
+        font-size: 0.85rem;
+    }
+
+    .bid-winning {
+        font-size: 0.65rem;
+        padding: 0.1rem 0.35rem;
+    }
+
+    .session-name {
+        font-size: 0.75rem;
+    }
+
+    .live-badge {
+        font-size: 0.7rem;
+    }
+}
+
+/* ── iPhone SE / Narrow (≤375px) ─ */
+@media (max-width: 375px) {
+    .price-value {
+        font-size: 1.8rem;
+    }
+
+    .currency {
+        font-size: 1rem;
+    }
+
+    .bid-input-group {
+        padding: 0.4rem 0.6rem;
+    }
+
+    .input-prefix {
+        font-size: 1.2rem;
+    }
+
+    .bid-input {
+        font-size: 1.2rem;  /* still ≥16px to avoid zoom */
+    }
+
+    .bid-button {
+        font-size: 0.95rem;
+        padding: 0.85rem;
+    }
+
+    .lot-name {
+        font-size: 1rem;
+    }
+
+    .history-list {
+        max-height: 160px;
+    }
+
+    .price-label {
+        font-size: 0.75rem;
+    }
+}
+
+/* ── Landscape on Mobile ─────────── */
+@media (max-height: 500px) and (orientation: landscape) {
+    .auction-main {
+        grid-template-columns: 1fr 1.2fr;
+        gap: 0.75rem;
+    }
+
+    .lot-image-wrapper {
+        aspect-ratio: 16/9;
+        max-height: 200px;
+    }
+
+    .price-display {
+        padding: 1rem;
+    }
+
+    .price-value {
+        font-size: 1.8rem;
+    }
+
+    .price-meta {
+        flex-direction: row;
+        gap: 1rem;
+    }
+
+    .bid-form {
+        padding: 0.75rem;
+    }
+
+    .bid-input-group {
+        margin-bottom: 0.5rem;
+    }
+
+    .bid-history {
+        padding: 0.75rem;
+    }
+
+    .history-list {
+        max-height: 120px;
+    }
+
+    .auction-header {
+        margin-bottom: 0.75rem;
     }
 }
