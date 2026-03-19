@@ -1,103 +1,48 @@
-# .metap/engines/evolution.yaml — 进化引擎配置
-# 职责：从项目执行和探索中提炼模式，驱动系统自我进化
+# .metap/engines/evolution.yaml — 进化引擎配置 (Delegated to AIEC OS)
+# 职责：在特定事件触发时，调用底层 AIEC 系统的 `evolution` 接口进行反思和蒸馏。
 
 engine:
   name: evolution
-  version: "0.1.0"
-  description: "自进化引擎——从经验中学习，渐进提升系统能力"
+  version: "1.0.0"
+  description: "代理式自进化引擎——本引擎不包含独立逻辑，全权委托给宿主 AIEC OS 处理经验蒸馏和策略生成。"
+  delegated_to: "AIEC_OS"
 
-# ─── 进化触发器 ───
+# ─── 委托 AIEC OS 的进化触发器 ───
+# 这里定义了应用层在何时会调用 AIEC OS 的接口。
 
 triggers:
-  - id: project_retro
-    event: "AISEP S8 复盘完成"
-    action: "提取项目经验，评估是否有可泛化的模式"
-  - id: exploration_concluded
-    event: "MetaP 探索任务结束"
-    action: "评估探索过程效率，是否有新的方法论沉淀"
-  - id: pattern_detected
-    event: "同类事件累计达到 memory.promotion_threshold"
-    action: "提议将重复模式抽象为规则或 Skill"
-  - id: user_command
-    event: "用户执行 /evolve"
-    action: "全面自进化分析"
-  - id: trust_milestone
-    event: "信任积分达到升级阈值"
-    action: "评估是否可提升某些操作的自治级别"
   - id: gate_auto_observation
     event: "任意 Gate 通过后"
-    action: "AI 自动检测进化信号 → 静默写入 observations.yaml"
-    autonomy: L3   # 纯记录，无需人确认
+    # action 委托给 AIEC OS
+    action: "call AIEC_OS.evolution.reflect(gate_log)"
+    autonomy: L3
 
-# ─── 自动观察配置（prop-013）───
+  - id: project_retro
+    event: "AISEP S8 复盘完成"
+    # action 委托给 AIEC OS
+    action: "call AIEC_OS.evolution.distill(project_context)"
 
-auto_observation:
-  description: "Gate 通过后 AI 自动分析执行过程，发现可沉淀的模式"
-  nudge_mode: silent       # silent: 仅记录不展示 | inline: Gate 后立即展示 | off: 关闭
-  trigger: every_gate      # every_gate: 每次 Gate | key_gates: 仅 S3/S6/S8
-  max_per_gate: 3          # 单次 Gate 最多生成的观察数
+  - id: exploration_concluded
+    event: "MetaP 探索任务结束"
+    action: "call AIEC_OS.evolution.reflect(exploration_log)"
 
-  detection_dimensions:
-    - id: anomaly
-      name: "异常模式"
-      signals: ["Gate 修正次数 ≥ 2", "回退事件", "执行耗时显著偏离估计"]
-    - id: decision
-      name: "决策模式"
-      signals: ["ADR 中的权衡点", "偏离 Skill/Pitfalls 默认建议", "新增 constitution 条款"]
-    - id: repetition
-      name: "重复模式"
-      signals: ["与历史 Gate 的相似修正原因", "跨项目相似 ADR 主题"]
-    - id: discovery
-      name: "新发现"
-      signals: ["未被 Skill/Pitfalls 覆盖的问题", "新的业务模式或技术方案"]
-    - id: success
-      name: "成功模式"
-      signals: ["Gate 零修正一次通过", "执行耗时显著低于估计", "用户无修改直接确认"]
-      note: "prop-015 — 针对 DevOps post-mortem 缺失正向经验提取的补充"
+  - id: user_command_evolve
+    event: "用户执行 /evolve"
+    # 直接调用 AIEC 的全核进化系统
+    action: "call AIEC_OS.evolution.trigger_full_evolution()"
 
-  observation_format:
-    fields: [id, gate_stage, dimension, confidence, summary, evidence, suggested_action]
-    confidence_range: [0.0, 1.0]   # 全部记录，不做静默过滤（用户指示）
-
-# ─── 进化层级（继承 AISEP constitution §10-12）───
+# ─── 进化层级（由 AIEC OS 提供）───
 
 levels:
-  L1_record:
-    name: "观察记录"
-    autonomy: L3
-    output: ".metap/evolution/observations.yaml"
-  L2_knowledge:
-    name: "知识提炼"
-    autonomy: L1
-    output: "新的 Concept（maturity: seed）"
-  L3_rule:
-    name: "规则优化"
-    autonomy: L0
-    output: "修改建议（diff 格式呈现）"
-  L4_capability:
-    name: "能力生成"
-    autonomy: L0
-    output: "新 Skill 文件 / Engine 配置"
+  L0: "参数预设"
+  L1: "流程调优"
+  L2: "组件/系统级干预 (新增 Workflow/Tools)"
+  L3: "模式层级 (Ontology schema)"
+  L4: "元进化 (Config)"
 
-# ─── 进化日志 ───
+# ─── 策略存储 ───
 
 log:
-  storage: ".metap/evolution/history.yaml"
-  retention: immutable  # 只追加不删除（constitution §12）
+  storage: "AIEC_OS.memory.store" # 由底层的知识图谱接管
+  retention: "managed by AIEC OS"
 
-# ─── 进化度量 ───
-
-metrics:
-  tracked:
-    - name: "探索效率"
-      formula: "有效来源数 / 总检索来源数"
-      target: "> 0.6"
-    - name: "行动建议采纳率"
-      formula: "approved / (approved + rejected)"
-      target: "> 0.7"
-    - name: "概念验证率"
-      formula: "validated concepts / total concepts"
-      target: "持续增长"
-    - name: "自治级别分布"
-      formula: "各级别操作数占比"
-      target: "L2+ 占比随信任增长"

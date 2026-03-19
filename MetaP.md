@@ -30,7 +30,7 @@ MetaP (反馈回路) ←   经验提炼回 Ontology
 - `.metap/engines/exploration.yaml` — 探索引擎（多 Scout 并行）
 - `.metap/engines/deliberation.yaml` — 博弈引擎（4 角色 3 轮）
 - `.metap/engines/autonomy.yaml` — 自治引擎（信任积分 + 三维评估）
-- `.metap/engines/evolution.yaml` — 进化引擎（L1-L4 进化层级）
+- `.metap/engines/evolution.yaml` — 进化引擎（**已委托给底层 AIEC OS 处理**）
 - `.metap/engines/memory.yaml` — 记忆引擎（工作/事件/语义三级）
 - `.metap/state/trust.yaml` — 当前信任积分
 
